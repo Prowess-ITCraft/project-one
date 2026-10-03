@@ -1,0 +1,21 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.6
+    hooks:
+      - id: ruff
+        args: [--fix]
+        files: ^backend/
+      - id: ruff-format
+        files: ^backend/
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+  - repo: local
+    hooks:
+      - id: import-linter
+        name: import-linter
+        entry: bash -c 'cd backend && .venv/Scripts/lint-imports --config ../.importlinter || .venv/bin/lint-imports --config ../.importlinter'
+        language: system
+        pass_filenames: false
+        files: ^backend/app/

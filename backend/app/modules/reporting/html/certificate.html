@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Certificate {{ p.number }}</title>
+<style>
+  {{ base_css | safe }}
+  @page { size: A4 landscape; margin: 10mm; @bottom-center { content: none; } }
+  body { font-size: 10pt; }
+  .frame { border: 2.5pt solid #0F2A45; padding: 3pt; height: 188mm; }
+  .inner { border: 0.75pt solid #2C629F; height: 100%; padding: 12mm 16mm 10mm; position: relative; }
+  .top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .iitpl { height: 26mm; width: auto; }
+  .num { text-align: right; font-size: 8.5pt; color: #444; line-height: 1.5; }
+  .num b { color: #0F2A45; font-size: 10pt; }
+  h1 { font-size: 24pt; letter-spacing: 0.5pt; color: #0F2A45; margin: 4mm 0 1mm; font-weight: 700; }
+  .by { font-size: 12pt; color: #2C629F; font-weight: 700; margin-bottom: 4mm; }
+  .wording { max-width: 200mm; color: #222; margin-bottom: 3mm; }
+  .customer { font-size: 17pt; font-weight: 700; color: #111; margin: 1mm 0; }
+  .project { font-size: 11pt; color: #333; margin-bottom: 3mm; }
+  .cols { display: flex; gap: 10mm; }
+  .scope { flex: 1; }
+  .scope h2, .facts h2 { font-size: 9pt; color: #555; margin: 0 0 1.5mm; font-weight: 700; }
+  .scope ul { margin: 0; padding-left: 4mm; columns: 2; column-gap: 8mm; font-size: 9pt; }
+  .scope li { break-inside: avoid; margin-bottom: 0.6mm; }
+  .facts { width: 70mm; font-size: 9pt; }
+  .facts dl { display: grid; grid-template-columns: 26mm 1fr; gap: 1mm 3mm; margin: 0; }
+  .facts dt { color: #555; } .facts dd { margin: 0; }
+  .excl { margin-top: 2mm; font-size: 8.5pt; color: #6b4a00; }
+  .foot { position: absolute; left: 16mm; right: 16mm; bottom: 9mm; display: flex; justify-content: space-between; align-items: flex-end; }
+  .verify { display: flex; gap: 4mm; align-items: flex-end; font-size: 7.5pt; color: #444; max-width: 95mm; }
+  .verify img { width: 24mm; height: 24mm; }
+  .verify b { color: #0F2A45; }
+  .sign { text-align: center; position: relative; width: 80mm; }
+  .sign .stamp { position: absolute; right: -6mm; bottom: 6mm; height: 28mm; width: auto; opacity: 0.92; }
+  .sign .line { border-top: 0.75pt solid #222; padding-top: 1.5mm; font-weight: 700; }
+  .sign .role { font-size: 8.5pt; color: #444; }
+  .made { display: flex; align-items: center; gap: 2mm; font-size: 8pt; color: #555; white-space: nowrap; }
+  .made img { height: 9mm; width: auto; }
+</style>
+</head>
+<body>
+{% from "_brand.html" import wordmark %}
+<div class="frame"><div class="inner">
+  <div class="top">
+    <img class="iitpl" src="{{ asset('iitpl-logo.png') }}" alt="IITPL">
+    <div class="num">Certificate number<br><b>{{ p.number }}</b><br>Issued {{ p.issued_on }}</div>
+  </div>
+
+  <h1>Certificate of Implementation</h1>
+  <div class="by">Certified by IITPL</div>
+  <p class="wording">{{ p.wording }}</p>
+  <div class="customer">{{ p.customer }}</div>
+  <div class="project">{{ p.project }} ({{ p.project_code }}){% if p.quote_ref %}, quotation {{ p.quote_ref }}{% endif %}{% if p.po_number %}, purchase order {{ p.po_number }}{% endif %}</div>
+
+  <div class="cols">
+    <div class="scope">
+      <h2>Work delivered and verified</h2>
+      <ul>{% for s in scope_shown %}<li>{{ s }}</li>{% endfor %}{% if scope_more %}<li>and {{ scope_more }} more, listed in completion report {{ p.report_number }}</li>{% endif %}</ul>
+      {% if p.exclusions %}<div class="excl"><b>Excluded by agreement:</b> {{ p.exclusions | join("; ") }}</div>{% endif %}
+    </div>
+    <div class="facts">
+      <h2>Record</h2>
+      <dl>
+        {% if p.work_started %}<dt>Work started</dt><dd>{{ p.work_started }}</dd>{% endif %}
+        {% if p.work_finished %}<dt>Work finished</dt><dd>{{ p.work_finished }}</dd>{% endif %}
+        {% if p.verifiers %}<dt>Verified by</dt><dd>{{ p.verifiers | join(", ") }}</dd>{% endif %}
+        <dt>Report</dt><dd>Completion report {{ p.report_number }}</dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="verify">
+      <img src="{{ qr }}" alt="">
+      <div>Scan to check this certificate, or open<br><b>{{ verify_url }}</b><br>Fingerprint {{ fingerprint }}
+        <div class="made" style="margin-top:2mm">Implemented by
+          {% if company.logo %}<img src="{{ asset(company.logo) }}" alt="">{% endif %}{{ wordmark(company, "10pt") }}</div>
+      </div>
+    </div>
+    <div class="sign">
+      {% if stamp %}<img class="stamp" src="{{ stamp }}" alt="IITPL stamp">{% endif %}
+      <div class="line">{{ p.director }}</div>
+      <div class="role">Director, IITPL</div>
+    </div>
+  </div>
+</div></div>
+</body>
+</html>

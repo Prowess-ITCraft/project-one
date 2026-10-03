@@ -1,0 +1,26 @@
+[
+ {
+  "file": "ITCraft 2627-030-Shobhaglobs Engineers Hub Private Limited- BOQ.json",
+  "source": "ITCraft 2627-030-Shobhaglobs Engineers Hub Private Limited- BOQ.pdf",
+  "kind": "boq",
+  "quality": 100,
+  "original_bytes": 85561,
+  "gzip_bytes": 1132
+ },
+ {
+  "file": "ITCraft 2627-030-Shobhaglobs Engineers Hub Private Limited- Sanitization, EPS, Switch & Firewall.json",
+  "source": "ITCraft 2627-030-Shobhaglobs Engineers Hub Private Limited- Sanitization, EPS, Switch & Firewall.pdf",
+  "kind": "boq",
+  "quality": 100,
+  "original_bytes": 151946,
+  "gzip_bytes": 3655
+ },
+ {
+  "file": "Shakti Equipments Pvt. Ltd. PrismSuite Audit Report.json",
+  "source": "Shakti Equipments Pvt. Ltd. PrismSuite Audit Report.docx",
+  "kind": "audit",
+  "quality": 95,
+  "original_bytes": 1384496,
+  "gzip_bytes": 17289
+ }
+]

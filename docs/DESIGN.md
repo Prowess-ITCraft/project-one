@@ -1,0 +1,186 @@
+# Design
+
+The UI design system and the document (PDF) design system. Frontend work follows the
+frontend-design and design-taste-frontend skill process: plan here first, review against the
+brief, revise anything that reads as a generic default, then build.
+
+## 1. Product read
+
+An internal operations tool for Indian IT services staff (sales, architects, engineers,
+directors), plus a phone flow for field engineers. Not a marketing page. Calm and minimal, dense
+where it helps (BOQ editor, library), very simple on a phone. Dials: variance 3, motion 2,
+density 5.
+
+Stack limits (owner's rule): Next.js and React only, plain CSS with tokens, no icon or
+component libraries, no Tailwind, no chart library (charts are small hand-written SVG).
+
+## 2. Tokens (brand pass, 3 Oct 2026)
+
+Colours come from the companies' own marks (`brand/`): ITCraft's shield blue and circuit green,
+IITPL's charcoal. Contrast checked with the WCAG formula.
+
+| Token | Light | Dark | Use | Contrast |
+| --- | --- | --- | --- | --- |
+| `--paper` | #F3F5F8 | #0D141C | Page background, faintly blue from the brand | |
+| `--surface` | #FFFFFF | #142030 | Panels, inputs | |
+| `--ink` | #142230 | #E6ECF3 | Text, blue-tinted rather than neutral black | 14.8 / 15.6 |
+| `--muted` | #536276 | #97A6B8 | Secondary text | 5.7 / 6.6 |
+| `--line` | #DCE2EA | #223244 | Hairlines | |
+| `--accent` (ITCraft blue) | #2C629F | #7FB0E8 | Actions, focus, current station | 6.3 / 7.3 |
+| `--trace` (circuit green) | #2A9445 | #5DD86B | Completed stations on the rail and the task timeline | 3.9 / 9.0 (graphics) |
+| Brand green | #4FCE5D | | Logo only: 2.0 on white is too weak to carry meaning | |
+
+Status colours only for real state: done #1E7A4C, attention #8A5A00, blocked #B42318 (lighter
+in dark mode). Radius 6px for controls, 8px for panels, full round only for timeline stations.
+No shadows except the focus ring and the drawer. Structure comes from hairlines and spacing.
+
+## 3. Type
+
+Geist for text, Geist Mono for numbers, codes and money (tabular figures). Scale 13, 14, 16,
+20, 26. Body 14px on 1.5 line height, lines under 70 characters. Sentence case, no all-caps
+labels.
+
+## 4. Layout
+
+```
++-----------+------------------------------------------------+
+| Project   |  Shakti Equipments Pvt Ltd / IT hardening      |
+| One       |  (o)--(o)--(o)--(o)--(@)--( )--( )--( )         |  stage rail
+|           |  ---------------------------------------------- |
+| Projects  |  BOQ                         Issue quote        |
+| Library   |  table, inline edits, blockers listed above     |
+| Catalogue |                                                |
+| Users     |                                                |
++-----------+------------------------------------------------+
+
+Phone (field engineer, 360 px):
++------------------------------+
+| Today              3 tasks   |
+|------------------------------|
+| T-04 Managed switch setup    |
+| Checked in . step 2 of 5     |   <- one task, one next action
+| [ Next: confirm backup ]     |
++------------------------------+
+```
+
+Left aligned, one content column up to 1080px. On phones the sidebar becomes a top bar, tables
+become stacked rows, the stage rail turns vertical.
+
+## 5. Where boldness goes
+
+Two places only, both drawn in the brand's own idea, a circuit trace:
+
+- **The stage rail**: eight stations on one trace. Approved stations fill with trace green, the
+  current one is ringed in ITCraft blue, locked ones are hollow.
+- **The task timeline** (field work): the nine states of a task as stations on one trace, the
+  current one ringed and labelled with the next action in plain words. When a check fails or a
+  verifier sends work back, the trace draws a visible loop back to "configured" with the count,
+  so rework is never hidden.
+
+Everything else is quiet: hairlines, type weight, spacing.
+
+## 5a. Screen plans (brand pass)
+
+```
+Field engineer, phone (360 px)              Task (phone)
++------------------------------+            +------------------------------+
+| [shield] My tasks            |            | < My tasks          Blocked? |
+|------------------------------|            | T-03 Firewall setup          |
+| Today, 12 Nov                |            | Shakti Equipments, FW-01     |
+| T-03 Firewall setup          |            | o--o--@--o--o--o--o--o--o    |  timeline
+|   Checked in                 |            |                              |
+|   Next: add the backup       |            | Next: add the backup         |
+| T-04 Switch install    10:30 |            | [ Take photo ]   (big)       |
+|   Waiting for T-03           |            | ---------------------------- |
+| Tomorrow                     |            | Steps 2 of 5, values, files  |
+| ...                          |            | 2 actions waiting to send    |
++------------------------------+            +------------------------------+
+```
+
+- **Library** (desktop): drop zone, then three tabs: Files (with held rows to confirm), Corpus
+  (one row per converted document: size before and after, quality, labels), Data quality
+  (corpus totals, label balance, price bands per gap type, flagged outliers).
+- **Review queue** (technical lead): a list of handed-over tasks, oldest first; a task opens with
+  its checks, values and evidence beside the approve and send-back actions.
+- **Project, Plan and Field work tabs**: plan generation, downtime, schedule, lock and the plan
+  document; field work start, a count per state on the trace, blocked and late lists, a live feed.
+
+## 5c. Sign-in and shell pass (owner: "very basic, make it appealing, not heavy")
+
+Sign-in palette: shield navy #0F2A45 (the logo blue, deepened), panel text #EAF1F8 (12.8:1),
+panel secondary #A8BDD3 (7.6:1), circuit green #4FCE5D on navy (7.2:1, so here the logo green
+can carry meaning), unlit trace #3B5A7A (decorative only). The form side stays on `--paper`.
+
+```
++-----------------------------+---------------------------------------+
+| [shield] Project One        |  navy                                 |
+|          ITCraft            |  From the audit report to a           |
+|                             |  signed certificate.                  |
+| Sign in                     |   (o) Audit intake                    |
+| Use your work email.        |    |  Current IT ... (stations light   |
+|                             |    |  up in order, once, on load)      |
+| Work email [            ]   |   (o) Field work                      |
+| Password   [        ] Show  |   (@) Certified by IITPL  [IITPL]     |
+| Caps Lock is on (if so)     |                                       |
+| [        Sign in         ]  |                                       |
+|                             |                                       |
+| Development login (local)   |                                       |
+| adi@test.com  [Use it]      |                                       |
++-----------------------------+---------------------------------------+
+Phone: the panel folds into a short navy band above the form, without the stage list.
+```
+
+- The one moment: the eight stages drawn as a circuit trace that lights station by station
+  once (about one second, never with reduced motion), ending on the IITPL certificate mark.
+- Form care: autofocus, show password, Caps Lock warning, full-width 44 px button, errors under
+  the field, the authenticator set-up shows a scannable QR code.
+- Shell: sidebar on a second neutral layer (#EAEFF5), the current page as a raised white chip,
+  44 px tap targets on phones, primary buttons with a soft tinted shadow and a 1 px press.
+- Review: navy plus a bright green panel risks the "dark with acid green" default. Kept because
+  both colours are the client's own logo and the green marks progress only; every action stays
+  ITCraft blue and the form side stays light.
+
+## 5b. Review against the brief
+
+- Cobalt #2A4FD6 read as the common SaaS default. Replaced with ITCraft's own blue, so the
+  colour now belongs to the client rather than the category.
+- The first idea for field progress was a row of number tiles. That is the hero-metric
+  template; replaced by counts placed on the same trace as the task timeline.
+- No icon library is allowed, so the only drawn marks are the company logos and the trace
+  stations (inline SVG and CSS). No glyphs stand in for icons.
+- Engineers work in sunlight: the field screens use the ink colour at full strength, 16 px body
+  and 48 px primary buttons.
+
+## 6. Components and copy
+
+- Buttons named by what people do: "Issue quote", "Send code to customer", "Mark backup done".
+- One primary action per view. Destructive actions ask for a reason, not a confirm dialog.
+- Errors say what happened and how to fix it. Empty states offer the next action.
+- Badges are text, not dots. No arrows on buttons, no fade-in on every section, no eyebrow
+  labels, no identical rounded cards, no middle-dot meta strings.
+
+## 7. Quality floor
+
+Responsive to 360px, keyboard reachable with visible focus, WCAG AA contrast in both themes,
+reduced motion respected, light and dark themes following the system with a manual switch.
+
+## 8. Document design (PDF)
+
+All documents are HTML and print CSS rendered by WeasyPrint (`core/documents.py`).
+
+- A4, margins 16 / 14 / 18 / 14 mm, page number "Page N of M" in the footer, table rows never
+  split across pages (`page-break-inside: avoid`), table header repeated on each page.
+- Font: DejaVu Sans, loaded with `@font-face` from the image (renders the rupee sign and Indian
+  grouping). Numbers right aligned. 9pt body, 13pt title.
+- Letterhead, address, phones, email, GSTIN, terms, signatory: from company settings, never in
+  the template.
+- **Quotation** (exact ITCraft format): letterhead, QUOTATION, "To," block with date and quote
+  ref, table `Sr N | Components | Qty | Price | Amount`, grey group rows (High Priority, To
+  Consider), italic section rows, bold line titles with bullet inclusions, options 6A and 6B
+  never summed, terms, signature. Totals rows only when the quote turns them on.
+- **Summary BOQ**: the same, without Price and Amount.
+- **Plan and schedule**: project header, one table per day (time, task, engineer, asset,
+  downtime flag), dependency notes, configuration baselines per device.
+- **Checklist export**: one task per page, timeline of states with time and place, steps with
+  times, evidence list with thumbnails, OTP confirmations (masked contact), verifier decision.
+- Completion report and certificate follow in Phase 10 with the same tokens.

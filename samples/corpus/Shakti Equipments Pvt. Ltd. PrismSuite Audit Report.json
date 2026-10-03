@@ -1,0 +1,2283 @@
+{
+ "audit": {
+  "assets": {
+   "access_points": 0,
+   "backup_devices": 1,
+   "desktops": 23,
+   "endpoints_total": 27,
+   "firewalls": 1,
+   "laptops": 4,
+   "routers": 2,
+   "servers": 1,
+   "storage_free_tb": "10.74",
+   "storage_total_tb": "14.38",
+   "storage_used_tb": "3.64",
+   "switches": 2
+  },
+  "component_scores": {
+   "health": {
+    "access_point": {
+     "ideal_range": null,
+     "label": null,
+     "out_of": "100",
+     "raw": "N/A",
+     "value": null
+    },
+    "endpoints": {
+     "ideal_range": null,
+     "label": null,
+     "out_of": "100",
+     "raw": "74.2 / 100",
+     "value": "74.2"
+    },
+    "firewall": {
+     "ideal_range": null,
+     "label": null,
+     "out_of": "100",
+     "raw": "62 / 100",
+     "value": "62"
+    },
+    "nas": {
+     "ideal_range": null,
+     "label": null,
+     "out_of": "100",
+     "raw": "56 / 100",
+     "value": "56"
+    },
+    "router": {
+     "ideal_range": null,
+     "label": null,
+     "out_of": "100",
+     "raw": "71 / 100",
+     "value": "71"
+    },
+    "server": {
+     "ideal_range": null,
+     "label": null,
+     "out_of": "100",
+     "raw": "76.6 / 100",
+     "value": "76.6"
+    },
+    "switch": {
+     "ideal_range": null,
+     "label": null,
+     "out_of": "100",
+     "raw": "68 / 100",
+     "value": "68"
+    }
+   },
+   "high_availability": {
+    "access_point": {
+     "ideal_range": null,
+     "label": null,
+     "out_of": "100",
+     "raw": "N/A",
+     "value": null
+    },
+    "firewall": {
+     "ideal_range": null,
+     "label": null,
+     "out_of": "100",
+     "raw": "50 / 100",
+     "value": "50"
+    },
+    "nas": {
+     "ideal_range": null,
+     "label": null,
+     "out_of": "100",
+     "raw": "33 / 100",
+     "value": "33"
+    },
+    "router": {
+     "ideal_range": null,
+     "label": null,
+     "out_of": "100",
+     "raw": "74 / 100",
+     "value": "74"
+    },
+    "server": {
+     "ideal_range": null,
+     "label": null,
+     "out_of": "100",
+     "raw": "27 / 100",
+     "value": "27"
+    },
+    "switch": {
+     "ideal_range": null,
+     "label": null,
+     "out_of": "100",
+     "raw": "66 / 100",
+     "value": "66"
+    }
+   },
+   "performance": {
+    "access_point": {
+     "ideal_range": null,
+     "label": null,
+     "out_of": "100",
+     "raw": "N/A",
+     "value": null
+    },
+    "firewall": {
+     "ideal_range": null,
+     "label": null,
+     "out_of": "100",
+     "raw": "40 / 100",
+     "value": "40"
+    },
+    "nas": {
+     "ideal_range": null,
+     "label": null,
+     "out_of": "100",
+     "raw": "66 / 100",
+     "value": "66"
+    },
+    "router": {
+     "ideal_range": null,
+     "label": null,
+     "out_of": "100",
+     "raw": "68 / 100",
+     "value": "68"
+    },
+    "server": {
+     "ideal_range": null,
+     "label": null,
+     "out_of": "100",
+     "raw": "63.3 / 100",
+     "value": "63.3"
+    },
+    "switch": {
+     "ideal_range": null,
+     "label": null,
+     "out_of": "100",
+     "raw": "64.2 / 100",
+     "value": "64.2"
+    }
+   },
+   "security": {
+    "endpoints": {
+     "ideal_range": null,
+     "label": null,
+     "out_of": "100",
+     "raw": "55.5 / 100",
+     "value": "55.5"
+    },
+    "firewall": {
+     "ideal_range": null,
+     "label": null,
+     "out_of": "100",
+     "raw": "64.6 / 100",
+     "value": "64.6"
+    },
+    "nas": {
+     "ideal_range": null,
+     "label": null,
+     "out_of": "100",
+     "raw": "43 / 100",
+     "value": "43"
+    },
+    "server": {
+     "ideal_range": null,
+     "label": null,
+     "out_of": "100",
+     "raw": "72 / 100",
+     "value": "72"
+    }
+   }
+  },
+  "devices": [
+   {
+    "age": "New",
+    "brand": "Dell",
+    "brand_model": "Dell Inc. PowerEdge T160",
+    "category": "server",
+    "configuration": "Intel Xeon 6315P @ 2.80 GHz, 4 cores, 64-bit; 64 GB RAM (63.83 GB usable); 128 GB maximum supported memory; 3.55 TB usable local storage capacity (1 × 1.92 TB SSD + 2 × 1.00 TB HDD), with 2.87 TB free; Windows Server 2025 Standard, Version 24H2; UEFI boot with Secure Boot disabled; configured as a Primary Domain Controller with IIS, Active Directory Domain Services (AD DS), DNS Server, Network Policy and Access Services, Remote Desktop Services, and File and Storage Services.",
+    "details": {
+     "Active Directory Configuration Grade": "Server is configured as a Primary Domain Controller with Active Directory Domain Services and DNS.",
+     "BIOS Password Protected?": null,
+     "BitLocker Encryption Enforced?": null,
+     "Brand with Model": "Dell PowerEdge T160",
+     "Configuration": "Intel Xeon 6315P @ 2.80 GHz, 4 cores, 64-bit; 64 GB RAM (63.83 GB usable), 128 GB maximum supported memory; 3.55 TB usable local storage (1 × 1.92 TB SSD + 2 × 1.00 TB HDD), 2.87 TB free; Broadcom NetXtreme Gigabit Ethernet, 1 Gbps; UEFI boot with Secure Boot disabled, Network Policy and Access Services, Remote Desktop Services, and File & Storage Services.",
+     "Configuration Assistance": "Apply pending security updates; enable Secure Boot where supported; review Group Policy/security baseline; verify endpoint protection; review privileged accounts.",
+     "EPS (Endpoint Security)": "Seqrite Endpoint Security 7.60 is installed",
+     "Enabled Host Firewall?": null,
+     "External Boot on Server Disabled?": null,
+     "High Availability (HA) for Server": null,
+     "High Risk Pointers to Mitigate": "Enable Secure Boot; address 7+ missing security updates; verify antivirus/Endpoint Security; review privileged/domain administrator accounts.",
+     "Log & Alert On?": null,
+     "Low Risk Pointers to Mitigate": "Periodic account review; software/license review; storage monitoring; regular security configuration assessment.",
+     "Medium Risk Pointers to Mitigate": "Review password age and account privileges; review installed third-party software; strengthen Group Policy; review server roles/services.",
+     "Open Ports": null,
+     "Operating System": "Windows Server 2025 Standard, Version 24H2 (Build 26100.33296)",
+     "Policy with Expiration Rule": null,
+     "Security Risk Level": "High - based on the low 3.83/10 security benchmark score, missing security updates, Secure Boot disabled",
+     "Server Hardening": "Security Benchmark Score: 3.83/10 - indicates significant hardening gaps.",
+     "Server Health Score": "Drive health is reported as Healthy for the three detected internal drives.",
+     "Server Resilience Component-wise": "2 × 32 GB RAM modules; 3 internal drives; all reported drives show Healthy status. No HA/cluster configuration is reported.",
+     "Server Type": "Tower server",
+     "Shared Folder Permissions Map": null,
+     "Unsolicited Programs": "UltraViewer Service, PushDataCollectorService and other third-party utilities are present",
+     "User Access Credentials Hardening": "Multiple administrator accounts and several user accounts with password ages reaching 168 days."
+    },
+    "device_type": "Tower Server",
+    "firmware": null,
+    "managed": null,
+    "model": "Inc. PowerEdge T160",
+    "ports": null,
+    "storage_used_percent": null
+   },
+   {
+    "age": "2+ Years",
+    "brand": "SONICWALL",
+    "brand_model": "SONICWALL TZ 270",
+    "category": "firewall",
+    "configuration": "SonicOS 7.0.1-5145-R5125, VPN: Global VPN Client, SSL VPN, Capture Client. HA: Not Configured, HA mode: None. IDS/IPS: Enabled. Web Filter: Yes. AV: Yes",
+    "details": {
+     "AV Scanning Enabled?": "Yes",
+     "Admin Access": "Administrator account configured. One-Time Password/OTP method is Disabled.",
+     "All Users on VPN": "Count 1 MaxCount 51",
+     "Allowed Ports": null,
+     "Allowed Protocols": null,
+     "App Control Active?": "Yes",
+     "Application Filtering": "Configured",
+     "Firmware & Security Updates": "Current firmware shown as SonicOS 7.0.1-5145-R5125. Firmware load date shown as 29-Feb-2024. Security-service licenses are active; latest firmware/update status not available.",
+     "Firmware/Software Version": "SonicOS 7.0.1-5145-R5125",
+     "Group Restriction Resource": null,
+     "High Availability": "Not configured; HA mode: None",
+     "IDS/IPS": "Enabled",
+     "Load Balancing and Bandwidth Allocation": "Bandwidth monitoring available; current bandwidth shown as 1.22 Mbps. Load balancing not configured",
+     "Logs Store": "546 MB primary, 174 MB diagnostic data",
+     "MFA on VPN": "Not indicated",
+     "Model": "TZ 270",
+     "Network Segmentation & Zones": "Multiple interfaces including WAN, LAN, WWAN",
+     "Secured Guest Access": null,
+     "Security Service (AV, Antispam, DDoS)": "Partially Enabled",
+     "User Restriction Resource": null,
+     "VPN Configuration": "Global VPN Client, SSL VPN, Capture Client",
+     "VPN Encryption": "TLS 1.2",
+     "Vendor": "SONICWALL",
+     "Web Content Filtering": "Configured",
+     "Web Filtering Enabled?": "Yes"
+    },
+    "device_type": "Next-Gen Firewall",
+    "firmware": "SonicOS 7.0.1-5145-R5125",
+    "managed": null,
+    "model": "TZ 270",
+    "ports": null,
+    "storage_used_percent": null
+   },
+   {
+    "age": "New",
+    "brand": "Airtel",
+    "brand_model": "Airtel AOT-5221ZY",
+    "category": "router",
+    "configuration": "Dual-band Wi-Fi (2.4 GHz + 5 GHz), GPON Fiber, Ethernet LAN",
+    "details": {},
+    "device_type": "Dual-Band GPON ONT",
+    "firmware": null,
+    "managed": null,
+    "model": "AOT-5221ZY",
+    "ports": null,
+    "storage_used_percent": null
+   },
+   {
+    "age": "New",
+    "brand": "Airtel",
+    "brand_model": "Airtel AOT-5221ZY",
+    "category": "router",
+    "configuration": "Dual-band Wi-Fi (2.4 GHz + 5 GHz), GPON Fiber, Ethernet LAN",
+    "details": {},
+    "device_type": "Dual-Band GPON ONT",
+    "firmware": null,
+    "managed": null,
+    "model": "AOT-5221ZY",
+    "ports": null,
+    "storage_used_percent": null
+   },
+   {
+    "age": "2 Years",
+    "brand": "Synology",
+    "brand_model": "Synology DS218+",
+    "category": "nas",
+    "configuration": "Storage: 3.6 TB (total for two drives, each 1.8 TB) (100% (Volume 1) used)",
+    "details": {
+     "AV Status": null,
+     "AV/Malware Scan Enabled?": null,
+     "Backup Application": null,
+     "Backup Schedule": null,
+     "Cloud Sync Configured?": null,
+     "Data Integrity/Consistency": "Data scrubbing suggested due to abnormal power failure on drive 1",
+     "Disk Failure Alert Enabled?": null,
+     "Drive Health Status": "Healthy",
+     "Drive Utilised": "100% (Volume 1)",
+     "Encryption": null,
+     "Firmware/Software Version Updated": "DSM 7.1.1-42962 Update 9",
+     "Full Data Backup": null,
+     "Last Restore Drill Done?": null,
+     "Login Failure Alert Configured?": null,
+     "Model/Plan": "DS218+",
+     "Restore Check": null,
+     "Retention Policy": null,
+     "SMTP/Email Alert on Completion": null,
+     "Snapshot Protection Available": null,
+     "Storage Available": "3.6 TB (total for two drives, each 1.8 TB)",
+     "System Event Log Enabled?": null,
+     "USB Drive Sync for Offline Backup": null,
+     "Unauthorised IP Block Enabled?": null,
+     "Vendor": "Synology"
+    },
+    "device_type": "NAS / Backup Appliance",
+    "firmware": "DSM 7.1.1-42962 Update 9",
+    "managed": null,
+    "model": "DS218+",
+    "ports": null,
+    "storage_used_percent": "100"
+   },
+   {
+    "age": "4+ Years",
+    "brand": "D-Link",
+    "brand_model": "D-Link DGS-1024C",
+    "category": "switch",
+    "configuration": "Ports: 24",
+    "details": {},
+    "device_type": "Unmanaged Switch",
+    "firmware": null,
+    "managed": false,
+    "model": "DGS-1024C",
+    "ports": 24,
+    "storage_used_percent": null
+   },
+   {
+    "age": "4+ Years",
+    "brand": "Cisco",
+    "brand_model": "Cisco Business 350 Series",
+    "category": "switch",
+    "configuration": "Ports: 24",
+    "details": {},
+    "device_type": "Managed Switch",
+    "firmware": null,
+    "managed": true,
+    "model": "Business 350 Series",
+    "ports": 24,
+    "storage_used_percent": null
+   }
+  ],
+  "endpoints": [
+   {
+    "antivirus": [
+     "McAfee",
+     "Seqrite Endpoint Security"
+    ],
+    "comments": "No significant issues detected",
+    "drives": "490.09 GB (307.6 GB Free)",
+    "motherboard": "Dell Inc. Vostro 15 3530",
+    "os": "Windows 11 Professional",
+    "processor": "2.50 gigahertz Intel 13th Gen Core i5-1335U",
+    "purchase_date": "May'26",
+    "ram_gb": "8",
+    "software": [
+     "AnyDesk",
+     "McAfee",
+     "Seqrite Endpoint Security",
+     "WinRAR",
+     "WinZip"
+    ],
+    "system_name": "ACCOUNTS-1",
+    "system_type": "Laptop",
+    "user_name": "gorkh operations shakti"
+   },
+   {
+    "antivirus": [
+     "Seqrite Endpoint Security"
+    ],
+    "comments": "No significant issues detected",
+    "drives": "239.43 GB (136.4 GB Free)",
+    "motherboard": "LENOVO IdeaCentre B320 Lenovo",
+    "os": "Windows 10 Professional",
+    "processor": "3.30 gigahertz Intel Core i3-2120",
+    "purchase_date": "Jan'12",
+    "ram_gb": "4",
+    "software": [
+     "AnyDesk",
+     "Seqrite Endpoint Security",
+     "WinRAR",
+     "WinZip"
+    ],
+    "system_name": "Accounts-3",
+    "system_type": "Desktop",
+    "user_name": "Pravin-Stores Shakti"
+   },
+   {
+    "antivirus": [
+     "Seqrite Endpoint Security"
+    ],
+    "comments": "No significant issues detected",
+    "drives": "487.8 GB (345.0 GB Free)",
+    "motherboard": "Dell Inc. Inspiron 24 5420 All-in-One",
+    "os": "Windows 11 Professional",
+    "processor": "2.50 gigahertz Intel 13th Gen Core i3-1315U",
+    "purchase_date": "May'26",
+    "ram_gb": "8",
+    "software": [
+     "Seqrite Endpoint Security"
+    ],
+    "system_name": "Accounts-4",
+    "system_type": "Desktop",
+    "user_name": "Shrikant-maintenance"
+   },
+   {
+    "antivirus": [
+     "Seqrite Endpoint Security"
+    ],
+    "comments": "No significant issues detected",
+    "drives": "487.88 GB (286.1 GB Free)",
+    "motherboard": "Dell Inc. Inspiron 24 5420 All-in-One",
+    "os": "Windows 11 Professional",
+    "processor": "2.50 gigahertz Intel 13th Gen Core i3-1315U",
+    "purchase_date": "Dec'25",
+    "ram_gb": "8",
+    "software": [
+     "AnyDesk",
+     "Seqrite Endpoint Security",
+     "WinRAR",
+     "WinZip"
+    ],
+    "system_name": "Accounts-5",
+    "system_type": "Desktop",
+    "user_name": "Neha Admin Shakti"
+   },
+   {
+    "antivirus": [
+     "McAfee"
+    ],
+    "comments": "No significant issues detected",
+    "drives": "487.84 GB (382.7 GB Free)",
+    "motherboard": "Dell Inc. Dell Slim ECS1250",
+    "os": "Windows 11 Professional",
+    "processor": "3.50 gigahertz Intel Core i3-14100",
+    "purchase_date": "Apr'26",
+    "ram_gb": "8",
+    "software": [
+     "AnyDesk",
+     "McAfee",
+     "WinRAR"
+    ],
+    "system_name": "Accounts-6",
+    "system_type": "Desktop",
+    "user_name": "HR 3-no emp"
+   },
+   {
+    "antivirus": [
+     "Quick Heal"
+    ],
+    "comments": "No significant issues detected",
+    "drives": "510.77 GB (389.2 GB Free)",
+    "motherboard": "LENOVO 82KA Lenovo V14 G2 ITL Ua",
+    "os": "Windows 11 Professional",
+    "processor": "3.00 gigahertz Intel 11th Gen Core i3-1115G4",
+    "purchase_date": "Jul'22",
+    "ram_gb": "8",
+    "software": [
+     "AnyDesk",
+     "Microsoft 365 / Office",
+     "Quick Heal",
+     "WinRAR",
+     "WinZip"
+    ],
+    "system_name": "admin",
+    "system_type": "Laptop",
+    "user_name": "Anuja accounts sales shakti"
+   },
+   {
+    "antivirus": [
+     "Seqrite Endpoint Security"
+    ],
+    "comments": "No significant issues detected",
+    "drives": "511.43 GB (416.5 GB Free)",
+    "motherboard": "Gigabyte Technology Co., Ltd. H410M H V2 -CF",
+    "os": "Windows 10 Professional",
+    "processor": "3.60 gigahertz Intel Core i3-10100",
+    "purchase_date": "Dec'23",
+    "ram_gb": "8",
+    "software": [
+     "AnyDesk",
+     "Microsoft 365 / Office",
+     "Seqrite Endpoint Security",
+     "WinRAR",
+     "WinZip"
+    ],
+    "system_name": "Admin",
+    "system_type": "Desktop",
+    "user_name": "Smita HR3 shakti"
+   },
+   {
+    "antivirus": [
+     "Seqrite Endpoint Security"
+    ],
+    "comments": "No significant issues detected",
+    "drives": "487.94 GB (352.2 GB Free)",
+    "motherboard": "Dell Inc. Inspiron 24 5420 All-in-One",
+    "os": "Windows 11 Professional",
+    "processor": "2.50 gigahertz Intel 13th Gen Core i3-1315U",
+    "purchase_date": "May'26",
+    "ram_gb": "8",
+    "software": [
+     "Seqrite Endpoint Security",
+     "WinRAR",
+     "WinZip"
+    ],
+    "system_name": "AUDITORS",
+    "system_type": "Desktop",
+    "user_name": "Mahesh Purchase shakti"
+   },
+   {
+    "antivirus": [
+     "Seqrite Endpoint Security",
+     "Windows Defender"
+    ],
+    "comments": "No significant issues detected",
+    "drives": "510.99 GB (310.8 GB Free)",
+    "motherboard": "Dell Inc. Inspiron 24 5420 All-in-One",
+    "os": "Windows 11 Professional",
+    "processor": "2.50 gigahertz Intel 13th Gen Core i5-1335U",
+    "purchase_date": "Jul'25",
+    "ram_gb": "8",
+    "software": [
+     "AnyDesk",
+     "Microsoft 365 / Office",
+     "Seqrite Endpoint Security",
+     "WinRAR",
+     "WinZip",
+     "Windows Defender"
+    ],
+    "system_name": "Billing",
+    "system_type": "Desktop",
+    "user_name": "Prachi Accounts"
+   },
+   {
+    "antivirus": [
+     "Quick Heal"
+    ],
+    "comments": "No significant issues detected",
+    "drives": "255.47 GB (132.9 GB Free)",
+    "motherboard": "LENOVO 2118DMQ ThinkCentre Edge 62z",
+    "os": "Windows 10 Professional",
+    "processor": "2.90 gigahertz Intel Pentium G645",
+    "purchase_date": "Nov'12",
+    "ram_gb": "8",
+    "software": [
+     "AnyDesk",
+     "Quick Heal",
+     "WinRAR",
+     "WinZip"
+    ],
+    "system_name": "HR-1",
+    "system_type": "Desktop",
+    "user_name": "Shubham"
+   },
+   {
+    "antivirus": [
+     "McAfee",
+     "Seqrite Endpoint Security"
+    ],
+    "comments": "No significant issues detected",
+    "drives": "485.99 GB (324.1 GB Free)",
+    "motherboard": "Dell Inc. Inspiron 24 5430 All-in-One",
+    "os": "Windows 11 Professional",
+    "processor": "2.50 gigahertz Intel Core 3 100U",
+    "purchase_date": "Aug'25",
+    "ram_gb": "8",
+    "software": [
+     "AnyDesk",
+     "McAfee",
+     "Seqrite Endpoint Security",
+     "WinRAR",
+     "WinZip"
+    ],
+    "system_name": "HR-2",
+    "system_type": "Desktop",
+    "user_name": "Amit Accounts Shakti"
+   },
+   {
+    "antivirus": [
+     "Seqrite Endpoint Security"
+    ],
+    "comments": "No significant issues detected",
+    "drives": "1290.24 GB (1177.6 GB Free)",
+    "motherboard": "LENOVO F0EB0018IN ideacentre A340-22IWL",
+    "os": "Windows 10 Professional",
+    "processor": "2.30 gigahertz Intel Pentium 5405U",
+    "purchase_date": "Nov'20",
+    "ram_gb": "4",
+    "software": [
+     "AnyDesk",
+     "Seqrite Endpoint Security",
+     "WinRAR",
+     "WinZip"
+    ],
+    "system_name": "HR-3",
+    "system_type": "Desktop",
+    "user_name": "Santosh HR shakti"
+   },
+   {
+    "antivirus": [
+     "Seqrite Endpoint Security"
+    ],
+    "comments": "No significant issues detected",
+    "drives": "487.41 GB (333.9 GB Free)",
+    "motherboard": "Dell Inc. Inspiron 24 5420 All-in-One",
+    "os": "Windows 11 Professional",
+    "processor": "2.50 gigahertz Intel 13th Gen Core i3-1315U",
+    "purchase_date": "May'26",
+    "ram_gb": "8",
+    "software": [
+     "AnyDesk",
+     "Seqrite Endpoint Security",
+     "WinRAR",
+     "WinZip"
+    ],
+    "system_name": "Hr1",
+    "system_type": "Desktop",
+    "user_name": "Durgesh Maintence Shakti"
+   },
+   {
+    "antivirus": [
+     "Quick Heal"
+    ],
+    "comments": "No significant issues detected",
+    "drives": "254.74 GB (163.2 GB Free)",
+    "motherboard": "Dell Inc. Vostro 3501",
+    "os": "Windows 11 Professional",
+    "processor": "1.20 gigahertz Intel Core i3-1005G1",
+    "purchase_date": "Dec'25",
+    "ram_gb": "8",
+    "software": [
+     "AnyDesk",
+     "Microsoft 365 / Office",
+     "Quick Heal",
+     "WinRAR"
+    ],
+    "system_name": "LAB-3",
+    "system_type": "Laptop",
+    "user_name": "Auditor"
+   },
+   {
+    "antivirus": [
+     "Windows Defender"
+    ],
+    "comments": "No significant issues detected",
+    "drives": "510.99 GB (439.8 GB Free)",
+    "motherboard": "Dell Inc. Dell Pro 15 Essential PV15250",
+    "os": "Windows 11 Professional",
+    "processor": "2.50 gigahertz Intel Core 3 100U",
+    "purchase_date": "May'26",
+    "ram_gb": "8",
+    "software": [
+     "AnyDesk",
+     "WinRAR",
+     "Windows Defender"
+    ],
+    "system_name": "Maintenance-2",
+    "system_type": "Laptop",
+    "user_name": "SMGSir Shakti"
+   },
+   {
+    "antivirus": [
+     "Quick Heal",
+     "Windows Defender"
+    ],
+    "comments": "No significant issues detected",
+    "drives": "255.47 GB (99.8 GB Free)",
+    "motherboard": "LENOVO F0CL003PIN ideacentre AIO 310-20IAP",
+    "os": "Windows 10 Enterprise",
+    "processor": "1.50 gigahertz Intel Pentium J4205",
+    "purchase_date": "Dec'16",
+    "ram_gb": "8",
+    "software": [
+     "AnyDesk",
+     "Quick Heal",
+     "WinRAR",
+     "WinZip",
+     "Windows Defender"
+    ],
+    "system_name": "OPERATION-1",
+    "system_type": "Desktop",
+    "user_name": "rohit operations shakti"
+   },
+   {
+    "antivirus": [
+     "Seqrite Endpoint Security"
+    ],
+    "comments": "No significant issues detected",
+    "drives": "255.47 GB (126.5 GB Free)",
+    "motherboard": "LENOVO IdeaCentre B320 Lenovo",
+    "os": "Windows 10 Enterprise",
+    "processor": "3.30 gigahertz Intel Core i3-2120",
+    "purchase_date": "Jan'12",
+    "ram_gb": "8",
+    "software": [
+     "AnyDesk",
+     "Nitro Pro",
+     "Seqrite Endpoint Security",
+     "WinRAR",
+     "WinZip"
+    ],
+    "system_name": "OPERATION-2",
+    "system_type": "Desktop",
+    "user_name": "Usha sales shakti"
+   },
+   {
+    "antivirus": [
+     "McAfee"
+    ],
+    "comments": "No significant issues detected",
+    "drives": "486.61 GB (367.7 GB Free)",
+    "motherboard": "Dell Inc. Dell 24 All-in-One EC24250",
+    "os": "Windows 11 Professional",
+    "processor": "2.50 gigahertz Intel Core 3 100U",
+    "purchase_date": "Sep'25",
+    "ram_gb": "8",
+    "software": [
+     "McAfee",
+     "WinRAR"
+    ],
+    "system_name": "PURCHASE-1",
+    "system_type": "Desktop",
+    "user_name": "unknown operations shakti"
+   },
+   {
+    "antivirus": [
+     "Quick Heal",
+     "Seqrite Endpoint Security"
+    ],
+    "comments": "No significant issues detected",
+    "drives": "1536.0 GB (1392.6 GB Free)",
+    "motherboard": "LENOVO 10YS000RIH V540-24IWL AIO",
+    "os": "Windows 11 Enterprise",
+    "processor": "2.30 gigahertz Intel Core i3-8145U",
+    "purchase_date": "Aug'19",
+    "ram_gb": "8",
+    "software": [
+     "AnyDesk",
+     "Quick Heal",
+     "Seqrite Endpoint Security",
+     "WinRAR",
+     "WinZip"
+    ],
+    "system_name": "PURCHASE-2",
+    "system_type": "Desktop",
+    "user_name": "Snehal Billing"
+   },
+   {
+    "antivirus": [
+     "Seqrite Endpoint Security"
+    ],
+    "comments": "No significant issues detected",
+    "drives": "487.41 GB (294.8 GB Free)",
+    "motherboard": "Dell Inc. Inspiron 24 5420 All-in-One",
+    "os": "Windows 11 Professional",
+    "processor": "2.50 gigahertz Intel 13th Gen Core i3-1315U",
+    "purchase_date": "Apr'26",
+    "ram_gb": "8",
+    "software": [
+     "AnyDesk",
+     "Seqrite Endpoint Security",
+     "WinRAR",
+     "WinZip"
+    ],
+    "system_name": "SALES-1",
+    "system_type": "Desktop",
+    "user_name": "Sales no emp"
+   },
+   {
+    "antivirus": [
+     "Windows Defender"
+    ],
+    "comments": "No significant issues detected",
+    "drives": "485.97 GB (365.7 GB Free)",
+    "motherboard": "Dell Inc. Dell 24 All-in-One EC24250",
+    "os": "Windows 11 Professional",
+    "processor": "2.50 gigahertz Intel Core 3 100U",
+    "purchase_date": "Jan'26",
+    "ram_gb": "8",
+    "software": [
+     "WinRAR",
+     "Windows Defender"
+    ],
+    "system_name": "SALES-2",
+    "system_type": "Desktop",
+    "user_name": "Vidya sales shakti"
+   },
+   {
+    "antivirus": [
+     "McAfee"
+    ],
+    "comments": "No significant issues detected",
+    "drives": "486.6 GB (374.3 GB Free)",
+    "motherboard": "Dell Inc. Dell 24 All-in-One EC24250",
+    "os": "Windows 11 Professional",
+    "processor": "2.50 gigahertz Intel Core 3 100U",
+    "purchase_date": "Sep'25",
+    "ram_gb": "8",
+    "software": [
+     "McAfee",
+     "WinRAR"
+    ],
+    "system_name": "SALES-3",
+    "system_type": "Desktop",
+    "user_name": "Sales5 no emp"
+   },
+   {
+    "antivirus": [
+     "McAfee",
+     "Seqrite Endpoint Security"
+    ],
+    "comments": "No significant issues detected",
+    "drives": "487.41 GB (289.6 GB Free)",
+    "motherboard": "Dell Inc. Inspiron 24 5420 All-in-One",
+    "os": "Windows 11 Professional",
+    "processor": "2.50 gigahertz Intel 13th Gen Core i3-1315U",
+    "purchase_date": "May'26",
+    "ram_gb": "8",
+    "software": [
+     "AnyDesk",
+     "McAfee",
+     "Seqrite Endpoint Security",
+     "WinRAR",
+     "WinZip"
+    ],
+    "system_name": "SALES-4",
+    "system_type": "Desktop",
+    "user_name": "Rupali sales shakti"
+   },
+   {
+    "antivirus": [
+     "McAfee"
+    ],
+    "comments": "No significant issues detected",
+    "drives": "487.85 GB (379.7 GB Free)",
+    "motherboard": "Dell Inc. Dell Slim ECS1250",
+    "os": "Windows 11 Professional",
+    "processor": "3.50 gigahertz Intel Core i3-14100",
+    "purchase_date": "Apr'26",
+    "ram_gb": "8",
+    "software": [
+     "McAfee",
+     "WinRAR"
+    ],
+    "system_name": "SALES-5",
+    "system_type": "Desktop",
+    "user_name": "Priyadarshani Accounts"
+   },
+   {
+    "antivirus": [
+     "Seqrite Endpoint Security"
+    ],
+    "comments": "No significant issues detected",
+    "drives": "478.96 GB (346.3 GB Free)",
+    "motherboard": "LENOVO F0CL003PIN ideacentre AIO 310-20IAP",
+    "os": "Windows 10 Professional",
+    "processor": "1.50 gigahertz Intel Pentium J4205",
+    "purchase_date": "Dec'16",
+    "ram_gb": "8",
+    "software": [
+     "AnyDesk",
+     "Microsoft 365 / Office",
+     "Nitro Pro",
+     "Seqrite Endpoint Security",
+     "WinRAR"
+    ],
+    "system_name": "SALES-5",
+    "system_type": "Desktop",
+    "user_name": "Accounts-2-no emp"
+   },
+   {
+    "antivirus": [
+     "Seqrite Endpoint Security"
+    ],
+    "comments": "No significant issues detected",
+    "drives": "1290.24 GB (1136.6 GB Free)",
+    "motherboard": "LENOVO F0EB0018IN ideacentre A340-22IWL",
+    "os": "Windows 10 Professional",
+    "processor": "2.30 gigahertz Intel Pentium 5405U",
+    "purchase_date": "Nov'20",
+    "ram_gb": "4",
+    "software": [
+     "AnyDesk",
+     "Nitro Pro",
+     "Seqrite Endpoint Security",
+     "WinRAR"
+    ],
+    "system_name": "SMG",
+    "system_type": "Desktop",
+    "user_name": "Mahendra Store shakti"
+   },
+   {
+    "antivirus": [
+     "Windows Defender"
+    ],
+    "comments": "No significant issues detected",
+    "drives": "487.41 GB (322.4 GB Free)",
+    "motherboard": "Dell Inc. Inspiron 24 5420 All-in-One",
+    "os": "Windows 11 Professional",
+    "processor": "2.50 gigahertz Intel 13th Gen Core i3-1315U",
+    "purchase_date": "May'26",
+    "ram_gb": "8",
+    "software": [
+     "AnyDesk",
+     "Microsoft 365 / Office",
+     "WinRAR",
+     "Windows Defender"
+    ],
+    "system_name": "STORE-1",
+    "system_type": "Desktop",
+    "user_name": "Sunil maintainance shakti"
+   }
+  ],
+  "header": {
+   "audit_date": "2026-09-10",
+   "auditor": "Shruti Satam",
+   "auditor_source": "document_properties",
+   "customer_location": "Thane, Maharashtra, 400605, India",
+   "customer_name": "Shakti Equipments Pvt Ltd",
+   "prepared_by": "PrismSuite",
+   "report_reference": "PS-10092026-SHA"
+  },
+  "installed_software": [
+   {
+    "category": "File Compression",
+    "count": 26,
+    "name": "WinRAR"
+   },
+   {
+    "category": "File Compression",
+    "count": 16,
+    "name": "WinZip"
+   },
+   {
+    "category": "Office Suite",
+    "count": 6,
+    "name": "Microsoft 365 / Office"
+   },
+   {
+    "category": "PDF & Document Tools",
+    "count": 3,
+    "name": "Nitro Pro"
+   },
+   {
+    "category": "Remote Access",
+    "count": 21,
+    "name": "AnyDesk"
+   }
+  ],
+  "notes": [
+   "Sanitize all systems before installing and configuring EPS."
+  ],
+  "os_distribution": [
+   {
+    "category": null,
+    "count": 19,
+    "name": "Windows 11"
+   },
+   {
+    "category": null,
+    "count": 8,
+    "name": "Windows 10"
+   },
+   {
+    "category": null,
+    "count": 0,
+    "name": "Windows 7"
+   },
+   {
+    "category": null,
+    "count": 0,
+    "name": "Other"
+   }
+  ],
+  "recommendations": [
+   {
+    "area": "EPS",
+    "description": "XDR or EDR provide current trending security with superior quarantine features.",
+    "recommendation": "Deploy Endpoint Protection Solution (EPS) with XDR for all users"
+   },
+   {
+    "area": "DR",
+    "description": "A Disaster Recovery (DR) solution minimizes downtime and ensures rapid recovery of critical systems and data during unexpected disruptions.",
+    "recommendation": "Deploy a disaster recovery solution"
+   }
+  ],
+  "schema_version": "1.0",
+  "scores": {
+   "high_availability": {
+    "ideal_range": "Above 70%",
+    "label": "At Risk",
+    "out_of": "100",
+    "raw": "50 / 100 - At Risk",
+    "value": "50"
+   },
+   "it_structure_health": {
+    "ideal_range": "Above 60%",
+    "label": "Moderate Risk",
+    "out_of": "100",
+    "raw": "66.7 / 100 - Moderate Risk",
+    "value": "66.7"
+   },
+   "performance": {
+    "ideal_range": "Above 60%",
+    "label": "Moderate Risk",
+    "out_of": "100",
+    "raw": "60.3 / 100 - Moderate Risk",
+    "value": "60.3"
+   },
+   "security": {
+    "ideal_range": "Above 70%",
+    "label": "AT RISK: several areas need attention",
+    "out_of": "100",
+    "raw": "58.7 / 100 - AT RISK: several areas need attention",
+    "value": "58.7"
+   },
+   "system_health": {
+    "ideal_range": "75%-80%",
+    "label": "significant issues require immediate action.",
+    "out_of": "100",
+    "raw": "74.2 / 100 - significant issues require immediate action.",
+    "value": "74.2"
+   }
+  },
+  "security_components": [
+   {
+    "detected": true,
+    "product": "Seqrite Endpoint Security 7.60",
+    "quantity": 1,
+    "scope": "server",
+    "technology": "EPS"
+   },
+   {
+    "detected": false,
+    "product": null,
+    "quantity": null,
+    "scope": "server",
+    "technology": "XDR"
+   },
+   {
+    "detected": false,
+    "product": null,
+    "quantity": null,
+    "scope": "server",
+    "technology": "ATP"
+   },
+   {
+    "detected": false,
+    "product": null,
+    "quantity": null,
+    "scope": "server",
+    "technology": "DLP"
+   },
+   {
+    "detected": false,
+    "product": null,
+    "quantity": null,
+    "scope": "server",
+    "technology": "MDM"
+   },
+   {
+    "detected": false,
+    "product": null,
+    "quantity": null,
+    "scope": "server",
+    "technology": "BYOD"
+   },
+   {
+    "detected": false,
+    "product": null,
+    "quantity": null,
+    "scope": "server",
+    "technology": "IDS/IPS"
+   },
+   {
+    "detected": false,
+    "product": null,
+    "quantity": null,
+    "scope": "server",
+    "technology": "Identity Management"
+   },
+   {
+    "detected": false,
+    "product": null,
+    "quantity": null,
+    "scope": "server",
+    "technology": "Encryption"
+   },
+   {
+    "detected": true,
+    "product": "Seqrite Endpoint Security",
+    "quantity": 16,
+    "scope": "endpoint",
+    "technology": "EPS"
+   },
+   {
+    "detected": true,
+    "product": "McAfee: 7, Quick Heal: 5, Windows Defender: 5",
+    "quantity": 17,
+    "scope": "endpoint",
+    "technology": "Antivirus"
+   }
+  ],
+  "server_hardening_score": {
+   "ideal_range": null,
+   "label": "indicates significant hardening gaps.",
+   "out_of": "10",
+   "raw": "Security Benchmark Score: 3.83/10 - indicates significant hardening gaps.",
+   "value": "3.83"
+  },
+  "system_recommendations": [
+   {
+    "office": "No upgrade needed - Microsoft 365 (always current)",
+    "office_upgrade_needed": false,
+    "os": "No upgrade needed - current OS: Windows 11",
+    "os_upgrade_needed": false,
+    "ram": "No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office')",
+    "ram_upgrade_needed": false,
+    "storage": "No upgrade needed - 63% free (307.6 GB of 490 GB)",
+    "storage_upgrade_needed": false,
+    "system_key": "ACCOUNTS-1_Amit_Accounts_Shakti_2026-09-01_1213"
+   },
+   {
+    "office": "No upgrade needed - Microsoft 365 (always current)",
+    "office_upgrade_needed": false,
+    "os": "No upgrade needed - current OS: Windows 11",
+    "os_upgrade_needed": false,
+    "ram": "Upgrade required - current: 4 GB, required: 8 GB ('Microsoft 365 / Office' needs 8 GB)",
+    "ram_upgrade_needed": true,
+    "storage": "No upgrade needed - 57% free (136.4 GB of 239 GB)",
+    "storage_upgrade_needed": false,
+    "system_key": "ACCOUNTS-3_Priyadarshani_Accounts_2026-09-01_1205"
+   },
+   {
+    "office": "No upgrade needed - Microsoft 365 (always current)",
+    "office_upgrade_needed": false,
+    "os": "No upgrade needed - current OS: Windows 11",
+    "os_upgrade_needed": false,
+    "ram": "No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office')",
+    "ram_upgrade_needed": false,
+    "storage": "No upgrade needed - 71% free (345.0 GB of 488 GB)",
+    "storage_upgrade_needed": false,
+    "system_key": "ACCOUNTS-4_Anuja_accounts_sales_shakti_2026-09-01_1202"
+   },
+   {
+    "office": "No upgrade needed - Microsoft 365 (always current)",
+    "office_upgrade_needed": false,
+    "os": "No upgrade needed - current OS: Windows 11",
+    "os_upgrade_needed": false,
+    "ram": "No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office')",
+    "ram_upgrade_needed": false,
+    "storage": "No upgrade needed - 59% free (286.1 GB of 488 GB)",
+    "storage_upgrade_needed": false,
+    "system_key": "ACCOUNTS-5_Prachi_Accounts_2026-09-01_1206"
+   },
+   {
+    "office": "No upgrade needed - Microsoft 365 (always current)",
+    "office_upgrade_needed": false,
+    "os": "No upgrade needed - current OS: Windows 11",
+    "os_upgrade_needed": false,
+    "ram": "No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office')",
+    "ram_upgrade_needed": false,
+    "storage": "No upgrade needed - 78% free (382.7 GB of 488 GB)",
+    "storage_upgrade_needed": false,
+    "system_key": "ACCOUNTS-6_Accounts-2-no_emp_2026-09-01_1159"
+   },
+   {
+    "office": "Upgrade required - current: Office 2013, upgrade to Microsoft 365 / Office 2024",
+    "office_upgrade_needed": true,
+    "os": "No upgrade needed - current OS: Windows 11",
+    "os_upgrade_needed": false,
+    "ram": "No upgrade needed - current: 8 GB meets requirement of 2 GB ('Quick Heal')",
+    "ram_upgrade_needed": false,
+    "storage": "No upgrade needed - 76% free (389.2 GB of 511 GB)",
+    "storage_upgrade_needed": false,
+    "system_key": "ADMIN_Durgesh_Maintence_Shakti_2026-09-08_1526"
+   },
+   {
+    "office": "No upgrade needed - Microsoft 365 (always current)",
+    "office_upgrade_needed": false,
+    "os": "No upgrade needed - current OS: Windows 11",
+    "os_upgrade_needed": false,
+    "ram": "No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office')",
+    "ram_upgrade_needed": false,
+    "storage": "No upgrade needed - 81% free (416.5 GB of 511 GB)",
+    "storage_upgrade_needed": false,
+    "system_key": "ADMIN_Neha_Admin_Shakti_2026-09-01_1156"
+   },
+   {
+    "office": "No upgrade needed - Microsoft 365 (always current)",
+    "office_upgrade_needed": false,
+    "os": "No upgrade needed - current OS: Windows 11",
+    "os_upgrade_needed": false,
+    "ram": "No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office')",
+    "ram_upgrade_needed": false,
+    "storage": "No upgrade needed - 72% free (352.2 GB of 488 GB)",
+    "storage_upgrade_needed": false,
+    "system_key": "AUDITORS_Auditor_2026-09-01_1233"
+   },
+   {
+    "office": "No upgrade needed - Microsoft 365 (always current)",
+    "office_upgrade_needed": false,
+    "os": "No upgrade needed - current OS: Windows 11",
+    "os_upgrade_needed": false,
+    "ram": "No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office')",
+    "ram_upgrade_needed": false,
+    "storage": "No upgrade needed - 61% free (310.8 GB of 511 GB)",
+    "storage_upgrade_needed": false,
+    "system_key": "BILLING_Snehal_Billing_2026-09-01_1219"
+   },
+   {
+    "office": "No upgrade needed - Microsoft 365 (always current)",
+    "office_upgrade_needed": false,
+    "os": "No upgrade needed - current OS: Windows 11",
+    "os_upgrade_needed": false,
+    "ram": "No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office')",
+    "ram_upgrade_needed": false,
+    "storage": "No upgrade needed - 52% free (132.9 GB of 255 GB)",
+    "storage_upgrade_needed": false,
+    "system_key": "HR-1_unknown_operations_shakti_2026-09-09_1243"
+   },
+   {
+    "office": "No upgrade needed - Microsoft 365 (always current)",
+    "office_upgrade_needed": false,
+    "os": "No upgrade needed - current OS: Windows 11",
+    "os_upgrade_needed": false,
+    "ram": "No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office')",
+    "ram_upgrade_needed": false,
+    "storage": "No upgrade needed - 67% free (324.1 GB of 486 GB)",
+    "storage_upgrade_needed": false,
+    "system_key": "HR-2_Santosh_HR_shakti_2026-09-01_1127"
+   },
+   {
+    "office": "No upgrade needed - Microsoft 365 (always current)",
+    "office_upgrade_needed": false,
+    "os": "No upgrade needed - current OS: Windows 11",
+    "os_upgrade_needed": false,
+    "ram": "Upgrade required - current: 4 GB, required: 8 GB ('Microsoft 365 / Office' needs 8 GB)",
+    "ram_upgrade_needed": true,
+    "storage": "No upgrade needed - 91% free (1177.6 GB of 1290 GB)",
+    "storage_upgrade_needed": false,
+    "system_key": "HR-3_HR_3-no_emp_2026-09-01_1128"
+   },
+   {
+    "office": "No upgrade needed - Microsoft 365 (always current)",
+    "office_upgrade_needed": false,
+    "os": "No upgrade needed - current OS: Windows 11",
+    "os_upgrade_needed": false,
+    "ram": "No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office')",
+    "ram_upgrade_needed": false,
+    "storage": "No upgrade needed - 69% free (333.9 GB of 487 GB)",
+    "storage_upgrade_needed": false,
+    "system_key": "HR1_Smita_HR3_shakti_2026-09-01_1137"
+   },
+   {
+    "office": "Upgrade required - current: Office 2013, upgrade to Microsoft 365 / Office 2024",
+    "office_upgrade_needed": true,
+    "os": "No upgrade needed - current OS: Windows 11",
+    "os_upgrade_needed": false,
+    "ram": "No upgrade needed - current: 8 GB meets requirement of 2 GB ('Quick Heal')",
+    "ram_upgrade_needed": false,
+    "storage": "No upgrade needed - 64% free (163.2 GB of 255 GB)",
+    "storage_upgrade_needed": false,
+    "system_key": "LAB-3_Sunil_maintainance_shakti_2026-09-07_1245"
+   },
+   {
+    "office": "No upgrade needed - Microsoft 365 (always current)",
+    "office_upgrade_needed": false,
+    "os": "No upgrade needed - current OS: Windows 11",
+    "os_upgrade_needed": false,
+    "ram": "No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office')",
+    "ram_upgrade_needed": false,
+    "storage": "No upgrade needed - 86% free (439.8 GB of 511 GB)",
+    "storage_upgrade_needed": false,
+    "system_key": "MAINTENANCE-2_Shubham_2026-09-01_1245"
+   },
+   {
+    "office": "No upgrade needed - Microsoft 365 (always current)",
+    "office_upgrade_needed": false,
+    "os": "No upgrade needed - current OS: Windows 11",
+    "os_upgrade_needed": false,
+    "ram": "No upgrade needed - current: 8 GB meets requirement of 8 GB ('TallyPrime / Tally')",
+    "ram_upgrade_needed": false,
+    "storage": "No upgrade needed - 39% free (99.8 GB of 255 GB)",
+    "storage_upgrade_needed": false,
+    "system_key": "OPERATION-1_rohit_operations_shakti_2026-09-09_1234"
+   },
+   {
+    "office": "No upgrade needed - Microsoft 365 (always current)",
+    "office_upgrade_needed": false,
+    "os": "No upgrade needed - current OS: Windows 11",
+    "os_upgrade_needed": false,
+    "ram": "No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office')",
+    "ram_upgrade_needed": false,
+    "storage": "No upgrade needed - 50% free (126.5 GB of 255 GB)",
+    "storage_upgrade_needed": false,
+    "system_key": "OPERATION-2_gorkh_operations_shakti_2026-09-09_1224"
+   },
+   {
+    "office": "No upgrade needed - Microsoft 365 (always current)",
+    "office_upgrade_needed": false,
+    "os": "No upgrade needed - current OS: Windows 11",
+    "os_upgrade_needed": false,
+    "ram": "No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office')",
+    "ram_upgrade_needed": false,
+    "storage": "No upgrade needed - 76% free (367.7 GB of 487 GB)",
+    "storage_upgrade_needed": false,
+    "system_key": "PURCHASE-1_Pravin-Stores_Shakti_2026-09-01_1231"
+   },
+   {
+    "office": "No upgrade needed - Microsoft 365 (always current)",
+    "office_upgrade_needed": false,
+    "os": "No upgrade needed - current OS: Windows 11",
+    "os_upgrade_needed": false,
+    "ram": "No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office')",
+    "ram_upgrade_needed": false,
+    "storage": "No upgrade needed - 91% free (1392.6 GB of 1536 GB)",
+    "storage_upgrade_needed": false,
+    "system_key": "PURCHASE-2_Mahendra_Store_shakti_2026-09-01_1240"
+   },
+   {
+    "office": "No upgrade needed - Microsoft 365 (always current)",
+    "office_upgrade_needed": false,
+    "os": "No upgrade needed - current OS: Windows 11",
+    "os_upgrade_needed": false,
+    "ram": "No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office')",
+    "ram_upgrade_needed": false,
+    "storage": "No upgrade needed - 60% free (294.8 GB of 487 GB)",
+    "storage_upgrade_needed": false,
+    "system_key": "SALES-1_Usha_sales_shakti_2026-09-01_1217"
+   },
+   {
+    "office": "No upgrade needed - Microsoft 365 (always current)",
+    "office_upgrade_needed": false,
+    "os": "No upgrade needed - current OS: Windows 11",
+    "os_upgrade_needed": false,
+    "ram": "No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office')",
+    "ram_upgrade_needed": false,
+    "storage": "No upgrade needed - 75% free (365.7 GB of 486 GB)",
+    "storage_upgrade_needed": false,
+    "system_key": "SALES-2_Vidya_sales_shakti_2026-09-01_1149"
+   },
+   {
+    "office": "No upgrade needed - Microsoft 365 (always current)",
+    "office_upgrade_needed": false,
+    "os": "No upgrade needed - current OS: Windows 11",
+    "os_upgrade_needed": false,
+    "ram": "No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office')",
+    "ram_upgrade_needed": false,
+    "storage": "No upgrade needed - 77% free (374.3 GB of 487 GB)",
+    "storage_upgrade_needed": false,
+    "system_key": "SALES-3_Sales_no_emp_2026-09-01_1144"
+   },
+   {
+    "office": "No upgrade needed - Microsoft 365 (always current)",
+    "office_upgrade_needed": false,
+    "os": "No upgrade needed - current OS: Windows 11",
+    "os_upgrade_needed": false,
+    "ram": "No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office')",
+    "ram_upgrade_needed": false,
+    "storage": "No upgrade needed - 59% free (289.6 GB of 487 GB)",
+    "storage_upgrade_needed": false,
+    "system_key": "SALES-4_Rupali_sales_shakti_2026-09-01_1142"
+   },
+   {
+    "office": "No upgrade needed - Microsoft 365 (always current)",
+    "office_upgrade_needed": false,
+    "os": "No upgrade needed - current OS: Windows 11",
+    "os_upgrade_needed": false,
+    "ram": "No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office')",
+    "ram_upgrade_needed": false,
+    "storage": "No upgrade needed - 78% free (379.7 GB of 488 GB)",
+    "storage_upgrade_needed": false,
+    "system_key": "SALES-5_Sales5_no_emp_2026-09-01_1213"
+   },
+   {
+    "office": "No upgrade needed - Microsoft 365 (always current)",
+    "office_upgrade_needed": false,
+    "os": "No upgrade needed - current OS: Windows 11",
+    "os_upgrade_needed": false,
+    "ram": "No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office')",
+    "ram_upgrade_needed": false,
+    "storage": "No upgrade needed - 72% free (346.3 GB of 479 GB)",
+    "storage_upgrade_needed": false,
+    "system_key": "SALES-5_Shrikant-maintenance_2026-09-01_1243"
+   },
+   {
+    "office": "No upgrade needed - Microsoft 365 (always current)",
+    "office_upgrade_needed": false,
+    "os": "No upgrade needed - current OS: Windows 11",
+    "os_upgrade_needed": false,
+    "ram": "Upgrade required - current: 4 GB, required: 8 GB ('Microsoft 365 / Office' needs 8 GB)",
+    "ram_upgrade_needed": true,
+    "storage": "No upgrade needed - 88% free (1136.6 GB of 1290 GB)",
+    "storage_upgrade_needed": false,
+    "system_key": "SMG_SMGSir_Shakti_2026-09-01_1224"
+   },
+   {
+    "office": "No upgrade needed - Microsoft 365 (always current)",
+    "office_upgrade_needed": false,
+    "os": "No upgrade needed - current OS: Windows 11",
+    "os_upgrade_needed": false,
+    "ram": "No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office')",
+    "ram_upgrade_needed": false,
+    "storage": "No upgrade needed - 66% free (322.4 GB of 487 GB)",
+    "storage_upgrade_needed": false,
+    "system_key": "STORE-1_Mahesh_Purchase_shakti_2026-09-01_1236"
+   }
+  ],
+  "upgrades": {
+   "conflicting_av": [
+    {
+     "action": "Remove all but one and migrate to a single EPS agent",
+     "products": [
+      "McAfee",
+      "Seqrite Endpoint Security"
+     ],
+     "system": "ACCOUNTS-1_Amit_Accounts_Shakti"
+    },
+    {
+     "action": "Remove all but one and migrate to a single EPS agent",
+     "products": [
+      "Seqrite Endpoint Security",
+      "Windows Defender"
+     ],
+     "system": "BILLING_Snehal_Billing"
+    },
+    {
+     "action": "Remove all but one and migrate to a single EPS agent",
+     "products": [
+      "McAfee",
+      "Seqrite Endpoint Security"
+     ],
+     "system": "HR-2_Santosh_HR_shakti"
+    },
+    {
+     "action": "Remove all but one and migrate to a single EPS agent",
+     "products": [
+      "Quick Heal",
+      "Windows Defender"
+     ],
+     "system": "OPERATION-1_rohit_operations_shakti"
+    },
+    {
+     "action": "Remove all but one and migrate to a single EPS agent",
+     "products": [
+      "Quick Heal",
+      "Seqrite Endpoint Security"
+     ],
+     "system": "PURCHASE-2_Mahendra_Store_shakti"
+    },
+    {
+     "action": "Remove all but one and migrate to a single EPS agent",
+     "products": [
+      "McAfee",
+      "Seqrite Endpoint Security"
+     ],
+     "system": "SALES-4_Rupali_sales_shakti"
+    }
+   ],
+   "endpoint_protection": [
+    {
+     "count": 4,
+     "current_av": "McAfee",
+     "upgrade_to": "EPS"
+    },
+    {
+     "count": 4,
+     "current_av": "Quick Heal",
+     "upgrade_to": "EPS"
+    },
+    {
+     "count": 4,
+     "current_av": "Windows Defender",
+     "upgrade_to": "EPS"
+    }
+   ],
+   "licence": [
+    {
+     "count": 2,
+     "current": "Office 2013",
+     "upgrade_to": "Microsoft 365 / Office 2024"
+    }
+   ],
+   "os": [],
+   "ram": [
+    {
+     "count": 3,
+     "current_gb": "4",
+     "description": "Upgrade required - current: 4 GB, required: 8 GB ('Microsoft 365 / Office' needs 8 GB)",
+     "required_gb": "8"
+    }
+   ]
+  },
+  "vulnerabilities": {
+   "listed": [
+    {
+     "cve_id": "CVE-2017-17663",
+     "cvss": "9.8",
+     "description": "The htpasswd implementation is affected by a buffer overflow that can be remotely exploited to perform code execution.",
+     "priority": 1,
+     "recommendation": "Patch/Upgrade: Apply the latest vendor security updates and patches for mini_httpd/thttpd. Software Security: Review vendor advisories and remove unsupported or end-of-life versions.",
+     "severity": "critical",
+     "title": "mini_httpd / thttpd - Buffer Overflow"
+    },
+    {
+     "cve_id": "CVE-2020-26561",
+     "cvss": "8.8",
+     "description": "A vulnerability in mini_httpd can result in arbitrary code execution through the sprintf function in create_dir.",
+     "priority": 2,
+     "recommendation": "Patch/Upgrade: Apply the latest vendor security updates and patches for the affected mini_httpd implementation. Software Security: Review vendor advisories and remove unsupported or end-of-life software versions.",
+     "severity": "high",
+     "title": "Belkin LINKSYS WRT160NL - Stack-based Buffer Overflow"
+    },
+    {
+     "cve_id": "CVE-2021-25310",
+     "cvss": "8.8",
+     "description": "The administration web interface allows authenticated remote attackers to execute system commands with root privileges through the ui_language parameter.",
+     "priority": 3,
+     "recommendation": "Patch/Upgrade: Apply the latest vendor security updates and patches for the affected administration interface. Software Security: Review vendor advisories and remove unsupported or end-of-life software versions.",
+     "severity": "high",
+     "title": "Belkin LINKSYS WRT160NL - Command Injection"
+    },
+    {
+     "cve_id": "CVE-2008-3214",
+     "cvss": "7.8",
+     "description": "Dnsmasq 2.25 allows remote attackers to cause a denial of service/daemon crash by renewing a nonexistent lease or sending a DHCP request for an IP address outside the network.",
+     "priority": 4,
+     "recommendation": "Patch/Upgrade: Update Dnsmasq to the latest secure version. Software Security: Review vendor advisories and remove unsupported or end-of-life Dnsmasq versions.",
+     "severity": "high",
+     "title": "Dnsmasq - DHCP Request Handling"
+    },
+    {
+     "cve_id": "CVE-2005-0877",
+     "cvss": "7.5",
+     "description": "Dnsmasq before 2.21 allows remote attackers to poison the DNS cache through unsolicited DNS responses.",
+     "priority": 5,
+     "recommendation": "Patch/Upgrade: Update Dnsmasq to a secure supported version. Software Security: Review vendor advisories and remove unsupported or end-of-life versions.",
+     "severity": "high",
+     "title": "Dnsmasq - DNS Cache Poisoning"
+    },
+    {
+     "cve_id": null,
+     "cvss": "7.5",
+     "description": "WebCit versions before 7.39 contain a format string vulnerability that may allow remote attackers to execute arbitrary code.",
+     "priority": 6,
+     "recommendation": "Patch/Upgrade: Apply the latest vendor security updates and patches for WebCit. Software Security: Review vendor advisories and remove unsupported or end-of-life software versions.",
+     "severity": "high",
+     "title": "Citadel.org WebCit - Format String Vulnerability"
+    },
+    {
+     "cve_id": "CVE-2009-2957",
+     "cvss": "6.8",
+     "description": "When TFTP is enabled, a long filename in a TFTP request may allow remote attackers to execute arbitrary code.",
+     "priority": 7,
+     "recommendation": "Patch/Upgrade: Update Dnsmasq to a secure supported version. Configuration: Review the Dnsmasq TFTP configuration and remove unsupported software versions.",
+     "severity": "medium",
+     "title": "Dnsmasq - TFTP Heap-based Buffer Overflow"
+    },
+    {
+     "cve_id": "CVE-2018-18778",
+     "cvss": "6.5",
+     "description": "ACME mini_httpd before 1.30 allows remote users to read arbitrary files.",
+     "priority": 8,
+     "recommendation": "Patch/Upgrade: Update mini_httpd to the latest secure version. Software Security: Remove unsupported or end-of-life mini_httpd versions.",
+     "severity": "medium",
+     "title": "mini_httpd - Arbitrary File Read"
+    },
+    {
+     "cve_id": "CVE-2020-17409",
+     "cvss": "6.5",
+     "description": "The vulnerability allows network-adjacent attackers to disclose sensitive information, including stored credentials, without authentication.",
+     "priority": 9,
+     "recommendation": "Patch/Upgrade: Apply the latest vendor security updates and patches. Software Security: Review vendor advisories and remove unsupported or end-of-life firmware/software versions.",
+     "severity": "medium",
+     "title": "NETGEAR mini_httpd - Information Disclosure"
+    },
+    {
+     "cve_id": "CVE-2015-3294",
+     "cvss": "6.4",
+     "description": "Improper handling in tcp_request may allow remote attackers to read process memory and cause a denial of service through a malformed DNS request.",
+     "priority": 10,
+     "recommendation": "Patch/Upgrade: Update Dnsmasq to a secure supported version. Software Security: Review vendor advisories and remove unsupported or end-of-life software versions.",
+     "severity": "medium",
+     "title": "Dnsmasq - Out-of-bounds Read"
+    }
+   ],
+   "total": 45
+  }
+ },
+ "built_at": "1970-01-01T00:00:00+00:00",
+ "cleaning_version": "2",
+ "document": {
+  "audit_date": "2026-09-10",
+  "conflicts": 1,
+  "counts": {
+   "conflict": 1,
+   "ok": 41
+  },
+  "customer": "Shakti Equipments Pvt Ltd",
+  "report_ref": "PS-10092026-SHA",
+  "unread_fields": 0
+ },
+ "facts": [
+  {
+   "audit_date": "2026-09-10",
+   "category": "score",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "system_health",
+   "out_of": "100",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "74.2",
+   "value_text": "significant issues require immediate action."
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "score",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "it_structure_health",
+   "out_of": "100",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "66.7",
+   "value_text": "Moderate Risk"
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "score",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "performance",
+   "out_of": "100",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "60.3",
+   "value_text": "Moderate Risk"
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "score",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "high_availability",
+   "out_of": "100",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "50",
+   "value_text": "At Risk"
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "score",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "security",
+   "out_of": "100",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "58.7",
+   "value_text": "AT RISK: several areas need attention"
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "score",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "server_hardening",
+   "out_of": "10",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "3.83",
+   "value_text": "indicates significant hardening gaps."
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "component_score",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "health.server",
+   "out_of": "100",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "76.6",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "component_score",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "health.firewall",
+   "out_of": "100",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "62",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "component_score",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "health.nas",
+   "out_of": "100",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "56",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "component_score",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "health.switch",
+   "out_of": "100",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "68",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "component_score",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "health.router",
+   "out_of": "100",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "71",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "component_score",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "health.endpoints",
+   "out_of": "100",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "74.2",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "component_score",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "high_availability.server",
+   "out_of": "100",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "27",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "component_score",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "high_availability.firewall",
+   "out_of": "100",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "50",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "component_score",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "high_availability.nas",
+   "out_of": "100",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "33",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "component_score",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "high_availability.switch",
+   "out_of": "100",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "66",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "component_score",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "high_availability.router",
+   "out_of": "100",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "74",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "component_score",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "performance.server",
+   "out_of": "100",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "63.3",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "component_score",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "performance.firewall",
+   "out_of": "100",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "40",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "component_score",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "performance.nas",
+   "out_of": "100",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "66",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "component_score",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "performance.switch",
+   "out_of": "100",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "64.2",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "component_score",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "performance.router",
+   "out_of": "100",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "68",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "component_score",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "security.server",
+   "out_of": "100",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "72",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "component_score",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "security.firewall",
+   "out_of": "100",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "64.6",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "component_score",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "security.nas",
+   "out_of": "100",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "43",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "component_score",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "security.endpoints",
+   "out_of": "100",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "55.5",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "asset_count",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "laptops",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "4",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "asset_count",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "desktops",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "23",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "asset_count",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "servers",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "1",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "asset_count",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "firewalls",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "1",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "asset_count",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "backup_devices",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "1",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "asset_count",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "switches",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "2",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "asset_count",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "routers",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "2",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "asset_count",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "access_points",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "0",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "asset_count",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "endpoints_total",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "27",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "asset_count",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "storage_total_tb",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "14.38",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "asset_count",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "storage_used_tb",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "3.64",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "asset_count",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "storage_free_tb",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "10.74",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "upgrade_need",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "ram_upgrades",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "3",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "upgrade_need",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "licence_upgrades",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "2",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "upgrade_need",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "conflicting_antivirus",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "6",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "upgrade_detail",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "licence.Office 2013",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "2",
+   "value_text": "Microsoft 365 / Office 2024"
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "upgrade_detail",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "ram",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "3",
+   "value_text": "Upgrade required - current: 4 GB, required: 8 GB ('Microsoft 365 / Office' needs 8 GB)"
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "device",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "server",
+   "managed": null,
+   "report_ref": "PS-10092026-SHA",
+   "used_percent": null,
+   "value_num": null,
+   "value_text": "Dell Inc. PowerEdge T160"
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "device",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "firewall",
+   "managed": null,
+   "report_ref": "PS-10092026-SHA",
+   "used_percent": null,
+   "value_num": null,
+   "value_text": "SONICWALL TZ 270"
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "device",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "router",
+   "managed": null,
+   "report_ref": "PS-10092026-SHA",
+   "used_percent": null,
+   "value_num": null,
+   "value_text": "Airtel AOT-5221ZY"
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "device",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "router",
+   "managed": null,
+   "report_ref": "PS-10092026-SHA",
+   "used_percent": null,
+   "value_num": null,
+   "value_text": "Airtel AOT-5221ZY"
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "device",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "nas",
+   "managed": null,
+   "report_ref": "PS-10092026-SHA",
+   "used_percent": "100",
+   "value_num": null,
+   "value_text": "Synology DS218+"
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "device",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "switch",
+   "managed": false,
+   "report_ref": "PS-10092026-SHA",
+   "used_percent": null,
+   "value_num": null,
+   "value_text": "D-Link DGS-1024C"
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "device",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "switch",
+   "managed": true,
+   "report_ref": "PS-10092026-SHA",
+   "used_percent": null,
+   "value_num": null,
+   "value_text": "Cisco Business 350 Series"
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "vulnerability_total",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "total",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": "45",
+   "value_text": null
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "vulnerability",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "CVE-2017-17663",
+   "report_ref": "PS-10092026-SHA",
+   "severity": "critical",
+   "value_num": "9.8",
+   "value_text": "mini_httpd / thttpd - Buffer Overflow"
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "vulnerability",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "CVE-2020-26561",
+   "report_ref": "PS-10092026-SHA",
+   "severity": "high",
+   "value_num": "8.8",
+   "value_text": "Belkin LINKSYS WRT160NL - Stack-based Buffer Overflow"
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "vulnerability",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "CVE-2021-25310",
+   "report_ref": "PS-10092026-SHA",
+   "severity": "high",
+   "value_num": "8.8",
+   "value_text": "Belkin LINKSYS WRT160NL - Command Injection"
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "vulnerability",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "CVE-2008-3214",
+   "report_ref": "PS-10092026-SHA",
+   "severity": "high",
+   "value_num": "7.8",
+   "value_text": "Dnsmasq - DHCP Request Handling"
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "vulnerability",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "CVE-2005-0877",
+   "report_ref": "PS-10092026-SHA",
+   "severity": "high",
+   "value_num": "7.5",
+   "value_text": "Dnsmasq - DNS Cache Poisoning"
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "vulnerability",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "",
+   "report_ref": "PS-10092026-SHA",
+   "severity": "high",
+   "value_num": "7.5",
+   "value_text": "Citadel.org WebCit - Format String Vulnerability"
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "vulnerability",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "CVE-2009-2957",
+   "report_ref": "PS-10092026-SHA",
+   "severity": "medium",
+   "value_num": "6.8",
+   "value_text": "Dnsmasq - TFTP Heap-based Buffer Overflow"
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "vulnerability",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "CVE-2018-18778",
+   "report_ref": "PS-10092026-SHA",
+   "severity": "medium",
+   "value_num": "6.5",
+   "value_text": "mini_httpd - Arbitrary File Read"
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "vulnerability",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "CVE-2020-17409",
+   "report_ref": "PS-10092026-SHA",
+   "severity": "medium",
+   "value_num": "6.5",
+   "value_text": "NETGEAR mini_httpd - Information Disclosure"
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "vulnerability",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "CVE-2015-3294",
+   "report_ref": "PS-10092026-SHA",
+   "severity": "medium",
+   "value_num": "6.4",
+   "value_text": "Dnsmasq - Out-of-bounds Read"
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "recommendation",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "EPS",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": null,
+   "value_text": "Deploy Endpoint Protection Solution (EPS) with XDR for all users"
+  },
+  {
+   "audit_date": "2026-09-10",
+   "category": "recommendation",
+   "customer": "Shakti Equipments Pvt Ltd",
+   "key": "DR",
+   "report_ref": "PS-10092026-SHA",
+   "value_num": null,
+   "value_text": "Deploy a disaster recovery solution"
+  }
+ ],
+ "kind": "audit",
+ "parser": {
+  "detect_score": 1.0,
+  "name": "prismsuite.docx.v1"
+ },
+ "quality": {
+  "issues": [
+   "1 value(s) disagree inside the report."
+  ],
+  "parts": {
+   "blocking": 0,
+   "conflicts": 1,
+   "facts": 63
+  },
+  "score": 95
+ },
+ "schema": "p1.corpus.v1",
+ "sizes": {
+  "gzip": 17289,
+  "json": 94102,
+  "original": 1384496
+ },
+ "source": {
+  "bytes": 1384496,
+  "file_kind": "docx",
+  "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "name": "Shakti Equipments Pvt. Ltd. PrismSuite Audit Report.docx",
+  "origin": "folder",
+  "pages": 1,
+  "sha256": "2cdcf32d129da052e402558a5b5b1b53966c4550bc7012c698b434ce6f6ed80b"
+ },
+ "text": {
+  "chars": 36627,
+  "pages": [
+   "Shakti Equipments Pvt Ltd\nThane, Maharashtra, 400605, India · 10-09-2026\nReport Reference: PS-10092026-SHA\nPrepared by PrismSuite\nCONFIDENTIAL - Prepared exclusively for Shakti Equipments Pvt Ltd\n▌ Introduction\nDear Sir / Madam,\nWe wish to begin by thanking you for providing us this opportunity to provide you the IT Infra & Security assessment.\nThere are over 6.5 lakh SME companies across India comprising those falling under 10 Cr to 1000 Cr business turnover per annum; most of whom need 'seamless business operations' while they live with organically grown IT infra. The problems associated with these organically grown IT infra are: outdated technologies, non-resilient networks, compromised data network securities etc. According to classified reports, the majority of these organizations' data are in a vulnerable state resulting in undesired data leaks, data losses or hacks.\nITCraft is on a mission to assist these SMEs build resilient IT infra & robust data network securities 'Business continuity' IT. As an immediate first step ITCraft has taken up a task of assisting 10,000 SMEs across India and under this, we are pleased to take up your organization's cause too.\nITCraft benefits Indian SMBs through 5 core, engineered specializations:\nDesign & build 'business continuity enabled IT infra'\nProtect or Secure 'confidential data' at different levels\nProvide strong monitoring & managed services through SOC & NOC\nBoost productivity through relevant AI tools\nReduce Capex and recurring costs\nITCraft is pleased to share this assessment report which can be updated with the next level of information & should work as a base guide for further implementation process.\nThanking you and assuring you of our best attention at all times.\nWarm regards,\nITCraft\nIT Infrastructure & Security Assessment\n▌ Shakti Equipments Pvt Ltd IT Infrastructure Diagram\nThe following diagram illustrates the network topology and key infrastructure components identified during the assessment.\n▌ Network Infrastructure\nServer\nFirewall\nRouter\nBackup\nSwitches\nAccess Point\n▌ PrismSuite Summary Report\nAsset Summary\nCumulative Storage: 14.38 TB total · 3.64 TB used · 10.74 TB free (across 27 system(s) with reported storage)\nInfra Setup\n▌ OS and Applications on Systems\nOS Distribution\nInstalled Software\n▌ Data Network Security Components\nThe following tables summarize the current deployment status of critical security technologies across the assessed environment, kept separate for servers and workstations since each is scanned and protected through a different mechanism.\nSummary Scores\nLicense Summary\n▌ Gap Analysis / Recommendations\n1. Endpoint Upgrade Recommendation\n1a. Hardware Upgrade Recommendation\n1b. License Upgrade Recommendation\n1c. OS Upgrade Recommendation\n1d. Endpoint Protection Recommendation\n1e. Conflicting Antivirus Cleanup\nRunning more than one real-time antivirus/EPS agent on the same system causes them to quarantine or interfere with each other, producing false confidence that the system is protected. Standardize on a single EPS agent per system.\n▌ CEO Summary\nSummary Scores\n▌ Vulnerabilities & Associated Risks\nTotal Vulnerabilities Identified: 45\nThe Top 10 Priority Vulnerabilities of are listed below -\nNetwork & Security Product Recommendations\nProducts this audit's own data (device counts, network layout, storage footprint, intake questionnaire answers) actually justifies recommending right now -- products already covered by existing deployments, or that need more intake information first, are left out of this list (available on request).\nSanitize all systems before installing and configuring EPS.\n▌ Health Quotient Of IT Infra\nThe chart and tables below show the current health score for key infrastructure components and endpoints.\n\nIT Infrastructure Health\n\nOverall Health Score: 66.7 / 100 - Moderate Risk\nEndpoint Health\n\nOverall Endpoint Health Score: 74.2 / 100 - significant issues require immediate action.\n▌ High Availability Grading\nThis section provides a graded view of high-availability posture across all infrastructure components.\nHigh Availability (HA) Grading\nHA grading reflects redundancy, failover, and uptime posture across components.\nOverall HA Score: 50 / 100 - At Risk\n▌ Performance Grading\nThis section provides a graded view of performance across all infrastructure components.\nPerformance Grading\nPerformance scores for each infrastructure component.\nOverall Performance Score: 60.3 / 100 - Moderate Risk\n▌ IT Security Risk Assessment\nThis section evaluates the overall security risk posture.\nOverall Security Score: 58.7 / 100 - AT RISK: several areas need attention\n▌ Server Details\nThe following table provides detailed information about server infrastructure, configuration, and security posture.\nDell PowerEdge T160\n▌ Network Gateway Security Appliance - Firewall\nThe following table outlines the firewall configuration, security features, and threat protection capabilities.\nSONICWALL TZ 270\n▌ Backup Device\nThe following table details the backup infrastructure, policies, and recovery capabilities.\nSynology DS218+\n▌ System Details With Comments\n▌ In-Depth Recommendations Per System\nEvery system in this audit, individually, with exactly what it needs (if anything) -- the detailed counterpart to the aggregated upgrade counts in Gap Analysis. Grayed-out cells mean no action is needed for that system on that item.\nServers\nEndpoints\nBrand & Model | Type | Age | Configuration\nDell Inc. PowerEdge T160 | Tower Server | New | Intel Xeon 6315P @ 2.80 GHz, 4 cores, 64-bit; 64 GB RAM (63.83 GB usable); 128 GB maximum supported memory; 3.55 TB usable local storage capacity (1 × 1.92 TB SSD + 2 × 1.00 TB HDD), with 2.87 TB free; Windows Server 2025 Standard, Version 24H2; UEFI boot with Secure Boot disabled; configured as a Primary Domain Controller with IIS, Active Directory Domain Services (AD DS), DNS Server, Network Policy and Access Services, Remote Desktop Services, and File and Storage Services.\nBrand & Model | Type | Age | Configuration\nSONICWALL TZ 270 | Next-Gen Firewall | 2+ Years | SonicOS 7.0.1-5145-R5125, VPN: Global VPN Client, SSL VPN, Capture Client. HA: Not Configured, HA mode: None. IDS/IPS: Enabled. Web Filter: Yes. AV: Yes\nBrand & Model | Type | Age | Configuration\nAirtel AOT-5221ZY | Dual-Band GPON ONT | New | Dual-band Wi-Fi (2.4 GHz + 5 GHz), GPON Fiber, Ethernet LAN\nAirtel AOT-5221ZY | Dual-Band GPON ONT | New | Dual-band Wi-Fi (2.4 GHz + 5 GHz), GPON Fiber, Ethernet LAN\nBrand & Model | Type | Age | Configuration\nSynology DS218+ | NAS / Backup Appliance | 2 Years | Storage: 3.6 TB (total for two drives, each 1.8 TB) (100% (Volume 1) used)\nBrand & Model | Type | Age | Configuration\nD-Link DGS-1024C | Unmanaged Switch | 4+ Years | Ports: 24\nCisco Business 350 Series | Managed Switch | 4+ Years | Ports: 24\nBrand & Model | Type | Age | Configuration\nN/A\nSr No. | System Type | Quantity\n1 | Laptops | 4\n2 | Desktops | 23\n3 | Server | 1\n4 | Firewall | 1\n5 | Backup Device | 1\n6 | Switches | 2\n7 | Routers | 2\n8 | Access Point | 0\nSr N | IT Infra | Current Config\n1 | Server | Dell Inc. PowerEdge T160 Intel Xeon 6315P @ 2.80 GHz, 4 cores, 64-bit; 64 GB RAM (63.83 GB usable); 128 GB maximum supported memory; 3.55 TB usable local storage capacity (1 × 1.92 TB SSD + 2 × 1.00 TB HDD), with 2.87 TB free; Windows Server 2025 Standard, Version 24H2; UEFI boot with Secure Boot disabled; configured as a Primary Domain Controller with IIS, Active Directory Domain Services (AD DS), DNS Server, Network Policy and Access Services, Remote Desktop Services, and File and Storage Services.\n2 | Firewall | SONICWALL TZ 270, FW: 7.0.1.3, IDS/IPS: Enabled, VPN: Global VPN Client, SSL VPN, Capture Client, HA: Configured with primary and secondary devices, HA mode: None\n3 | NAS | Synology DS218+, Storage: 3.6 TB (total for two drives, each 1.8 TB) (100% (Volume 1) used)\n4 | Switches | SW1: D-Link DGS-1024C, Ports: 24\nSW2: Cisco Business 350 Series, Ports: 24\n5 | Router | R1: Airtel AOT-5221ZY, Dual-Band GPON ONT\nR2: Airtel AOT-5221ZY, Dual-Band GPON ONT\nOperating System | Systems\nWindows 11 | 19\nWindows 10 | 8\nWindows 7 | 0\nOther | 0\nName | Software Type | Systems\nWinRAR | File Compression | 26\nWinZip | File Compression | 16\nMicrosoft 365 / Office | Office Suite | 6\nNitro Pro | PDF & Document Tools | 3\nAnyDesk | Remote Access | 21\nServer-Level Security Components | Endpoint-Level Security Components\nOverall System Health\nComment: Endpoint health across all parameters. | 74.2%\nNEEDS ATTENTION\nAverage IT Structure Health\nComment: Network component health across all parameters. | 66.7%\nNEEDS ATTENTION\nPerformance of Infra\nComment: Overall performance score across all parameters. | 60.3%\nNEEDS ATTENTION\nHA of Infra\nComment: Overall high availability score across all parameters. | 50%\nNEEDS ATTENTION\nOverall IT Security Posture\nComment: Overall IT Security Posture score across all risk parameters. | 58.7%\nNEEDS ATTENTION\nSr No. | Quantity | POP | Type\n1 | N/A\nSr N | Upgrade Type | Count\n1 | Upgrade required - current: 4 GB, required: 8 GB ('Microsoft 365 / Office' needs 8 GB) | 3\nSr N | Current Version | Upgrade To | Count\n1 | Office 2013 | Microsoft 365 / Office 2024 | 2\nSr N | Current OS | Upgrade To | Count\n1\nSr No. | Current AV | Count | Upgrade to\n1 | McAfee | 4 | EPS\n2 | Quick Heal | 4 | EPS\n3 | Windows Defender | 4 | EPS\nSr N | System | Products Installed | Action\n1 | ACCOUNTS-1_Amit_Accounts_Shakti | McAfee, Seqrite Endpoint Security | Remove all but one and migrate to a single EPS agent\n2 | BILLING_Snehal_Billing | Seqrite Endpoint Security, Windows Defender | Remove all but one and migrate to a single EPS agent\n3 | HR-2_Santosh_HR_shakti | McAfee, Seqrite Endpoint Security | Remove all but one and migrate to a single EPS agent\n4 | OPERATION-1_rohit_operations_shakti | Quick Heal, Windows Defender | Remove all but one and migrate to a single EPS agent\n5 | PURCHASE-2_Mahendra_Store_shakti | Quick Heal, Seqrite Endpoint Security | Remove all but one and migrate to a single EPS agent\n6 | SALES-4_Rupali_sales_shakti | McAfee, Seqrite Endpoint Security | Remove all but one and migrate to a single EPS agent\nName | Score | Comment | Ideal Range\nAverage System Health | 74.2 % | Endpoint health across all parameters. | 75%-80%\nAverage IT Structure Health | 66.7 % | Network health across all parameters. | Above 60%\nPerformance of Infra | 60.3% | Overall performance score across all parameters. | Above 60%\nHA of Infra | 50% | Overall high availability score across all parameters. | Above 70%\nOverall IT Security Posture | 58.7% | Overall IT Security Posture score across all risk parameters. | Above 70%\nPriority | CVE ID | Vulnerability | Risk Factor | Recommendation\n1 | CVE-2017-17663 | mini_httpd / thttpd - Buffer Overflow: The htpasswd implementation is affected by a buffer overflow that can be remotely exploited to perform code execution. | CRITICAL\nCVSS 9.8 | Patch/Upgrade: Apply the latest vendor security updates and patches for mini_httpd/thttpd. Software Security: Review vendor advisories and remove unsupported or end-of-life versions.\n2 | CVE-2020-26561 | Belkin LINKSYS WRT160NL - Stack-based Buffer Overflow: A vulnerability in mini_httpd can result in arbitrary code execution through the sprintf function in create_dir. | HIGH - CVSS 8.8 | Patch/Upgrade: Apply the latest vendor security updates and patches for the affected mini_httpd implementation.\nSoftware Security: Review vendor advisories and remove unsupported or end-of-life software versions.\n3 | CVE-2021-25310 | Belkin LINKSYS WRT160NL - Command Injection: The administration web interface allows authenticated remote attackers to execute system commands with root privileges through the ui_language parameter. | HIGH - CVSS 8.8 | Patch/Upgrade: Apply the latest vendor security updates and patches for the affected administration interface. Software Security: Review vendor advisories and remove unsupported or end-of-life software versions.\n4 | CVE-2008-3214 | Dnsmasq - DHCP Request Handling: Dnsmasq 2.25 allows remote attackers to cause a denial of service/daemon crash by renewing a nonexistent lease or sending a DHCP request for an IP address outside the network. | HIGH - CVSS 7.8 | Patch/Upgrade: Update Dnsmasq to the latest secure version.\nSoftware Security: Review vendor advisories and remove unsupported or end-of-life Dnsmasq versions.\n5 | CVE-2005-0877 | Dnsmasq - DNS Cache Poisoning: Dnsmasq before 2.21 allows remote attackers to poison the DNS cache through unsolicited DNS responses. | HIGH - CVSS 7.5 | Patch/Upgrade: Update Dnsmasq to a secure supported version. Software Security: Review vendor advisories and remove unsupported or end-of-life versions.\n6 | Citadel.org WebCit - Format String Vulnerability: WebCit versions before 7.39 contain a format string vulnerability that may allow remote attackers to execute arbitrary code. | HIGH - CVSS 7.5 | Patch/Upgrade: Apply the latest vendor security updates and patches for WebCit.\nSoftware Security: Review vendor advisories and remove unsupported or end-of-life software versions.\n7 | CVE-2009-2957 | Dnsmasq - TFTP Heap-based Buffer Overflow: When TFTP is enabled, a long filename in a TFTP request may allow remote attackers to execute arbitrary code. | MEDIUM - CVSS 6.8 | Patch/Upgrade: Update Dnsmasq to a secure supported version. Configuration: Review the Dnsmasq TFTP configuration and remove unsupported software versions.\n8 | CVE-2018-18778 | mini_httpd - Arbitrary File Read: ACME mini_httpd before 1.30 allows remote users to read arbitrary files. | MEDIUM - CVSS 6.5 | Patch/Upgrade: Update mini_httpd to the latest secure version.\nSoftware Security: Remove unsupported or end-of-life mini_httpd versions.\n9 | CVE-2020-17409 | NETGEAR mini_httpd - Information Disclosure: The vulnerability allows network-adjacent attackers to disclose sensitive information, including stored credentials, without authentication. | MEDIUM - CVSS 6.5 | Patch/Upgrade: Apply the latest vendor security updates and patches. Software Security: Review vendor advisories and remove unsupported or end-of-life firmware/software versions.\n10 | CVE-2015-3294 | Dnsmasq - Out-of-bounds Read: Improper handling in tcp_request may allow remote attackers to read process memory and cause a denial of service through a malformed DNS request. | MEDIUM - CVSS 6.4 | Patch/Upgrade: Update Dnsmasq to a secure supported version. Software Security: Review vendor advisories and remove unsupported or end-of-life software versions.\nSr N | IT Infra | Recommendation | Description\n1 | EPS | Deploy Endpoint Protection Solution (EPS) with XDR for all users | XDR or EDR provide current trending security with superior quarantine features.\n2 | DR | Deploy a disaster recovery solution | A Disaster Recovery (DR) solution minimizes downtime and ensures rapid recovery of critical systems and data during unexpected disruptions.\nSr N | Device | Score\n1 | Server | 76.6 / 100\n2 | Firewall | 62 / 100\n3 | NAS | 56 / 100\n4 | Switches | 68 / 100\n5 | Router | 71 / 100\n6 | Access Point | N/A\nOverall Health Score | 66.7/100\nSr N | Device | Score\n1 | Endpoints | 74.2 / 100\nSr N | Component | HA Score\n1 | Server | 27 / 100\n2 | Firewall | 50 / 100\n3 | NAS / Backup | 33 / 100\n4 | Switches | 66 / 100\n5 | Routers | 74 / 100\n6 | Access Points | N/A\nOverall HA Score | 50 / 100 (At Risk)\nSr N | Component | Performance Score\n1 | Server | 63.3 / 100\n2 | Firewall | 40 / 100\n3 | NAS / Backup | 66 / 100\n4 | Switches | 64.2 / 100\n5 | Access Points | N/A\n6 | Routers | 68 / 100\nOverall Average | 60.3 / 100\nSr N | Security Component | Risk Score\n1 | Server | 72 / 100\n2 | Firewall | 64.6 / 100\n3 | NAS / Backup | 43 / 100\n4 | Endpoints | 55.5 / 100\nOverall Infra Risk Score | 58.7 / 100 (AT RISK)\nParameter | Value\nServer Type | Tower server\nBrand with Model | Dell PowerEdge T160\nOperating System | Windows Server 2025 Standard, Version 24H2 (Build 26100.33296)\nConfiguration | Intel Xeon 6315P @ 2.80 GHz, 4 cores, 64-bit; 64 GB RAM (63.83 GB usable), 128 GB maximum supported memory; 3.55 TB usable local storage (1 × 1.92 TB SSD + 2 × 1.00 TB HDD), 2.87 TB free; Broadcom NetXtreme Gigabit Ethernet, 1 Gbps; UEFI boot with Secure Boot disabled, Network Policy and Access Services, Remote Desktop Services, and File & Storage Services.\nActive Directory Configuration Grade | Server is configured as a Primary Domain Controller with Active Directory Domain Services and DNS.\nUser Access Credentials Hardening | Multiple administrator accounts and several user accounts with password ages reaching 168 days.\nServer Hardening | Security Benchmark Score: 3.83/10 - indicates significant hardening gaps.\nServer Resilience Component-wise | 2 × 32 GB RAM modules; 3 internal drives; all reported drives show Healthy status. No HA/cluster configuration is reported.\nSecurity Risk Level | High - based on the low 3.83/10 security benchmark score, missing security updates, Secure Boot disabled\nConfiguration Assistance | Apply pending security updates; enable Secure Boot where supported; review Group Policy/security baseline; verify endpoint protection; review privileged accounts.\nUnsolicited Programs | UltraViewer Service, PushDataCollectorService and other third-party utilities are present\nOpen Ports | N/A\nServer Health Score | Drive health is reported as Healthy for the three detected internal drives.\nHigh Risk Pointers to Mitigate | Enable Secure Boot; address 7+ missing security updates; verify antivirus/Endpoint Security; review privileged/domain administrator accounts.\nMedium Risk Pointers to Mitigate | Review password age and account privileges; review installed third-party software; strengthen Group Policy; review server roles/services.\nLow Risk Pointers to Mitigate | Periodic account review; software/license review; storage monitoring; regular security configuration assessment.\nEPS (Endpoint Security) | Seqrite Endpoint Security 7.60 is installed\nEnabled Host Firewall? | N/A\nPolicy with Expiration Rule | N/A\nLog & Alert On? | N/A\nBIOS Password Protected? | N/A\nExternal Boot on Server Disabled? | N/A\nBitLocker Encryption Enforced? | N/A\nShared Folder Permissions Map | N/A\nHigh Availability (HA) for Server | N/A\nParameter | Value\nVendor | SONICWALL\nModel | TZ 270\nFirmware/Software Version | SonicOS 7.0.1-5145-R5125\nLoad Balancing and Bandwidth Allocation | Bandwidth monitoring available; current bandwidth shown as 1.22 Mbps. Load balancing not configured\nFirmware & Security Updates | Current firmware shown as SonicOS 7.0.1-5145-R5125. Firmware load date shown as 29-Feb-2024. Security-service licenses are active; latest firmware/update status not available.\nIDS/IPS | Enabled\nWeb Content Filtering | Configured\nApplication Filtering | Configured\nSecurity Service (AV, Antispam, DDoS) | Partially Enabled\nLogs Store | 546 MB primary, 174 MB diagnostic data\nAdmin Access | Administrator account configured. One-Time Password/OTP method is Disabled.\nVPN Configuration | Global VPN Client, SSL VPN, Capture Client\nVPN Encryption | TLS 1.2\nMFA on VPN | Not indicated\nAll Users on VPN | Count 1 MaxCount 51\nUser Restriction Resource | N/A\nGroup Restriction Resource | N/A\nNetwork Segmentation & Zones | Multiple interfaces including WAN, LAN, WWAN\nHigh Availability | Not configured; HA mode: None\nAV Scanning Enabled? | Yes\nApp Control Active? | Yes\nWeb Filtering Enabled? | Yes\nAllowed Ports | N/A\nAllowed Protocols | N/A\nSecured Guest Access | N/A\nParameter | Value\nVendor | Synology\nModel/Plan | DS218+\nFirmware/Software Version Updated | DSM 7.1.1-42962 Update 9\nStorage Available | 3.6 TB (total for two drives, each 1.8 TB)\nDrive Utilised | 100% (Volume 1)\nSnapshot Protection Available | N/A\nRetention Policy | N/A\nBackup Schedule | N/A\nBackup Application | N/A\nEncryption | N/A\nRestore Check | N/A\nAV Status | N/A\nDrive Health Status | Healthy\nFull Data Backup | N/A\nLast Restore Drill Done? | N/A\nData Integrity/Consistency | Data scrubbing suggested due to abnormal power failure on drive 1\nAV/Malware Scan Enabled? | N/A\nUnauthorised IP Block Enabled? | N/A\nSystem Event Log Enabled? | N/A\nLogin Failure Alert Configured? | N/A\nDisk Failure Alert Enabled? | N/A\nSMTP/Email Alert on Completion | N/A\nCloud Sync Configured? | N/A\nUSB Drive Sync for Offline Backup | N/A\nSr\nNo | User\nName | System\nName | Type | Hardware Specs | Operating\nSystem | Purchase\nDate | Approved\nSoftware | Comments\n1 | gorkh operations shakti | ACCOUNTS-1 | Laptop | Processor: 2.50 gigahertz Intel 13th Gen Core i5-1335U\nMotherboard: Dell Inc. Vostro 15 3530\nRAM: 8 GB\nDrives: 490.09 GB (307.6 GB Free)\n(512GB HDD) | Windows 11 Professional | May'26 | AnyDesk\nMcAfee\nSeqrite Endpoint Security\nWinRAR\nWinZip | No significant issues detected\n2 | Pravin-Stores Shakti | Accounts-3 | Desktop | Processor: 3.30 gigahertz Intel Core i3-2120\nMotherboard: LENOVO IdeaCentre B320 Lenovo\nRAM: 4 GB\nDrives: 239.43 GB (136.4 GB Free) | Windows 10 Professional | Jan'12 | AnyDesk\nSeqrite Endpoint Security\nWinRAR\nWinZip | No significant issues detected\n3 | Shrikant-maintenance | Accounts-4 | Desktop | Processor: 2.50 gigahertz Intel 13th Gen Core i3-1315U\nMotherboard: Dell Inc. Inspiron 24 5420 All-in-One\nRAM: 8 GB\nDrives: 487.8 GB (345.0 GB Free)\n(512GB HDD) | Windows 11 Professional | May'26 | Seqrite Endpoint Security | No significant issues detected\n4 | Neha Admin Shakti | Accounts-5 | Desktop | Processor: 2.50 gigahertz Intel 13th Gen Core i3-1315U\nMotherboard: Dell Inc. Inspiron 24 5420 All-in-One\nRAM: 8 GB\nDrives: 487.88 GB (286.1 GB Free)\n(512GB HDD) | Windows 11 Professional | Dec'25 | AnyDesk\nSeqrite Endpoint Security\nWinRAR\nWinZip | No significant issues detected\n5 | HR 3-no emp | Accounts-6 | Desktop | Processor: 3.50 gigahertz Intel Core i3-14100\nMotherboard: Dell Inc. Dell Slim ECS1250\nRAM: 8 GB\nDrives: 487.84 GB (382.7 GB Free)\n(512GB HDD) | Windows 11 Professional | Apr'26 | AnyDesk\nMcAfee\nWinRAR | No significant issues detected\n6 | Anuja accounts sales shakti | admin | Laptop | Processor: 3.00 gigahertz Intel 11th Gen Core i3-1115G4\nMotherboard: LENOVO 82KA Lenovo V14 G2 ITL Ua\nRAM: 8 GB\nDrives: 510.77 GB (389.2 GB Free) | Windows 11 Professional | Jul'22 | AnyDesk\nMicrosoft 365 / Office\nQuick Heal\nWinRAR\nWinZip | No significant issues detected\n7 | Smita HR3 shakti | Admin | Desktop | Processor: 3.60 gigahertz Intel Core i3-10100\nMotherboard: Gigabyte Technology Co., Ltd. H410M H V2 -CF\nRAM: 8 GB\nDrives: 511.43 GB (416.5 GB Free) | Windows 10 Professional | Dec'23 | AnyDesk\nMicrosoft 365 / Office\nSeqrite Endpoint Security\nWinRAR\nWinZip | No significant issues detected\n8 | Mahesh Purchase shakti | AUDITORS | Desktop | Processor: 2.50 gigahertz Intel 13th Gen Core i3-1315U\nMotherboard: Dell Inc. Inspiron 24 5420 All-in-One\nRAM: 8 GB\nDrives: 487.94 GB (352.2 GB Free)\n(512GB HDD) | Windows 11 Professional | May'26 | Seqrite Endpoint Security\nWinRAR\nWinZip | No significant issues detected\n9 | Prachi Accounts | Billing | Desktop | Processor: 2.50 gigahertz Intel 13th Gen Core i5-1335U\nMotherboard: Dell Inc. Inspiron 24 5420 All-in-One\nRAM: 8 GB\nDrives: 510.99 GB (310.8 GB Free)\n(512GB HDD) | Windows 11 Professional | Jul'25 | AnyDesk\nMicrosoft 365 / Office\nSeqrite Endpoint Security\nWinRAR\nWinZip\nWindows Defender | No significant issues detected\n10 | Shubham | HR-1 | Desktop | Processor: 2.90 gigahertz Intel Pentium G645\nMotherboard: LENOVO 2118DMQ ThinkCentre Edge 62z\nRAM: 8 GB\nDrives: 255.47 GB (132.9 GB Free) | Windows 10 Professional | Nov'12 | AnyDesk\nQuick Heal\nWinRAR\nWinZip | No significant issues detected\n11 | Amit Accounts Shakti | HR-2 | Desktop | Processor: 2.50 gigahertz Intel Core 3 100U\nMotherboard: Dell Inc. Inspiron 24 5430 All-in-One\nRAM: 8 GB\nDrives: 485.99 GB (324.1 GB Free)\n(512GB HDD) | Windows 11 Professional | Aug'25 | AnyDesk\nMcAfee\nSeqrite Endpoint Security\nWinRAR\nWinZip | No significant issues detected\n12 | Santosh HR shakti | HR-3 | Desktop | Processor: 2.30 gigahertz Intel Pentium 5405U\nMotherboard: LENOVO F0EB0018IN ideacentre A340-22IWL\nRAM: 4 GB\nDrives: 1290.24 GB (1177.6 GB Free)\n(256GB NVME + 1TB HDD) | Windows 10 Professional | Nov'20 | AnyDesk\nSeqrite Endpoint Security\nWinRAR\nWinZip | No significant issues detected\n13 | Durgesh Maintence Shakti | Hr1 | Desktop | Processor: 2.50 gigahertz Intel 13th Gen Core i3-1315U\nMotherboard: Dell Inc. Inspiron 24 5420 All-in-One\nRAM: 8 GB\nDrives: 487.41 GB (333.9 GB Free)\n(512GB HDD) | Windows 11 Professional | May'26 | AnyDesk\nSeqrite Endpoint Security\nWinRAR\nWinZip | No significant issues detected\n14 | Auditor | LAB-3 | Laptop | Processor: 1.20 gigahertz Intel Core i3-1005G1\nMotherboard: Dell Inc. Vostro 3501\nRAM: 8 GB\nDrives: 254.74 GB (163.2 GB Free) | Windows 11 Professional | Dec'25 | AnyDesk\nMicrosoft 365 / Office\nQuick Heal\nWinRAR | No significant issues detected\n15 | SMGSir Shakti | Maintenance-2 | Laptop | Processor: 2.50 gigahertz Intel Core 3 100U\nMotherboard: Dell Inc. Dell Pro 15 Essential PV15250\nRAM: 8 GB\nDrives: 510.99 GB (439.8 GB Free)\n(512GB HDD) | Windows 11 Professional | May'26 | AnyDesk\nWinRAR\nWindows Defender | No significant issues detected\n16 | rohit operations shakti | OPERATION-1 | Desktop | Processor: 1.50 gigahertz Intel Pentium J4205\nMotherboard: LENOVO F0CL003PIN ideacentre AIO 310-20IAP\nRAM: 8 GB\nDrives: 255.47 GB (99.8 GB Free) | Windows 10 Enterprise | Dec'16 | AnyDesk\nQuick Heal\nWinRAR\nWinZip\nWindows Defender | No significant issues detected\n17 | Usha sales shakti | OPERATION-2 | Desktop | Processor: 3.30 gigahertz Intel Core i3-2120\nMotherboard: LENOVO IdeaCentre B320 Lenovo\nRAM: 8 GB (4 + 4)\nDrives: 255.47 GB (126.5 GB Free) | Windows 10 Enterprise | Jan'12 | AnyDesk\nNitro Pro\nSeqrite Endpoint Security\nWinRAR\nWinZip | No significant issues detected\n18 | unknown operations shakti | PURCHASE-1 | Desktop | Processor: 2.50 gigahertz Intel Core 3 100U\nMotherboard: Dell Inc. Dell 24 All-in-One EC24250\nRAM: 8 GB\nDrives: 486.61 GB (367.7 GB Free)\n(512GB HDD) | Windows 11 Professional | Sep'25 | McAfee\nWinRAR | No significant issues detected\n19 | Snehal Billing | PURCHASE-2 | Desktop | Processor: 2.30 gigahertz Intel Core i3-8145U\nMotherboard: LENOVO 10YS000RIH V540-24IWL AIO\nRAM: 8 GB (4 + 4)\nDrives: 1536.0 GB (1392.6 GB Free)\n(500GB NVME + 1TB HDD) | Windows 11 Enterprise | Aug'19 | AnyDesk\nQuick Heal\nSeqrite Endpoint Security\nWinRAR\nWinZip | No significant issues detected\n20 | Sales no emp | SALES-1 | Desktop | Processor: 2.50 gigahertz Intel 13th Gen Core i3-1315U\nMotherboard: Dell Inc. Inspiron 24 5420 All-in-One\nRAM: 8 GB\nDrives: 487.41 GB (294.8 GB Free)\n(512GB HDD) | Windows 11 Professional | Apr'26 | AnyDesk\nSeqrite Endpoint Security\nWinRAR\nWinZip | No significant issues detected\n21 | Vidya sales shakti | SALES-2 | Desktop | Processor: 2.50 gigahertz Intel Core 3 100U\nMotherboard: Dell Inc. Dell 24 All-in-One EC24250\nRAM: 8 GB\nDrives: 485.97 GB (365.7 GB Free)\n(512GB HDD) | Windows 11 Professional | Jan'26 | WinRAR\nWindows Defender | No significant issues detected\n22 | Sales5 no emp | SALES-3 | Desktop | Processor: 2.50 gigahertz Intel Core 3 100U\nMotherboard: Dell Inc. Dell 24 All-in-One EC24250\nRAM: 8 GB\nDrives: 486.6 GB (374.3 GB Free)\n(512GB HDD) | Windows 11 Professional | Sep'25 | McAfee\nWinRAR | No significant issues detected\n23 | Rupali sales shakti | SALES-4 | Desktop | Processor: 2.50 gigahertz Intel 13th Gen Core i3-1315U\nMotherboard: Dell Inc. Inspiron 24 5420 All-in-One\nRAM: 8 GB\nDrives: 487.41 GB (289.6 GB Free)\n(512GB HDD) | Windows 11 Professional | May'26 | AnyDesk\nMcAfee\nSeqrite Endpoint Security\nWinRAR\nWinZip | No significant issues detected\n24 | Priyadarshani Accounts | SALES-5 | Desktop | Processor: 3.50 gigahertz Intel Core i3-14100\nMotherboard: Dell Inc. Dell Slim ECS1250\nRAM: 8 GB\nDrives: 487.85 GB (379.7 GB Free)\n(512GB HDD) | Windows 11 Professional | Apr'26 | McAfee\nWinRAR | No significant issues detected\n25 | Accounts-2-no emp | SALES-5 | Desktop | Processor: 1.50 gigahertz Intel Pentium J4205\nMotherboard: LENOVO F0CL003PIN ideacentre AIO 310-20IAP\nRAM: 8 GB\nDrives: 478.96 GB (346.3 GB Free) | Windows 10 Professional | Dec'16 | AnyDesk\nMicrosoft 365 / Office\nNitro Pro\nSeqrite Endpoint Security\nWinRAR | No significant issues detected\n26 | Mahendra Store shakti | SMG | Desktop | Processor: 2.30 gigahertz Intel Pentium 5405U\nMotherboard: LENOVO F0EB0018IN ideacentre A340-22IWL\nRAM: 4 GB\nDrives: 1290.24 GB (1136.6 GB Free)\n(256GB NVME + 1TB HDD) | Windows 10 Professional | Nov'20 | AnyDesk\nNitro Pro\nSeqrite Endpoint Security\nWinRAR | No significant issues detected\n27 | Sunil maintainance shakti | STORE-1 | Desktop | Processor: 2.50 gigahertz Intel 13th Gen Core i3-1315U\nMotherboard: Dell Inc. Inspiron 24 5420 All-in-One\nRAM: 8 GB\nDrives: 487.41 GB (322.4 GB Free)\n(512GB HDD) | Windows 11 Professional | May'26 | AnyDesk\nMicrosoft 365 / Office\nWinRAR\nWindows Defender | No significant issues detected\nSystem | OS | Endpoint Security\nDell Inc. PowerEdge T160 | None\nSystem | RAM | Storage | OS | Office\nACCOUNTS-1_Amit_Accounts_Shakti_2026-09-01_1213 | No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office') | No upgrade needed - 63% free (307.6 GB of 490 GB) | No upgrade needed - current OS: Windows 11 | No upgrade needed - Microsoft 365 (always current)\nACCOUNTS-3_Priyadarshani_Accounts_2026-09-01_1205 | Upgrade required - current: 4 GB, required: 8 GB ('Microsoft 365 / Office' needs 8 GB) | No upgrade needed - 57% free (136.4 GB of 239 GB) | No upgrade needed - current OS: Windows 11 | No upgrade needed - Microsoft 365 (always current)\nACCOUNTS-4_Anuja_accounts_sales_shakti_2026-09-01_1202 | No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office') | No upgrade needed - 71% free (345.0 GB of 488 GB) | No upgrade needed - current OS: Windows 11 | No upgrade needed - Microsoft 365 (always current)\nACCOUNTS-5_Prachi_Accounts_2026-09-01_1206 | No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office') | No upgrade needed - 59% free (286.1 GB of 488 GB) | No upgrade needed - current OS: Windows 11 | No upgrade needed - Microsoft 365 (always current)\nACCOUNTS-6_Accounts-2-no_emp_2026-09-01_1159 | No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office') | No upgrade needed - 78% free (382.7 GB of 488 GB) | No upgrade needed - current OS: Windows 11 | No upgrade needed - Microsoft 365 (always current)\nADMIN_Durgesh_Maintence_Shakti_2026-09-08_1526 | No upgrade needed - current: 8 GB meets requirement of 2 GB ('Quick Heal') | No upgrade needed - 76% free (389.2 GB of 511 GB) | No upgrade needed - current OS: Windows 11 | Upgrade required - current: Office 2013, upgrade to Microsoft 365 / Office 2024\nADMIN_Neha_Admin_Shakti_2026-09-01_1156 | No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office') | No upgrade needed - 81% free (416.5 GB of 511 GB) | No upgrade needed - current OS: Windows 11 | No upgrade needed - Microsoft 365 (always current)\nAUDITORS_Auditor_2026-09-01_1233 | No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office') | No upgrade needed - 72% free (352.2 GB of 488 GB) | No upgrade needed - current OS: Windows 11 | No upgrade needed - Microsoft 365 (always current)\nBILLING_Snehal_Billing_2026-09-01_1219 | No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office') | No upgrade needed - 61% free (310.8 GB of 511 GB) | No upgrade needed - current OS: Windows 11 | No upgrade needed - Microsoft 365 (always current)\nHR-1_unknown_operations_shakti_2026-09-09_1243 | No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office') | No upgrade needed - 52% free (132.9 GB of 255 GB) | No upgrade needed - current OS: Windows 11 | No upgrade needed - Microsoft 365 (always current)\nHR-2_Santosh_HR_shakti_2026-09-01_1127 | No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office') | No upgrade needed - 67% free (324.1 GB of 486 GB) | No upgrade needed - current OS: Windows 11 | No upgrade needed - Microsoft 365 (always current)\nHR-3_HR_3-no_emp_2026-09-01_1128 | Upgrade required - current: 4 GB, required: 8 GB ('Microsoft 365 / Office' needs 8 GB) | No upgrade needed - 91% free (1177.6 GB of 1290 GB) | No upgrade needed - current OS: Windows 11 | No upgrade needed - Microsoft 365 (always current)\nHR1_Smita_HR3_shakti_2026-09-01_1137 | No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office') | No upgrade needed - 69% free (333.9 GB of 487 GB) | No upgrade needed - current OS: Windows 11 | No upgrade needed - Microsoft 365 (always current)\nLAB-3_Sunil_maintainance_shakti_2026-09-07_1245 | No upgrade needed - current: 8 GB meets requirement of 2 GB ('Quick Heal') | No upgrade needed - 64% free (163.2 GB of 255 GB) | No upgrade needed - current OS: Windows 11 | Upgrade required - current: Office 2013, upgrade to Microsoft 365 / Office 2024\nMAINTENANCE-2_Shubham_2026-09-01_1245 | No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office') | No upgrade needed - 86% free (439.8 GB of 511 GB) | No upgrade needed - current OS: Windows 11 | No upgrade needed - Microsoft 365 (always current)\nOPERATION-1_rohit_operations_shakti_2026-09-09_1234 | No upgrade needed - current: 8 GB meets requirement of 8 GB ('TallyPrime / Tally') | No upgrade needed - 39% free (99.8 GB of 255 GB) | No upgrade needed - current OS: Windows 11 | No upgrade needed - Microsoft 365 (always current)\nOPERATION-2_gorkh_operations_shakti_2026-09-09_1224 | No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office') | No upgrade needed - 50% free (126.5 GB of 255 GB) | No upgrade needed - current OS: Windows 11 | No upgrade needed - Microsoft 365 (always current)\nPURCHASE-1_Pravin-Stores_Shakti_2026-09-01_1231 | No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office') | No upgrade needed - 76% free (367.7 GB of 487 GB) | No upgrade needed - current OS: Windows 11 | No upgrade needed - Microsoft 365 (always current)\nPURCHASE-2_Mahendra_Store_shakti_2026-09-01_1240 | No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office') | No upgrade needed - 91% free (1392.6 GB of 1536 GB) | No upgrade needed - current OS: Windows 11 | No upgrade needed - Microsoft 365 (always current)\nSALES-1_Usha_sales_shakti_2026-09-01_1217 | No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office') | No upgrade needed - 60% free (294.8 GB of 487 GB) | No upgrade needed - current OS: Windows 11 | No upgrade needed - Microsoft 365 (always current)\nSALES-2_Vidya_sales_shakti_2026-09-01_1149 | No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office') | No upgrade needed - 75% free (365.7 GB of 486 GB) | No upgrade needed - current OS: Windows 11 | No upgrade needed - Microsoft 365 (always current)\nSALES-3_Sales_no_emp_2026-09-01_1144 | No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office') | No upgrade needed - 77% free (374.3 GB of 487 GB) | No upgrade needed - current OS: Windows 11 | No upgrade needed - Microsoft 365 (always current)\nSALES-4_Rupali_sales_shakti_2026-09-01_1142 | No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office') | No upgrade needed - 59% free (289.6 GB of 487 GB) | No upgrade needed - current OS: Windows 11 | No upgrade needed - Microsoft 365 (always current)\nSALES-5_Sales5_no_emp_2026-09-01_1213 | No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office') | No upgrade needed - 78% free (379.7 GB of 488 GB) | No upgrade needed - current OS: Windows 11 | No upgrade needed - Microsoft 365 (always current)\nSALES-5_Shrikant-maintenance_2026-09-01_1243 | No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office') | No upgrade needed - 72% free (346.3 GB of 479 GB) | No upgrade needed - current OS: Windows 11 | No upgrade needed - Microsoft 365 (always current)\nSMG_SMGSir_Shakti_2026-09-01_1224 | Upgrade required - current: 4 GB, required: 8 GB ('Microsoft 365 / Office' needs 8 GB) | No upgrade needed - 88% free (1136.6 GB of 1290 GB) | No upgrade needed - current OS: Windows 11 | No upgrade needed - Microsoft 365 (always current)\nSTORE-1_Mahesh_Purchase_shakti_2026-09-01_1236 | No upgrade needed - current: 8 GB meets requirement of 8 GB ('Microsoft 365 / Office') | No upgrade needed - 66% free (322.4 GB of 487 GB) | No upgrade needed - current OS: Windows 11 | No upgrade needed - Microsoft 365 (always current)"
+  ]
+ }
+}

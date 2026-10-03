@@ -1,0 +1,30 @@
+{#- The company mark on every document: the logo and the wordmark in the logo's own colours
+    (green IT, blue CRAFT, as on itcraft.net.in). Logo, colours and text come from company
+    settings. -#}
+{% macro wordmark(company, size="22pt") -%}
+<span class="wordmark" style="font-size: {{ size }}">
+{%- for part in company.brand_parts or [{"text": company.brand, "color": "#2C629F"}] -%}
+<span style="color: {{ part.color }}">{{ part.text }}</span>
+{%- endfor -%}
+</span>
+{%- endmacro %}
+
+{% macro letterhead(company) -%}
+<div class="letterhead">
+  <div class="mark">
+    {% if company.logo %}<img class="logo" src="{{ asset(company.logo) }}" alt="">{% endif %}
+    <div>{{ wordmark(company) }}<div class="tag">{{ company.tagline }}</div></div>
+  </div>
+  <div class="co">{% for l in company.address_lines %}{{ l }}<br>{% endfor %}Ph: {{ company.phones | join(" / ") }}<br>Email: {{ company.email }}<br>GSTIN No: {{ company.gstin }}</div>
+</div>
+{%- endmacro %}
+
+{% macro mini_header(company, right="") -%}
+<div class="mini-head">
+  <div class="mark">
+    {% if company.logo %}<img class="logo" src="{{ asset(company.logo) }}" alt="">{% endif %}
+    {{ wordmark(company, "15pt") }}
+  </div>
+  <div class="right">{{ right }}</div>
+</div>
+{%- endmacro %}

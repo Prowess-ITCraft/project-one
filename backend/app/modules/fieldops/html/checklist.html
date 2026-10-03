@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ title }}</title>
+<style>
+  {{ base_css | safe }}
+  h1 { font-size: 13pt; margin: 0 0 2pt; }
+  h2 { font-size: 10.5pt; margin: 12pt 0 4pt; border-bottom: 0.8pt solid #222; padding-bottom: 2pt; }
+  .meta { color: #333; margin-bottom: 6pt; }
+  th, td { border: 0.6pt solid #777; padding: 2.5pt 4pt; vertical-align: top; text-align: left; }
+  th { background: #eee; font-size: 8.5pt; }
+  .n { white-space: nowrap; }
+  .pass { font-weight: 700; color: #1E7A4C; }
+  .fail { font-weight: 700; color: #B42318; }
+  .muted { color: #555; }
+  .ev { page-break-inside: avoid; margin: 0 0 6pt; }
+  .ev img { max-width: 70mm; max-height: 55mm; border: 0.5pt solid #999; display: block; margin-top: 3pt; }
+  dl { display: grid; grid-template-columns: 32mm 1fr; gap: 1pt 6pt; margin: 0; }
+  dt { color: #555; } dd { margin: 0; }
+</style>
+</head>
+<body>
+{% from "_brand.html" import mini_header %}
+{{ mini_header(company, "Field task record") }}
+<h1>{{ title }}: {{ run.title }}</h1>
+<div class="meta"><b>{{ customer }}</b>, {{ project }}. Printed {{ printed }}.</div>
+
+<dl>
+  <dt>State</dt><dd>{{ run.state }}</dd>
+  <dt>Engineer</dt><dd>{{ run.engineer }}</dd>
+  <dt>Device or asset</dt><dd>{{ run.asset or "None" }}</dd>
+  <dt>Planned</dt><dd>{{ run.planned }}</dd>
+  {% if run.checked_in %}<dt>Checked in</dt><dd>{{ run.checked_in }} (customer code confirmed)</dd>{% endif %}
+  {% if run.handed_over %}<dt>Handed over</dt><dd>{{ run.handed_over }} (customer code confirmed)</dd>{% endif %}
+  {% if run.closed %}<dt>Closed</dt><dd>{{ run.closed }}, verified by {{ run.verified_by }}</dd>{% endif %}
+  <dt>Sent back</dt><dd>{{ run.rework }} time(s)</dd>
+</dl>
+
+<h2>Timeline</h2>
+<table>
+  <thead><tr><th>When (IST)</th><th>What</th><th>State after</th><th>Who</th><th>Where</th></tr></thead>
+  <tbody>{% for t in timeline %}<tr><td class="n">{{ t.when }}</td><td>{{ t.action | capitalize }}{% if t.detail %}<br><span class="muted">{{ t.detail }}</span>{% endif %}</td><td>{{ t.to }}</td><td class="n">{{ t.who }}</td><td class="n">{{ t.place }}</td></tr>{% endfor %}</tbody>
+</table>
+
+<h2>Steps</h2>
+<table>
+  <thead><tr><th>#</th><th>Step</th><th>Done</th></tr></thead>
+  <tbody>{% for s in steps %}<tr><td class="n">{{ loop.index }}</td><td>{{ s.text }}</td><td class="n">{{ s.when if s.done else "Not done" }}</td></tr>{% endfor %}</tbody>
+</table>
+
+{% if baseline %}
+<h2>Target configuration and what was found</h2>
+<table>
+  <thead><tr><th>Setting</th><th>Target</th><th>Recorded</th><th>Importance</th></tr></thead>
+  <tbody>{% for b in baseline %}<tr><td>{{ b.label }}</td><td>{{ b.expected }}</td><td>{{ b.actual or "Not recorded" }}</td><td class="n">{{ b.severity | capitalize }}</td></tr>{% endfor %}</tbody>
+</table>
+{% endif %}
+
+{% for c in checks %}
+<h2>Configuration check {{ c.attempt }}, {{ c.when }}: <span class="{{ 'pass' if c.passed else 'fail' }}">{{ "Passed" if c.passed else "Failed" }}</span></h2>
+<table>
+  <thead><tr><th>Setting</th><th>Target</th><th>Found</th><th>Result</th></tr></thead>
+  <tbody>{% for f in c.fields %}<tr><td>{{ f.label }}</td><td>{{ f.expected }}</td><td>{{ f.actual or "" }}</td><td><span class="{{ 'pass' if f.outcome == 'pass' else ('fail' if f.outcome == 'fail' else 'muted') }}">{{ f.outcome | replace("_", " ") | capitalize }}</span><br><span class="muted">{{ f.reason }}</span></td></tr>{% endfor %}</tbody>
+</table>
+{% endfor %}
+
+<h2>Evidence</h2>
+{% for e in evidence %}
+<div class="ev">
+  <b>{{ e.label }}</b> <span class="muted">({{ e.stage }}, {{ e.type }}, {{ e.when }}, {{ e.by }})</span>
+  {% if e.text %}<br>{{ e.text }}{% endif %}{% if e.note %}<br><span class="muted">{{ e.note }}</span>{% endif %}
+  {% if e.image %}<img src="{{ e.image }}" alt="{{ e.label }}">{% endif %}
+</div>
+{% else %}
+<p class="muted">No evidence yet.</p>
+{% endfor %}
+</body>
+</html>

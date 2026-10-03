@@ -1,0 +1,481 @@
+/* Field work, review and data quality. Loaded after globals.css and refresh.css.
+   The task timeline is the one bold element (docs/DESIGN.md section 5). */
+
+/* ---------- brand in the shell ---------- */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.brand .logo {
+  flex: none;
+}
+.brand .words {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+.brand .words small {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+}
+::selection {
+  background: var(--accent-wash);
+  color: var(--ink);
+}
+input,
+textarea {
+  caret-color: var(--accent);
+}
+
+/* ---------- the task timeline: stations on a circuit trace ---------- */
+.timeline {
+  position: relative;
+  margin: 6px 0 18px;
+  padding-top: 26px;
+}
+.timeline ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+}
+.timeline li {
+  position: relative;
+  padding-top: 26px;
+  min-width: 0;
+  text-align: center;
+}
+.timeline li::before {
+  /* the trace between stations */
+  content: "";
+  position: absolute;
+  top: 8px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--line-strong);
+}
+.timeline li:first-child::before {
+  left: 50%;
+}
+.timeline li:last-child::before {
+  right: 50%;
+}
+.timeline li[data-state="done"]::before,
+.timeline li[data-state="current"]::before {
+  background: var(--trace);
+}
+.timeline li[data-state="current"]::before {
+  right: 50%;
+}
+.timeline li:first-child[data-state="current"]::before {
+  display: none;
+}
+.timeline li::after {
+  /* the station */
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: calc(50% - 8px);
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--line-strong);
+}
+.timeline li[data-state="done"]::after {
+  background: var(--trace);
+  border-color: var(--trace);
+}
+.timeline li[data-state="current"]::after {
+  border: 4px solid var(--accent);
+  box-shadow: 0 0 0 5px var(--accent-wash);
+}
+.timeline li[data-state="blocked"]::after {
+  border: 4px solid var(--bad);
+  box-shadow: 0 0 0 5px var(--bad-wash);
+}
+.timeline .name {
+  display: block;
+  font-size: 12px;
+  line-height: 1.25;
+  color: var(--muted);
+  padding: 0 2px;
+  overflow-wrap: anywhere;
+}
+.timeline li[data-state="current"] .name,
+.timeline li[data-state="blocked"] .name {
+  color: var(--ink);
+  font-weight: 650;
+}
+.timeline li[data-state="blocked"] .name {
+  color: var(--bad);
+}
+.timeline .loop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 34px;
+  overflow: visible;
+}
+.timeline .loop path {
+  fill: none;
+  stroke: var(--warn);
+  stroke-width: 2px;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 5 4;
+}
+.timeline .loop path.head {
+  stroke-dasharray: none;
+}
+.timeline .loop-label {
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  margin-left: 14%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--warn);
+  background: var(--paper);
+  padding: 0 6px;
+}
+.timeline.counts .count {
+  display: block;
+  font-size: 20px;
+  font-weight: 650;
+  color: var(--ink);
+  line-height: 1.1;
+}
+.timeline.counts li[data-state="todo"] .count {
+  color: var(--muted);
+}
+.timeline.counts {
+  padding-top: 0;
+}
+.timeline.counts li {
+  padding-top: 26px;
+}
+.timeline.counts > p {
+  margin-top: 8px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .timeline li[data-state="current"]::after {
+    transition: box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+@media (max-width: 640px) {
+  /* nine stations at 360 px: names only for the current one */
+  .timeline:not(.counts) li:not([aria-current]) .name {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  .timeline:not(.counts) li[aria-current] .name {
+    white-space: nowrap;
+    position: relative;
+    z-index: 1;
+  }
+  .timeline:not(.counts) li:first-child[aria-current] .name {
+    text-align: left;
+  }
+  .timeline:not(.counts) li:last-child[aria-current] .name {
+    text-align: right;
+    direction: rtl;
+  }
+  .timeline.counts ol {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    row-gap: 14px;
+  }
+  .timeline.counts li::before {
+    display: none;
+  }
+}
+
+/* ---------- field screens: big targets, readable in sunlight ---------- */
+.field-page {
+  max-width: 680px;
+}
+.field-page .page-head h1 {
+  font-size: 24px;
+}
+.tasklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.tasklist .day {
+  margin: 18px 0 6px;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--muted);
+}
+.tasklist a.task {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 12px;
+  padding: 14px 4px;
+  border-bottom: 1px solid var(--line);
+  color: inherit;
+  text-decoration: none;
+  min-height: 64px;
+}
+.tasklist a.task:hover .title,
+.tasklist a.task:focus-visible .title {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.tasklist .title {
+  font-size: 16px;
+  font-weight: 600;
+}
+.tasklist .next {
+  grid-column: 1 / -1;
+  font-size: 14px;
+  color: var(--ink);
+}
+.tasklist .when {
+  font-size: 13px;
+  color: var(--muted);
+  text-align: right;
+}
+.next-action {
+  font-size: 18px;
+  font-weight: 650;
+  line-height: 1.35;
+  margin: 2px 0 12px;
+}
+.btn.big {
+  min-height: 48px;
+  padding: 12px 20px;
+  font-size: 16px;
+  width: 100%;
+  justify-content: center;
+}
+@media (min-width: 641px) {
+  .btn.big {
+    width: auto;
+  }
+}
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: step;
+}
+.steps li {
+  counter-increment: step;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.steps li::before {
+  content: counter(step);
+  font: 600 13px/24px var(--font-mono-stack);
+  width: 24px;
+  height: 24px;
+  text-align: center;
+  border-radius: 50%;
+  border: 2px solid var(--line-strong);
+  color: var(--muted);
+}
+.steps li[data-done="true"]::before {
+  background: var(--trace);
+  border-color: var(--trace);
+  color: var(--surface);
+}
+.steps li[data-next="true"]::before {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.steps li[data-done="true"] .text {
+  color: var(--muted);
+}
+.evidence-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.evidence-list > li {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.evidence-list .head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+.evidence-list .label {
+  font-weight: 600;
+}
+.evidence-list form {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+.thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.thumbs img {
+  width: 96px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: var(--r-control);
+  border: 1px solid var(--line);
+}
+.otp {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+.otp input {
+  font: 600 22px/1 var(--font-mono-stack);
+  letter-spacing: 0.3em;
+  width: 9.5ch;
+  text-align: center;
+  padding: 10px 8px;
+}
+.outbox-note {
+  border: 1px solid var(--warn);
+  background: var(--warn-wash);
+  color: var(--ink);
+  padding: 10px 12px;
+  border-radius: var(--r-panel);
+  font-size: 14px;
+}
+.values {
+  display: grid;
+  gap: 12px;
+}
+.values .field select,
+.values .field input {
+  max-width: 320px;
+}
+
+/* ---------- results of the configuration check ---------- */
+.check-result .pass {
+  color: var(--ok);
+  font-weight: 600;
+}
+.check-result .fail {
+  color: var(--bad);
+  font-weight: 600;
+}
+.check-result .not_checked {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* ---------- data quality: price bands as a range mark, no filled track ---------- */
+.band {
+  position: relative;
+  height: 18px;
+  min-width: 140px;
+}
+.band .range {
+  position: absolute;
+  top: 8px;
+  height: 2px;
+  background: var(--accent);
+}
+.band .range::before,
+.band .range::after {
+  content: "";
+  position: absolute;
+  top: -4px;
+  width: 2px;
+  height: 10px;
+  background: var(--accent);
+}
+.band .range::before {
+  left: 0;
+}
+.band .range::after {
+  right: 0;
+}
+.band .median {
+  position: absolute;
+  top: 2px;
+  width: 4px;
+  height: 14px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: var(--ink);
+}
+.quality {
+  font: 650 15px/1 var(--font-mono-stack);
+}
+.quality[data-tone="ok"] {
+  color: var(--ok);
+}
+.quality[data-tone="warn"] {
+  color: var(--warn);
+}
+.quality[data-tone="bad"] {
+  color: var(--bad);
+}
+.labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+}
+.feed {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 340px;
+  overflow: auto;
+}
+.feed li {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13.5px;
+}
+.feed time {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .feed li.fresh {
+    animation: arrive 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes arrive {
+    from {
+      background: var(--accent-wash);
+    }
+  }
+}
+
+/* a button that reads as a link, for opening a row's details */
+.linklike {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--accent);
+  text-align: left;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.linklike:hover {
+  text-decoration-thickness: 2px;
+}

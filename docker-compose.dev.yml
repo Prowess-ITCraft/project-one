@@ -1,0 +1,71 @@
+# Dev mode: publishes the port map on localhost only and adds mail capture and Celery monitoring.
+# Use: docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile dev --profile monitoring up -d --build
+
+services:
+  postgres:
+    ports: ["127.0.0.1:9599:5432"]
+  redis:
+    ports: ["127.0.0.1:9600:6379"]
+  minio:
+    ports:
+      - "127.0.0.1:9601:9000"
+      - "127.0.0.1:9602:9001"
+  api:
+    ports: ["127.0.0.1:9596:9596"]
+    environment:
+      P1_ENV: dev
+      P1_SMTP_HOST: mailpit
+      P1_SMTP_PORT: "1025"
+      P1_SMTP_STARTTLS: "false"
+      P1_COOKIE_SECURE: "false"
+      P1_LOG_JSON: "false"
+  worker:
+    volumes:
+      # The reference samples, read only, so `cli corpus ingest /data/samples` fills the library.
+      - ./samples:/data/samples:ro
+    environment:
+      P1_ENV: dev
+      P1_SMTP_HOST: mailpit
+      P1_SMTP_PORT: "1025"
+      P1_SMTP_STARTTLS: "false"
+  beat:
+    environment:
+      P1_ENV: dev
+      P1_SMTP_HOST: mailpit
+      P1_SMTP_PORT: "1025"
+      P1_SMTP_STARTTLS: "false"
+  migrate:
+    environment:
+      P1_ENV: dev
+  web:
+    ports: ["127.0.0.1:9595:9595"]
+  proxy:
+    ports: ["127.0.0.1:9597:80"]
+  prometheus:
+    ports: ["127.0.0.1:9603:9090"]
+  grafana:
+    ports: ["127.0.0.1:9604:3000"]
+  mailpit:
+    profiles: [dev]
+    image: axllent/mailpit:v1.21
+    restart: unless-stopped
+    ports: ["127.0.0.1:9605:8025"]
+    networks: [internal]
+  flower:
+    profiles: [dev]
+    image: project-one/backend:${P1_VERSION:-dev}
+    restart: unless-stopped
+    command: ["celery", "-A", "app.worker", "flower", "--port=9598"]
+    environment:
+      P1_ENV: dev
+      P1_CELERY_BROKER_URL: redis://:${P1_REDIS_PASSWORD}@redis:6379/1
+      P1_FERNET_KEYS: ${P1_FERNET_KEYS}
+    ports: ["127.0.0.1:9598:9598"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9598/healthcheck || curl -fsS http://127.0.0.1:9598/ >/dev/null"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    depends_on: [worker]
+    networks: [internal]

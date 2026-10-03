@@ -1,0 +1,275 @@
+{
+ "built_at": "1970-01-01T00:00:00+00:00",
+ "cleaning_version": "2",
+ "document": {
+  "customer": null,
+  "doc_kind": "summary",
+  "gst_rate": null,
+  "quote_date": null,
+  "quote_ref": null,
+  "validity_days": null,
+  "warnings": []
+ },
+ "kind": "boq",
+ "lines": [
+  {
+   "amount": null,
+   "canonical": "sanitization",
+   "component": "Sanitization",
+   "component_raw": null,
+   "confidence": 1.0,
+   "description": null,
+   "flags": [],
+   "inclusions": [],
+   "issues": [],
+   "label": {
+    "confidence": 0.95,
+    "gap_type": "conflicting_av",
+    "line_role": "service",
+    "rule": "'sanitization' in title"
+   },
+   "line_ref": "1",
+   "name_key": "sanitization",
+   "option": null,
+   "priority_group": "High Priority",
+   "qty": 31,
+   "section": null,
+   "unit_price": null
+  },
+  {
+   "amount": null,
+   "canonical": "endpoint security",
+   "component": "Endpoint Security",
+   "component_raw": "End Point Security",
+   "confidence": 1.0,
+   "description": null,
+   "flags": [
+    "text_cleaned"
+   ],
+   "inclusions": [],
+   "issues": [],
+   "label": {
+    "confidence": 0.95,
+    "gap_type": "no_unified_eps",
+    "line_role": "product",
+    "rule": "'endpoint security' in title"
+   },
+   "line_ref": "2",
+   "name_key": "endpoint security",
+   "option": null,
+   "priority_group": "High Priority",
+   "qty": 31,
+   "section": null,
+   "unit_price": null
+  },
+  {
+   "amount": null,
+   "canonical": "managed switch",
+   "component": "Managed Switch",
+   "component_raw": null,
+   "confidence": 1.0,
+   "description": null,
+   "flags": [],
+   "inclusions": [],
+   "issues": [],
+   "label": {
+    "confidence": 0.95,
+    "gap_type": "unmanaged_switch",
+    "line_role": "product",
+    "rule": "'switch' in title"
+   },
+   "line_ref": "3",
+   "name_key": "managed switch",
+   "option": null,
+   "priority_group": "High Priority",
+   "qty": 1,
+   "section": null,
+   "unit_price": null
+  },
+  {
+   "amount": null,
+   "canonical": "firewall reconfiguration",
+   "component": "Firewall Reconfiguration",
+   "component_raw": null,
+   "confidence": 1.0,
+   "description": null,
+   "flags": [],
+   "inclusions": [],
+   "issues": [],
+   "label": {
+    "confidence": 0.95,
+    "gap_type": "firewall_underconfigured",
+    "line_role": "setup",
+    "rule": "'firewall' in title"
+   },
+   "line_ref": "4",
+   "name_key": "firewall reconfiguration",
+   "option": null,
+   "priority_group": "High Priority",
+   "qty": 1,
+   "section": null,
+   "unit_price": null
+  },
+  {
+   "amount": null,
+   "canonical": "firewall configuration setup management",
+   "component": "Firewall configuration setup & management",
+   "component_raw": "Firewall configuration set up & management",
+   "confidence": 1.0,
+   "description": null,
+   "flags": [
+    "text_cleaned"
+   ],
+   "inclusions": [],
+   "issues": [],
+   "label": {
+    "confidence": 0.95,
+    "gap_type": "firewall_underconfigured",
+    "line_role": "setup",
+    "rule": "'firewall' in title"
+   },
+   "line_ref": "5",
+   "name_key": "configuration firewall management setup",
+   "option": null,
+   "priority_group": "High Priority",
+   "qty": 1,
+   "section": null,
+   "unit_price": null
+  },
+  {
+   "amount": null,
+   "canonical": "server for ad/dc",
+   "component": "Server for AD/DC",
+   "component_raw": null,
+   "confidence": 1.0,
+   "description": null,
+   "flags": [],
+   "inclusions": [],
+   "issues": [],
+   "label": {
+    "confidence": 0.95,
+    "gap_type": "no_second_dc",
+    "line_role": "product",
+    "rule": "'ad/dc' in title"
+   },
+   "line_ref": "6",
+   "name_key": "ad dc server",
+   "option": null,
+   "priority_group": "To Consider",
+   "qty": 1,
+   "section": null,
+   "unit_price": null
+  },
+  {
+   "amount": null,
+   "canonical": "nas",
+   "component": "NAS",
+   "component_raw": null,
+   "confidence": 1.0,
+   "description": null,
+   "flags": [],
+   "inclusions": [],
+   "issues": [],
+   "label": {
+    "confidence": 0.95,
+    "gap_type": "backup_at_risk",
+    "line_role": "product",
+    "rule": "'nas' in title"
+   },
+   "line_ref": "7",
+   "name_key": "nas",
+   "option": null,
+   "priority_group": "To Consider",
+   "qty": 1,
+   "section": null,
+   "unit_price": null
+  },
+  {
+   "amount": null,
+   "canonical": "phoenix odr",
+   "component": "Phoenix ODR",
+   "component_raw": "Phoneix ODR",
+   "confidence": 1.0,
+   "description": null,
+   "flags": [
+    "text_cleaned"
+   ],
+   "inclusions": [],
+   "issues": [],
+   "label": {
+    "confidence": 0.95,
+    "gap_type": "no_disaster_recovery",
+    "line_role": "product",
+    "rule": "'odr' in title"
+   },
+   "line_ref": "8",
+   "name_key": "odr phoenix",
+   "option": null,
+   "priority_group": "To Consider",
+   "qty": 1,
+   "section": null,
+   "unit_price": null
+  },
+  {
+   "amount": null,
+   "canonical": "dlp",
+   "component": "DLP",
+   "component_raw": null,
+   "confidence": 1.0,
+   "description": null,
+   "flags": [],
+   "inclusions": [],
+   "issues": [],
+   "label": {
+    "confidence": 0.95,
+    "gap_type": "no_dlp",
+    "line_role": "product",
+    "rule": "'dlp' in title"
+   },
+   "line_ref": "9",
+   "name_key": "dlp",
+   "option": null,
+   "priority_group": "To Consider",
+   "qty": 1,
+   "section": null,
+   "unit_price": null
+  }
+ ],
+ "parser": {
+  "detect_score": 0.9,
+  "name": "boq.pdf.v1"
+ },
+ "quality": {
+  "issues": [],
+  "parts": {
+   "completeness": 1.0,
+   "confidence": 1.0,
+   "consistency": 1.0,
+   "labelled": 1.0,
+   "uniqueness": 1.0,
+   "validity": 1.0
+  },
+  "score": 100
+ },
+ "schema": "p1.corpus.v1",
+ "sizes": {
+  "gzip": 1132,
+  "json": 4800,
+  "original": 85561
+ },
+ "source": {
+  "bytes": 85561,
+  "file_kind": "pdf",
+  "media_type": "application/pdf",
+  "name": "ITCraft 2627-030-Shobhaglobs Engineers Hub Private Limited- BOQ.pdf",
+  "origin": "folder",
+  "pages": 1,
+  "sha256": "97a181699aa67dfdde466222375792a8f02e366fa9724a0650e67ebe44aa18a8"
+ },
+ "text": {
+  "chars": 239,
+  "pages": [
+   "BOQ\nSr N Components Qty\nHigh Priority\n1 Sanitization 31\n2 End Point Security 31\n3 Managed Switch 1\n4 Firewall Reconfiguration 1\n5 Firewall configuration set up & management 1\nTo Consider\n6 Server for AD/DC 1\n7 NAS 1\n8 Phoneix ODR 1\n9 DLP 1"
+  ]
+ }
+}

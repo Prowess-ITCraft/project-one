@@ -1,0 +1,126 @@
+[project]
+name = "project-one"
+version = "0.3.0"
+description = "Project One: PrismSuite audit to certified implementation, for ITCraft / IITPL"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "gunicorn>=23.0",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    "email-validator>=2.2",
+    "python-multipart>=0.0.18",
+    "sqlalchemy[asyncio]>=2.0.36",
+    "asyncpg>=0.30",
+    "psycopg[binary]>=3.2",
+    "alembic>=1.14",
+    "redis>=5.2",
+    "celery[redis]>=5.4",
+    "flower>=2.0",
+    "boto3>=1.35",
+    "structlog>=24.4",
+    "prometheus-client>=0.21",
+    "opentelemetry-api>=1.28",
+    "opentelemetry-sdk>=1.28",
+    "opentelemetry-exporter-otlp-proto-http>=1.28",
+    "opentelemetry-instrumentation-fastapi>=0.49b0",
+    "opentelemetry-instrumentation-sqlalchemy>=0.49b0",
+    "sentry-sdk[fastapi]>=2.19",
+    "argon2-cffi>=23.1",
+    "pyjwt>=2.10",
+    "pyotp>=2.9",
+    "cryptography>=44.0",
+    "python-docx>=1.1",
+    "pdfplumber>=0.11",
+    "openpyxl>=3.1",
+    "rapidfuzz>=3.10",
+    "pillow>=11.0",
+    "tzdata>=2024.2",
+    "httpx>=0.28",
+    "polars>=1.44.2",
+    "duckdb>=1.5.6",
+    "pyarrow>=25.0.1",
+    "jinja2>=3.1.6",
+    "weasyprint>=70.0",
+    "qrcode[pil]>=8.2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "pytest-cov>=6.0",
+    "hypothesis>=6.122",
+    "testcontainers[postgres,redis,minio]>=4.9",
+    "ruff>=0.8",
+    "mypy>=1.13",
+    "import-linter>=2.1",
+    "bandit>=1.8",
+    "pip-audit>=2.7",
+    "pre-commit>=4.0",
+    "boto3-stubs[s3]>=1.35",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["migrations/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "ASYNC", "C4", "SIM", "RUF", "PT", "N"]
+# N818: error classes are named after HTTP outcomes (NotFound, Conflict) on purpose.
+ignore = ["B008", "RUF012", "S101", "N818"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["F841", "S", "PT011", "PT012", "PT018", "B017", "B007", "N802", "E501", "PT022"]
+"app/core/db.py" = ["N805"]
+# The parser normalises odd Unicode on purpose and uses immediately-called local closures.
+# The engine builds SQL only from validated identifiers and bound parameters (see its tests).
+"app/modules/datasets/engine/*.py" = ["S608", "E501", "SLF001", "C416", "RUF005"]
+"app/modules/infra/*.py" = ["E501"]
+"app/modules/boq/*.py" = ["E501", "SLF001"]
+"app/modules/datasets/*.py" = ["SLF001", "E501", "ASYNC240"]
+"app/modules/prismsuite/parsers/*.py" = ["E501", "B023", "RUF001", "SIM102", "PT018"]
+"app/**/tests/**" = ["F841", "S", "PT011", "PT012", "PT018", "B017", "B007", "N802", "E501"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+exclude = ["migrations/"]
+
+[[tool.mypy.overrides]]
+module = ["weasyprint.*", "qrcode.*", "pyarrow.*", "duckdb.*", "celery.*", "kombu.*", "testcontainers.*", "pyotp.*", "docx.*", "pdfplumber.*", "openpyxl.*", "flower.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+testpaths = ["tests", "app"]
+addopts = "-ra --strict-markers"
+markers = [
+    "clamav: needs a running clamd (skipped when unreachable)",
+]
+filterwarnings = ["ignore::DeprecationWarning:testcontainers.*"]
+
+[tool.coverage.run]
+source = ["app"]
+omit = ["app/**/tests/*", "app/worker.py", "app/cli.py"]
+branch = true
+concurrency = ["greenlet", "thread"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+
+[tool.bandit]
+exclude_dirs = ["tests", "app/modules/*/tests"]

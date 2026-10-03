@@ -1,0 +1,30 @@
+.env
+secrets/
+infra/nginx/tls/*.pem
+.venv/
+__pycache__/
+*.pyc
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+node_modules/
+.next/
+backend/openapi.json
+
+# Library inbox: customer files are never committed
+inbox/*
+!inbox/README.md
+
+# Rendered sample PDFs (python -m app.cli render-samples); regenerate, never commit
+sample-documents/
+
+# demo accounts written by `cli demo-projects` (development only)
+demo-accounts.json
+.demo/
+
+# Playwright output
+e2e/.results/
+e2e/.report/
+e2e/screens/

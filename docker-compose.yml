@@ -1,0 +1,233 @@
+# Project One. Base definition: services talk to each other by name on the internal network and
+# publish nothing. Add a mode on top:
+#   dev : docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile dev up -d --build
+#   prod: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Optional profiles: `dev` (mailpit, flower), `monitoring` (prometheus, grafana).
+
+name: project-one
+
+x-backend-env: &backend-env
+  P1_ENV: ${P1_ENV:-dev}
+  P1_PUBLIC_BASE_URL: ${P1_PUBLIC_BASE_URL:-http://localhost:9597}
+  P1_DATABASE_URL: postgresql+asyncpg://p1_app:${P1_APP_PASSWORD:?set P1_APP_PASSWORD in .env}@postgres:5432/project_one
+  P1_DATABASE_OWNER_URL: postgresql+asyncpg://p1_owner:${P1_OWNER_PASSWORD:?set P1_OWNER_PASSWORD in .env}@postgres:5432/project_one
+  P1_REDIS_URL: redis://:${P1_REDIS_PASSWORD:?set P1_REDIS_PASSWORD in .env}@redis:6379/0
+  P1_CELERY_BROKER_URL: redis://:${P1_REDIS_PASSWORD}@redis:6379/1
+  P1_S3_ENDPOINT_URL: http://minio:9000
+  P1_S3_PUBLIC_ENDPOINT_URL: ${P1_S3_PUBLIC_ENDPOINT_URL:-http://localhost:9601}
+  P1_S3_ACCESS_KEY: ${P1_S3_ACCESS_KEY:?set P1_S3_ACCESS_KEY in .env}
+  P1_S3_SECRET_KEY: ${P1_S3_SECRET_KEY:?set P1_S3_SECRET_KEY in .env}
+  P1_CLAMAV_HOST: clamav
+  P1_CLAMAV_PORT: "3310"
+  P1_FERNET_KEYS: ${P1_FERNET_KEYS:?set P1_FERNET_KEYS in .env}
+  P1_JWT_SIGNING_KEYS: ${P1_JWT_SIGNING_KEYS:?set P1_JWT_SIGNING_KEYS in .env}
+  P1_COOKIE_SECURE: ${P1_COOKIE_SECURE:-true}
+  P1_CORS_ALLOW_ORIGINS: ${P1_CORS_ALLOW_ORIGINS:-http://localhost:9595,http://localhost:9597}
+  P1_LOG_JSON: "true"
+  P1_SMTP_HOST: ${P1_SMTP_HOST:-}
+  P1_SMTP_PORT: ${P1_SMTP_PORT:-587}
+  P1_SMTP_USER: ${P1_SMTP_USER:-}
+  P1_SMTP_PASSWORD: ${P1_SMTP_PASSWORD:-}
+  P1_SMTP_FROM: ${P1_SMTP_FROM:-no-reply@itcraft.example}
+  P1_SMTP_STARTTLS: ${P1_SMTP_STARTTLS:-true}
+  P1_SENTRY_DSN: ${P1_SENTRY_DSN:-}
+  P1_OTEL_EXPORTER_OTLP_ENDPOINT: ${P1_OTEL_EXPORTER_OTLP_ENDPOINT:-}
+  P1_LIBRARY_INBOX_DIR: /data/inbox
+  P1_CORPUS_ORIGINALS_RETENTION_DAYS: ${P1_CORPUS_ORIGINALS_RETENTION_DAYS:-0}
+
+x-backend: &backend
+  build:
+    context: ./backend
+  image: project-one/backend:${P1_VERSION:-dev}
+  restart: unless-stopped
+  environment: *backend-env
+  read_only: true
+  tmpfs:
+    - /tmp
+  cap_drop: [ALL]
+  security_opt:
+    - no-new-privileges:true
+  networks: [internal]
+
+services:
+  postgres:
+    image: postgres:16.6-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${P1_POSTGRES_PASSWORD:?set P1_POSTGRES_PASSWORD in .env}
+      P1_OWNER_PASSWORD: ${P1_OWNER_PASSWORD}
+      P1_APP_PASSWORD: ${P1_APP_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d project_one || pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    deploy:
+      resources:
+        limits: {memory: 1g}
+    networks: [internal]
+
+  redis:
+    image: valkey/valkey:8.0-alpine
+    restart: unless-stopped
+    command: ["valkey-server", "--requirepass", "${P1_REDIS_PASSWORD}", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD-SHELL", "valkey-cli -a \"$$REDIS_PASSWORD\" --no-auth-warning ping | grep PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    environment:
+      REDIS_PASSWORD: ${P1_REDIS_PASSWORD}
+    networks: [internal]
+
+  minio:
+    # The official minio/minio images are no longer published; see docs/decisions/0006.
+    image: cgr.dev/chainguard/minio@sha256:4692462f35d97d7e82c30371d82f057703c5d9489bcae726010594c812f2d285
+    restart: unless-stopped
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${P1_S3_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${P1_S3_SECRET_KEY}
+    volumes:
+      - miniodata:/data
+    networks: [internal]
+
+  clamav:
+    image: clamav/clamav:1.4
+    restart: unless-stopped
+    volumes:
+      - clamdata:/var/lib/clamav
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/clamdcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 180s
+    networks: [internal]
+
+  migrate:
+    <<: *backend
+    restart: "no"
+    command: ["sh", "-c", "alembic upgrade head && python -m app.cli init-storage"]
+    depends_on:
+      postgres: {condition: service_healthy}
+      minio: {condition: service_started}
+
+  api:
+    <<: *backend
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+      clamav: {condition: service_healthy}
+    deploy:
+      resources:
+        limits: {memory: 1g}
+
+  worker:
+    <<: *backend
+    command: ["celery", "-A", "app.worker", "worker", "-l", "info", "--concurrency", "2"]
+    volumes:
+      # Old BOQs and PrismSuite reports dropped here are read every 5 minutes (ADR 0014).
+      - ./inbox:/data/inbox
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A app.worker inspect ping -d celery@$$HOSTNAME --timeout 5 | grep -q pong"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+    deploy:
+      resources:
+        limits: {memory: 1g}
+
+  beat:
+    <<: *backend
+    command: ["celery", "-A", "app.worker", "beat", "-l", "info", "--schedule", "/tmp/celerybeat-schedule"]
+    healthcheck:
+      # beat writes its schedule file once it is running
+      test: ["CMD-SHELL", "test -s /tmp/celerybeat-schedule || test -f /tmp/celerybeat-schedule.db"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+    deploy:
+      resources:
+        limits: {memory: 256m}
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        API_ORIGIN: http://api:9596
+    image: project-one/web:${P1_VERSION:-dev}
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      api: {condition: service_healthy}
+    deploy:
+      resources:
+        limits: {memory: 512m}
+    networks: [internal]
+
+  proxy:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infra/nginx/conf.d:/etc/nginx/conf.d:ro
+    depends_on:
+      api: {condition: service_healthy}
+    networks: [internal]
+
+  prometheus:
+    profiles: [monitoring]
+    image: prom/prometheus:v2.55.1
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=15d
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - promdata:/prometheus
+    networks: [internal]
+
+  grafana:
+    profiles: [monitoring]
+    image: grafana/grafana:11.3.1
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${P1_GRAFANA_PASSWORD:?set P1_GRAFANA_PASSWORD in .env}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+    volumes:
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafanadata:/var/lib/grafana
+    depends_on: [prometheus]
+    networks: [internal]
+
+networks:
+  internal:
+
+volumes:
+  pgdata:
+  redisdata:
+  miniodata:
+  clamdata:
+  promdata:
+  grafanadata:

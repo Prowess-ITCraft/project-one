@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Completion report</title>
+<style>
+  {{ base_css | safe }}
+  h1 { font-size: 16pt; margin: 0 0 2pt; color: #0F2A45; }
+  h2 { font-size: 10.5pt; margin: 14pt 0 4pt; border-bottom: 0.8pt solid #2C629F; padding-bottom: 2pt; }
+  th, td { border: 0.6pt solid #888; padding: 2.5pt 4pt; vertical-align: top; text-align: left; }
+  th { background: #eef2f7; font-size: 8.5pt; }
+  td.n { text-align: right; white-space: nowrap; }
+  .nw { white-space: nowrap; }
+  .meta { color: #333; margin-bottom: 4pt; }
+  .muted { color: #555; }
+  .up { color: #1E7A4C; font-weight: 700; } .down { color: #B42318; font-weight: 700; }
+  .sev-critical { color: #B42318; font-weight: 700; } .sev-major { color: #8A5A00; font-weight: 700; }
+  dl { display: grid; grid-template-columns: 34mm 1fr; gap: 1pt 6pt; margin: 4pt 0 0; }
+  dt { color: #555; } dd { margin: 0; }
+</style>
+</head>
+<body>
+{% from "_brand.html" import mini_header %}
+{{ mini_header(company, "Completion report") }}
+<h1>Completion report{% if c.report_number %} {{ c.report_number }}{% endif %}</h1>
+<div class="meta"><b>{{ c.customer.legal_name or c.customer.name }}</b>, {{ c.project.name }} ({{ c.project.code }}). Printed {{ c.printed }}.</div>
+<dl>
+  {% if c.quote_ref %}<dt>Quotation</dt><dd>{{ c.quote_ref }}{% if c.po_number %}, purchase order {{ c.po_number }}{% endif %}</dd>{% endif %}
+  {% if c.work_started %}<dt>Work</dt><dd>{{ c.work_started }} to {{ c.work_finished or "in progress" }}</dd>{% endif %}
+  {% if c.verifiers %}<dt>Verified by</dt><dd>{{ c.verifiers | join(", ") }}</dd>{% endif %}
+  <dt>Audits</dt><dd>Before: {{ c.baseline_ref or "not recorded" }}. After: {{ c.rescan_ref or "rescan not approved yet" }}.</dd>
+</dl>
+
+<h2>Before and after, on the four lenses</h2>
+<table>
+  <thead><tr><th>Lens</th><th>Before</th><th>After</th><th>Change</th></tr></thead>
+  <tbody>{% for l in c.lenses %}<tr><td>{{ l.label }}</td><td class="n">{{ l.before or "" }}</td><td class="n">{{ l.after or "" }}</td>
+  <td class="n">{% if l.change %}{% set ch = l.change | float %}{% if ch > 0 %}<span class="up">+{{ l.change }}</span>{% elif ch < 0 %}<span class="down">{{ l.change }}</span>{% else %}No change{% endif %}{% endif %}</td></tr>{% endfor %}</tbody>
+</table>
+<p class="muted" style="margin-top:3pt">Scores out of 100 from the PrismSuite audit before the work and the rescan after it.</p>
+
+<h2>Work delivered</h2>
+{% if c.delivered %}
+<table>
+  <thead><tr><th>Task</th><th>Device</th><th>Closed</th><th>Verified by</th></tr></thead>
+  <tbody>{% for d in c.delivered %}<tr><td><b>{{ d.ref }}</b> {{ d.title }}</td><td class="nw">{{ d.device or "" }}</td><td class="nw">{{ d.closed or "" }}</td><td class="nw">{{ d.verified_by or "" }}</td></tr>{% endfor %}</tbody>
+</table>
+{% else %}<p class="muted">No task is closed yet.</p>{% endif %}
+
+{% if c.exclusions %}
+<h2>Excluded by agreement</h2>
+<table>
+  <thead><tr><th>What</th><th>Kind</th><th>Reason</th><th class="nw">Approved by</th><th class="nw">Customer</th></tr></thead>
+  <tbody>{% for x in c.exclusions %}<tr><td>{{ x.what }}</td><td class="nw">{{ x.kind | capitalize }}</td><td>{{ x.reason }}</td><td class="nw">{{ x.approved_by or "" }}</td><td class="nw">{{ x.acknowledged_by or "" }}</td></tr>{% endfor %}</tbody>
+</table>
+{% endif %}
+
+<h2>Configuration checks</h2>
+{% if c.configuration %}
+<table>
+  <thead><tr><th>Task</th><th>Device</th><th>Checks run</th><th>Last result</th><th>Pass</th><th>Fail</th><th>Verifier judged</th></tr></thead>
+  <tbody>{% for k in c.configuration %}<tr><td>{{ k.ref }}</td><td>{{ k.device }}</td><td class="n">{{ k.attempts }}</td><td>{{ "Passed" if k.passed else "Failed" }}</td><td class="n">{{ k.pass }}</td><td class="n">{{ k.fail }}</td><td class="n">{{ k.not_checked }}</td></tr>{% endfor %}</tbody>
+</table>
+{% else %}<p class="muted">No configuration checks were needed.</p>{% endif %}
+
+<h2>Deviations</h2>
+{% if c.deviations_closed or c.deviations_open %}
+<table>
+  <thead><tr><th>Task</th><th>Setting</th><th>Severity</th><th>Outcome</th></tr></thead>
+  <tbody>
+  {% for d in c.deviations_closed %}<tr><td>{{ d.task }}</td><td>{{ d.label }}</td><td class="sev-{{ d.severity }}">{{ d.severity | capitalize }}</td><td>{{ d.status | capitalize }}{% if d.resolution %}: {{ d.resolution }}{% endif %}</td></tr>{% endfor %}
+  {% for d in c.deviations_open %}<tr><td>{{ d.task }}</td><td>{{ d.label }}</td><td class="sev-{{ d.severity }}">{{ d.severity | capitalize }}</td><td>Still open{% if d.actual %}: found {{ d.actual }}, target {{ d.expected }}{% endif %}</td></tr>{% endfor %}
+  </tbody>
+</table>
+{% else %}<p class="muted">No deviations were found.</p>{% endif %}
+
+<h2>Recommendations still open</h2>
+{% if c.open_recommendations %}
+<table>
+  <thead><tr><th>Gap</th><th>Lens</th><th>Priority</th><th>Recommendation</th></tr></thead>
+  <tbody>{% for g in c.open_recommendations %}<tr><td><b>{{ g.code }}</b> {{ g.title }}</td><td>{{ g.lens | capitalize }}</td><td>{{ g.priority }}</td><td>{{ g.recommendation or "" }}</td></tr>{% endfor %}</tbody>
+</table>
+{% else %}<p class="muted">Every gap in the register was addressed by the accepted quotation.</p>{% endif %}
+</body>
+</html>

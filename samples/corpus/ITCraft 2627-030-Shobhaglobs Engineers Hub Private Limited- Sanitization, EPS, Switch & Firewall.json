@@ -1,0 +1,331 @@
+{
+ "built_at": "1970-01-01T00:00:00+00:00",
+ "cleaning_version": "2",
+ "document": {
+  "customer": "Shobhaglobs Engineers Hub Private Limited",
+  "doc_kind": "quotation",
+  "gst_rate": "18",
+  "quote_date": "2026-09-26",
+  "quote_ref": "ITCraft/NN/2627/030",
+  "validity_days": 5,
+  "warnings": []
+ },
+ "kind": "boq",
+ "lines": [
+  {
+   "amount": "15500.00",
+   "canonical": "system sanitization to quarantine/ mitigate risks arising out of malicious application",
+   "component": "System sanitization to quarantine/ mitigate risks arising out of malicious application,",
+   "component_raw": "System sanitization to quarentine/ mitigate risks arising out of malious application,",
+   "confidence": 1.0,
+   "description": "malware, or any unwanted dormant programs",
+   "flags": [
+    "text_cleaned"
+   ],
+   "inclusions": [],
+   "issues": [],
+   "label": {
+    "confidence": 0.95,
+    "gap_type": "conflicting_av",
+    "line_role": "service",
+    "rule": "'sanitization' in title"
+   },
+   "line_ref": "1",
+   "name_key": "arising mitigate quarantine risks sanitization system",
+   "option": null,
+   "priority_group": "High Priority",
+   "qty": 31,
+   "section": "Sanitization, End Point Security & Managed Switch",
+   "unit_price": "500.00"
+  },
+  {
+   "amount": "48422.00",
+   "canonical": "acronis xdr extended detection and response per annum",
+   "component": "Acronis XDR - Extended Detection and Response per annum",
+   "component_raw": null,
+   "confidence": 1.0,
+   "description": "Workloads : Servers, VMs, Workstations, Hosting Servers",
+   "flags": [],
+   "inclusions": [],
+   "issues": [],
+   "label": {
+    "confidence": 0.95,
+    "gap_type": "no_unified_eps",
+    "line_role": "product",
+    "rule": "'xdr' in title"
+   },
+   "line_ref": "2",
+   "name_key": "acronis annum detection extended response xdr",
+   "option": null,
+   "priority_group": "High Priority",
+   "qty": 31,
+   "section": "Sanitization, End Point Security & Managed Switch",
+   "unit_price": "1562.00"
+  },
+  {
+   "amount": "12000.00",
+   "canonical": "eps implementation security setup configuration + one year administration",
+   "component": "EPS implementation, security setup configuration + One Year administration &",
+   "component_raw": "EPS implementation, security set up configuration + One Year administration &",
+   "confidence": 1.0,
+   "description": "Managing charges that includes:",
+   "flags": [
+    "text_cleaned"
+   ],
+   "inclusions": [
+    "weekly EPS portal verification",
+    "Monthly report generation, assessment & submission",
+    "All mail communication with Sophos & query handling",
+    "Regular relevant firmware updates, verification & patching",
+    "All security breach calls handling & management",
+    "Every new user's device addition, configuration",
+    "Every outgoing user's system scanning, verification & allocation",
+    "All EPS support calls"
+   ],
+   "issues": [],
+   "label": {
+    "confidence": 0.95,
+    "gap_type": "no_unified_eps",
+    "line_role": "setup",
+    "rule": "'eps' in title"
+   },
+   "line_ref": "3",
+   "name_key": "+ configuration eps implementation security setup",
+   "option": null,
+   "priority_group": "High Priority",
+   "qty": 1,
+   "section": "Sanitization, End Point Security & Managed Switch",
+   "unit_price": "12000.00"
+  },
+  {
+   "amount": "33972.00",
+   "canonical": "cisco catalyst c1300 24t 4g giga managed switch",
+   "component": "Cisco Catalyst C1300-24T-4G Giga Managed Switch",
+   "component_raw": null,
+   "confidence": 1.0,
+   "description": null,
+   "flags": [],
+   "inclusions": [],
+   "issues": [],
+   "label": {
+    "confidence": 0.95,
+    "gap_type": "unmanaged_switch",
+    "line_role": "product",
+    "rule": "'switch' in title"
+   },
+   "line_ref": "4",
+   "name_key": "24t 4g c1300 catalyst cisco giga",
+   "option": null,
+   "priority_group": "High Priority",
+   "qty": 1,
+   "section": "Sanitization, End Point Security & Managed Switch",
+   "unit_price": "33972.00"
+  },
+  {
+   "amount": "6000.00",
+   "canonical": "one time setup installation and configuration charges inclusive of one year onsite",
+   "component": "One Time Setup installation and Configuration charges Inclusive of One Year Onsite",
+   "component_raw": null,
+   "confidence": 1.0,
+   "description": "/ Remote Support Charges for Switch",
+   "flags": [],
+   "inclusions": [],
+   "issues": [],
+   "label": {
+    "confidence": 0.7,
+    "gap_type": "unmanaged_switch",
+    "line_role": "setup",
+    "rule": "'switch' in details"
+   },
+   "line_ref": "5",
+   "name_key": "charges configuration installation one setup time",
+   "option": null,
+   "priority_group": "High Priority",
+   "qty": 1,
+   "section": "Sanitization, End Point Security & Managed Switch",
+   "unit_price": "6000.00"
+  },
+  {
+   "amount": "66812.00",
+   "canonical": "sophos xgs 108 firewall with 3 years xtreme protection",
+   "component": "Sophos XGS-108 Firewall With 3 years Xtreme Protection",
+   "component_raw": null,
+   "confidence": 1.0,
+   "description": "Upto 40-50 Concurrent Users",
+   "flags": [],
+   "inclusions": [
+    "6 Fixed Ethernet GbE Copper Interfaces",
+    "Firewall Throughput 12,500Mbps",
+    "VPN Throughput 8,250Mbps",
+    "Firewall Hardware Appliance",
+    "Gateway antivirus",
+    "Gateway Anti-Spam",
+    "Intrusion Prevention System",
+    "Web URL Filter",
+    "Application Filtering",
+    "VPN, BM & Load Balancing & Failover",
+    "Active-Active, Active-Passive, Clustering"
+   ],
+   "issues": [],
+   "label": {
+    "confidence": 0.95,
+    "gap_type": "firewall_underconfigured",
+    "line_role": "product",
+    "rule": "'firewall' in title"
+   },
+   "line_ref": "6A",
+   "name_key": "108 3 firewall sophos xgs years",
+   "option": "A",
+   "priority_group": "High Priority",
+   "qty": 1,
+   "section": "Firewall Options",
+   "unit_price": "66812.00"
+  },
+  {
+   "amount": "109653.00",
+   "canonical": "fortigate fg40f utm with 3year subscription",
+   "component": "FortiGate FG40F UTM with 3Year Subscription",
+   "component_raw": null,
+   "confidence": 1.0,
+   "description": "For 50-60 Concurrent Users",
+   "flags": [],
+   "inclusions": [
+    "4 Fixed Ethernet GbE Copper Interfaces + 1 FortiLink Ports",
+    "Firewall Throughput 7.5Mbps",
+    "VPN Throughput 490 Mbps",
+    "NGFW Throughput 800 MBPS",
+    "Firewall Hardware Appliance",
+    "Gateway antivirus",
+    "Gateway Anti-Spam",
+    "Intrusion Prevention System",
+    "Web URL Filter",
+    "Application Filtering",
+    "VPN, BM & Load Balancing & Failover",
+    "Active-Active, Active-Passive, Clustering"
+   ],
+   "issues": [],
+   "label": {
+    "confidence": 0.95,
+    "gap_type": "firewall_underconfigured",
+    "line_role": "product",
+    "rule": "'utm' in title"
+   },
+   "line_ref": "6B",
+   "name_key": "3year fg40f fortigate subscription utm",
+   "option": "B",
+   "priority_group": "High Priority",
+   "qty": 1,
+   "section": "Firewall Options",
+   "unit_price": "109653.00"
+  },
+  {
+   "amount": "12000.00",
+   "canonical": "fortinet / sophos one time setup installation configuration charges",
+   "component": "Fortinet / Sophos One Time Setup Installation Configuration Charges",
+   "component_raw": "FHoigrhti nPerito /r iStoyphos One Time Setup Installation Configuration Charges",
+   "confidence": 0.75,
+   "description": null,
+   "flags": [
+    "repaired_interleaved_heading",
+    "text_cleaned"
+   ],
+   "inclusions": [
+    "Network Firewall Configuration",
+    "SSL VPN Configuration for remote users",
+    "Multiple ISP Configuration & load balancing",
+    "Defining Content Filtering Policies",
+    "Unwanted sites blocking",
+    "Defining & punching policies for network security",
+    "Public Email domain blocking",
+    "Internet Bandwidth allocation for all users"
+   ],
+   "issues": [
+    "The heading 'High Priority' was printed over this line and was taken out. Check the text."
+   ],
+   "label": {
+    "confidence": 0.7,
+    "gap_type": "firewall_underconfigured",
+    "line_role": "setup",
+    "rule": "'firewall' in details"
+   },
+   "line_ref": "7",
+   "name_key": "fortinet installation one setup sophos time",
+   "option": null,
+   "priority_group": "High Priority",
+   "qty": 1,
+   "section": "Firewall Options",
+   "unit_price": "12000.00"
+  },
+  {
+   "amount": "15000.00",
+   "canonical": "fortinet / sophos one year support charges for vpn firewall includes",
+   "component": "Fortinet / Sophos One Year Support Charges for VPN Firewall Includes:",
+   "component_raw": null,
+   "confidence": 1.0,
+   "description": null,
+   "flags": [],
+   "inclusions": [
+    "Add / Delete/ Validate Accounts",
+    "Redefining controls for existing users",
+    "Regular monitoring for failures, assessment & support",
+    "Firmware patching for the Firewall",
+    "SSL VPN Accounts management",
+    "Monthly cumulative VPN Firewall reporting",
+    "Regular verification validation of accounts",
+    "Onsite/Remote Management: Breakdown Calls"
+   ],
+   "issues": [],
+   "label": {
+    "confidence": 0.95,
+    "gap_type": "firewall_underconfigured",
+    "line_role": "support",
+    "rule": "'firewall' in title"
+   },
+   "line_ref": "8",
+   "name_key": "charges fortinet one sophos support year",
+   "option": null,
+   "priority_group": "High Priority",
+   "qty": 1,
+   "section": "Firewall Options",
+   "unit_price": "15000.00"
+  }
+ ],
+ "parser": {
+  "detect_score": 0.9,
+  "name": "boq.pdf.v1"
+ },
+ "quality": {
+  "issues": [],
+  "parts": {
+   "completeness": 1.0,
+   "confidence": 0.9722,
+   "consistency": 1.0,
+   "labelled": 1.0,
+   "uniqueness": 1.0,
+   "validity": 1.0
+  },
+  "score": 100
+ },
+ "schema": "p1.corpus.v1",
+ "sizes": {
+  "gzip": 3655,
+  "json": 12725,
+  "original": 151946
+ },
+ "source": {
+  "bytes": 151946,
+  "file_kind": "pdf",
+  "media_type": "application/pdf",
+  "name": "ITCraft 2627-030-Shobhaglobs Engineers Hub Private Limited- Sanitization, EPS, Switch & Firewall.pdf",
+  "origin": "folder",
+  "pages": 2,
+  "sha256": "1ed9068ea822b78209e40c59b6564394a267359bed37d2969f54bea8ffa6e830"
+ },
+ "text": {
+  "chars": 4184,
+  "pages": [
+   "28/D-1, Jai Shree Krishna Soc, MHADA\nMulund East, Mumbai - 400 081\nPh: 8454 079 001 / 8454 079 002\nEmail: nirav@iitpl.co.in\nGSTIN No: 27AAPCP3476M1ZL\nQUOTATION\nTo,\nM/S Shobhaglobs Engineers Hub Private Limited Date : 26th September, 2026\nKatha No.745, Iggalur village, Sy.No.78/8, Chandapura to, Iggalur, Taluk, Quote Ref No: ITCraft/NN/2627/030\nAnekal, Bengaluru, Karnataka 562166\nDear Sir/Mam,\nPlease find below our offer for Sanitization, End Point Security, Managed Switch & Firewall as per your Requirements:\nSr N Components Qty Price Amount\nHigh Priority\nSanitization, End Point Security & Managed Switch\n1 System sanitization to quarentine/ mitigate risks arising out of malious application, 31 ₹ 500.00 ₹ 15,500.00\nmalware, or any unwanted dorment programs\n2 Acronis XDR - Extended Detection and Response per annum 31 ₹ 1,562.00 ₹ 48,422.00\nWorkloads : Servers, VMs, Workstations, Hosting Servers\n3 EPS implementation, security set up configuration + One Year administration & 1 ₹ 12,000.00 ₹ 12,000.00\nManaging charges that includes:\nweekly EPS portal verification\nMonthy report generation, assessment & submission\nAll mail communication with Sophos & query handling\nRegular relevant firmware updates, verification & patching\nAll security breach calls handling & management\nEvery new user's device addition, configuration\nEvery outgoing user's system scanning, verification & allocation\nAll EPS support calls\n4 Cisco Catalyst C1300-24T-4G Giga Managed Switch 1 ₹ 33,972.00 ₹ 33,972.00\n5 One Time Setup installation and Configuration charges Inclusive of One Year Onsite 1 ₹ 6,000.00 ₹ 6,000.00\n/ Remote Support Charges for Switch\nFirewall Options\n6A Sophos XGS-108 Firewall With 3 years Xtreme Protection 1 ₹ 66,812.00 ₹ 66,812.00\nUpto 40-50 Concurrent Users\n6 Fixed Ethernet GbE Copper Interfaces\nFirewall Throughput 12,500Mbps\nVPN Throughput 8,250Mbps\nFirewall Hardware Appliance\nGateway antivirus\nGateway Anti-Spam\nIntrusion Prevention System\nWeb URL Filter\nApplication Filtering\nVPN, BM & Load Balancing & Failover\nActive-Active, Active-Passive, Clustering\n6B FortiGate FG40F UTM with 3Year Subscription 1 ₹ 1,09,653.00 ₹ 1,09,653.00\nFor 50-60 Concurrent Users\n4 Fixed Ethernet GbE Copper Interfaces + 1 FortiLink Ports\nFirewall Throughput 7.5Mbps\nVPN Throughput 490 Mbps\nNGFW Throughput 800 MBPS\nFirewall Hardware Appliance\nGateway antivirus\nGateway Anti-Spam\nIntrusion Prevention System\nWeb URL Filter\nApplication Filtering\nVPN, BM & Load Balancing & Failover\nActive-Active, Active-Passive, Clustering",
+   "Sr N Components Qty Price Amount\n7 FHoigrhti nPerito /r iStoyphos One Time Setup Installation Configuration Charges 1 ₹ 12,000.00 ₹ 12,000.00\nNetwork Firewall Configuration\nSSL VPN Configuration for remote users\nMultiple ISP Configuration & load balancing\nDefining Content Filtering Policies\nUnwanted sites blocking\nDefining & punching policies for network security\nPublic Email domain blocking\nInternet Bandwidth allocation for all users\n8 Fortinet / Sophos One Year Support Charges for VPN Firewall Includes: 1 ₹ 15,000.00 ₹ 15,000.00\nAdd / Delete/ Validate Accounts\nRedefining controls for existing users\nRegular monitoring for failures, assessment & support\nFirmware patching for the Firewall\nSSL VPN Accounts management\nMonthly cumulative VPN Firewall reporting\nRegular verification validation of accounts\nOnsite/Remote Management: Breakdown Calls\nTerms & Conditions:\nOn the above prices - GST @ 18% applicable\nAbove can be delivered within 1-2 weeks from the date of confirmed purchase order with advance\nPayments: 100 % advance with confirmed Purchase Order\nWarranty will be in consistent with manufacturer's warranty policy\nDelivery charges extra at actuals for all out of Mumbai orders\nOrder once processed cannot be cancelled\nin case of onsite installation engineer to be deployed and his travelling accommodtion, food all arrangements to be done by the\ncustomer.\nAbove prices are strictly valid for period of 5 days only from the date of this offer, beyond the time specified new price will\nbe applicable\nThanking you and Regards,\nNirav Nagda (Biz Development Manager)\nProwess IT Craft Pvt ltd\nIT Products, IT Infra & Secured Business Continuity Solutions!!"
+  ]
+ }
+}

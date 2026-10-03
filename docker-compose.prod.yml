@@ -1,0 +1,34 @@
+# Prod mode: only the reverse proxy is published (80 redirects to 443; 9597 is the plain HTTP
+# port for a front load balancer that terminates TLS). The web app joins in Phase 11.
+# Database, cache, storage, monitoring and Celery stay on the internal network.
+# Grafana and Prometheus are reached over the admin VPN with `docker compose exec` or an SSH tunnel.
+#
+# Secrets: set real values in .env (never commit it) or switch each P1_* variable to a Docker
+# secret file; the app reads /run/secrets/<name> as well as environment variables.
+
+services:
+  proxy:
+    ports:
+      - "80:80"
+      - "443:443"
+      - "9597:80"
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infra/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./infra/nginx/tls:/etc/nginx/tls:ro
+  api:
+    environment:
+      P1_ENV: prod
+      P1_COOKIE_SECURE: "true"
+    deploy:
+      resources:
+        limits: {memory: 2g}
+  worker:
+    environment:
+      P1_ENV: prod
+  beat:
+    environment:
+      P1_ENV: prod
+  migrate:
+    environment:
+      P1_ENV: prod

@@ -1,0 +1,33 @@
+name: migrations
+on:
+  pull_request:
+    paths: ["backend/migrations/**", "backend/app/**/models.py", "backend/app/core/**"]
+permissions:
+  contents: read
+jobs:
+  alembic:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16.6-alpine
+        env:
+          POSTGRES_PASSWORD: pgtest
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      P1_DATABASE_OWNER_URL: postgresql+asyncpg://p1_owner:owner@localhost:5432/project_one
+      P1_FERNET_KEYS: ${{ secrets.CI_FERNET_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --frozen
+      - name: Create roles and database
+        run: |
+          PGPASSWORD=pgtest psql -h localhost -U postgres -c "CREATE ROLE p1_owner LOGIN PASSWORD 'owner'" -c "CREATE ROLE p1_app LOGIN PASSWORD 'app'" -c "CREATE DATABASE project_one OWNER p1_owner"
+      - run: uv run alembic upgrade head
+      - run: uv run alembic check
+      - run: uv run alembic downgrade base
