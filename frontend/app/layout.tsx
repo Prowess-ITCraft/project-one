@@ -13,6 +13,7 @@ const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono", display: 
 export const metadata: Metadata = {
   title: { default: "Project One", template: "%s | Project One" },
   description: "From IT audit to certified implementation.",
+  icons: { apple: "/icons/apple-touch-icon.png" },
 };
 export const viewport: Viewport = {
   themeColor: [

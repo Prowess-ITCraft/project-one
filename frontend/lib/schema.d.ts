@@ -2415,6 +2415,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/boq/{boq_id}/compare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Compare
+         * @description Lines added, removed and changed between two issued versions, with both totals.
+         */
+        get: operations["compare_api_v1_boq__boq_id__compare_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/boq/{boq_id}/versions/{number}/accept": {
         parameters: {
             query?: never;
@@ -4305,6 +4325,36 @@ export interface components {
             };
             /** Version */
             version?: number | null;
+        };
+        /** CompareOut */
+        CompareOut: {
+            older: components["schemas"]["CompareSideOut"];
+            newer: components["schemas"]["CompareSideOut"];
+            /** Summary */
+            summary: string;
+            /** Added */
+            added: string[];
+            /** Removed */
+            removed: string[];
+            /** Changed */
+            changed: {
+                [key: string]: unknown;
+            }[];
+        } & {
+            [key: string]: unknown;
+        };
+        /** CompareSideOut */
+        CompareSideOut: {
+            /** Number */
+            number: number;
+            /** State */
+            state: string;
+            /** Totals */
+            totals: {
+                [key: string]: unknown;
+            };
+        } & {
+            [key: string]: unknown;
         };
         /** ConfigTemplateOut */
         ConfigTemplateOut: {
@@ -13011,6 +13061,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VersionViewOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    compare_api_v1_boq__boq_id__compare_get: {
+        parameters: {
+            query: {
+                older: number;
+                newer: number;
+            };
+            header?: never;
+            path: {
+                boq_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompareOut"];
                 };
             };
             /** @description Validation Error */

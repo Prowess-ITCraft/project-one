@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ApiError, message, post, type S } from "@/lib/api";
 import { Field, Notice } from "@/components/ui";
+import { forgetKept } from "@/lib/hooks";
 import { Wordmark } from "@/components/field";
 
 /** The eight stages every project walks, drawn as the circuit on the right. */
@@ -76,7 +77,10 @@ export default function Login() {
     }
   }
 
-  const finish = () => router.replace("/projects");
+  const finish = () => {
+    forgetKept(); // a shared phone must not show the last person's tasks offline
+    router.replace("/projects");
+  };
 
   const signIn = (ev: React.FormEvent) => {
     ev.preventDefault();

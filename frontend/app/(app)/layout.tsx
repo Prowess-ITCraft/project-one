@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { post, type S } from "@/lib/api";
-import { MeProvider, ToastHost, useData } from "@/lib/hooks";
+import { forgetKept, MeProvider, ToastHost, useData } from "@/lib/hooks";
 import { Skeleton } from "@/components/ui";
 import { Logo, Wordmark } from "@/components/field";
 
@@ -58,6 +58,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (engineerOnly && path === "/projects") router.replace("/field");
   }, [engineerOnly, path, router]);
+  // Installed app on phones (public/sw.js). Not in development, where it would cache hot reloads.
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {
+        /* the app works without it, only not offline */
+      });
+    }
+  }, []);
 
   if (error && !me) {
     return (
@@ -88,6 +96,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     } catch {
       /* already signed out */
     }
+    forgetKept();
     router.replace("/login");
   }
 

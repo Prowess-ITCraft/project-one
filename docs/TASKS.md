@@ -1,25 +1,14 @@
 # Tasks
 
-Phase and task tracker. Status words: `done`, `in progress`, `blocked`, `not started`,
-`exists, to verify`. Dates follow the mock plan in `ROADMAP.md`. Decisions: `decisions/`.
+Phase status and what is left. Status words: `done`, `in progress`, `blocked`, `not started`.
+Planned dates are in `ROADMAP.md`, decisions in `decisions/`.
 
-## Where we are (3 October 2026)
+## Where we are (4 October 2026)
 
-- Batch 1 (phases 6 to 8) is built: 302 backend tests pass, 86 percent coverage. Waiting for the
-  owner's go-ahead for Batch 2 (9 to 11).
-- Next batch: phase 9 (verification engine and Director dashboard API), 10 (completion report
-  and certificate), 11 (frontend foundation, mostly done early).
-
-## Reconciliation of phases 1 to 5 (3 Oct 2026)
-
-| Check | Result |
-| --- | --- |
-| Backend test suite | 222 passed at the start of the session (7 min 50 s) |
-| Import boundaries | 2 contracts kept, 0 broken |
-| ruff and mypy --strict | Clean after fixes this session |
-| PDF generators | WeasyPrint only; moved behind the shared renderer (ADR 0016); rendered in the container with the rupee sign, remote and system files refused |
-| `docker compose up`, CI on GitHub, Trivy | Not re-run this session. Last recorded healthy stack on 1 Oct (MEMORY.md) |
-| Six core docs | Missing; created this session from the code and the brief |
+- Phases 1 to 10 are built. Backend: 320 tests pass at 84 percent coverage (4 Oct).
+- The web app covers every stage, from audit intake to the certificate. Phase 12 has a few
+  screens and the installable phone app left.
+- Next: finish phase 12, then 13 (learning from the library), 14 (hardening), 15 (go-live).
 
 ## Phase status
 
@@ -28,90 +17,79 @@ Phase and task tracker. Status words: `done`, `in progress`, `blocked`, `not sta
 | 1 | Platform foundation | done | compose, CI files, health, metrics, outbox, backups |
 | 2 | Identity, RBAC, MFA, audit log, customers, gates | done | permission matrix covers every route |
 | 3 | PrismSuite intake, catalogue, price book | done | docx v1 and JSON v1 parsers |
-| 4 | Dataset engine and library | done | plus the document corpus (Batch 1) |
+| 4 | Dataset engine and library | done | plus the document corpus |
 | 5 | Infra model, rule library, gap engine | done | |
-| 6 | BOQ and recommendation engine | done | gaps listed below |
-| 7 | Planning, scheduling, baselines | done | plan PDF added this session |
-| 8 | Field ops, evidence, OTP, notifications, realtime | done | rebuilt to the v2.1 states |
-| 9 | Verification engine, Director dashboard API | not started | engine interface and answer driver exist (phase 8) |
-| 10 | Completion report and certificate | not started | `field_status` contract ready |
-| 11 | Frontend foundation | in progress | first slice built 1 Oct |
-| 12 | Frontend core workflows | in progress | done: field engineer flow with offline outbox, review queue, plan and field tabs, library corpus and data quality; left: BOQ version diff view, dataset workspace, Playwright tests |
-| 13 | ML pipeline | not started | corpus, labels and frozen snapshots ready |
+| 6 | BOQ and recommendation engine | done | two open items below |
+| 7 | Planning, scheduling, baselines | done | plan PDF |
+| 8 | Field ops, evidence, OTP, notifications, realtime | done | |
+| 9 | Verification engine, Director dashboard API | done | SonicWall mappings unconfirmed until a real export |
+| 10 | Completion report and certificate | done | real IITPL stamp still needed |
+| 11 | Frontend foundation | done | |
+| 12 | Frontend core workflows | in progress | see below |
+| 13 | Learning from the library (ML) | not started | corpus, labels and frozen snapshots ready |
 | 14 | Hardening and performance | not started | |
 | 15 | Go-live | not started | |
 
-## Batch 1 detail
+## Open items by phase
 
 ### Phase 6: BOQ and recommendations
 
-- [x] Templates per gap type, quantity rules, safe expressions
-- [x] Options 6A and 6B never summed; totals as ranges
-- [x] Priority groups, price book, expired price blocks approval
-- [x] Every edit with a reason, versions with diff, PO on acceptance
-- [x] Quote refs per financial year, safe under concurrency
-- [x] Quotation and summary BOQ as HTML, PDF and Excel; golden tests
-- [x] Rule-based recommender with reasons and runner-ups
-- [x] PDF through the shared renderer with checksum header (ADR 0016)
 - [ ] Store issued PDFs in MinIO linked to the BOQ version (needs a column and migration)
 - [ ] Visual golden test (rasterise page 1, compare to a reference) in the container CI job
 
-### Phase 7: Planning
-
-- [x] Tasks from the accepted BOQ, dependencies, engineer leave, downtime windows
-- [x] Scheduler, baselines per device from config templates, locking
-- [x] Plan and schedule PDF and HTML (`/projects/{id}/plan/render`)
-
 ### Phase 8: Field operations
 
-- [x] State machine per ADR 0015, nothing skipped, verified in tests
-- [x] Customer OTP at check-in and hand over (email), hashed, rate limited
-- [x] Evidence per stage, resumable by `client_id`, offline window 72 hours
-- [x] Engine check behind `ConfigCheckDriver` (answer driver v1)
-- [x] Verifier queue; the doer cannot verify (tested with a person holding both roles)
-- [x] Customer, Director and PM notified at every transition
-- [x] Live feed: SSE stream plus polling with a `seq` cursor; Director summary
-- [x] Checklist record PDF with embedded photos
-- [x] Notifications module registered, retries scheduled every minute
-- [ ] WebSocket transport (SSE covers v1; add only if a client needs two-way)
+- [ ] WebSocket transport. SSE covers v1; add only if a client needs two-way
 
-### Data corpus (owner request, 3 Oct)
+### Phase 9: Verification
 
-- [x] Canonical JSON per file (`p1.corpus.v1`), gzipped, indexed (ADR 0014)
-- [x] Cleaning: normalisation, spelling, heading-overprint repair, labels per gap type
-- [x] Quality score per document; analysis with price bands and MAD outliers
-- [x] Rebuild from originals, retention purge (off by default), data card distributions
-- [x] Watched inbox folder scheduled every 5 minutes; `samples/corpus` golden files
-- [x] `cli corpus convert | ingest | rebuild | purge`
+- [x] Export parsers per brand, SonicWall first (`.exp`, key/value text, JSON)
+- [x] Brand key mappings as data, with an inspector to confirm them on a real export
+- [x] Deviation register kept in step with every configuration check
+- [x] Severity policy: what blocks the certificate, what a verifier may not accept
+- [x] Verifier can add a deviation by hand or accept one with a reason; never the doer
+- [x] Director dashboard API: stage, field progress, blocked work, open deviations
+- [ ] Confirm the SonicWall mappings against the first real export
 
-### Frontend (brand pass)
+### Phase 10: Completion report and certificate
 
-- [x] ITCraft and IITPL logos, brand tokens with contrast checked (DESIGN.md)
-- [x] My tasks, task page with timeline, evidence capture, OTP, offline outbox
-- [x] Review queue; Plan tab; Field work tab with live feed
-- [x] Library: corpus, data quality, held lines; status bugs fixed
-- [ ] Playwright tests for the field flow (phase 12)
-- [ ] Installable web app (PWA manifest and service worker) for engineers (phase 12)
+- [x] Eight release conditions, checked in one place, no override
+- [x] Waivers: Director decides, customer acknowledges, printed on the certificate
+- [x] Field work summary, completion report preview, lock, PDF stored with its SHA-256
+- [x] Certificate: Director only, signed, QR code to the public check page, revoke
+- [x] Certificate wording and stamp settings
+- [ ] Upload the real IITPL stamp (waiting on IITPL)
 
-## Gaps found and fixed this session
+### Phase 12: Frontend core workflows
 
-- Watched library folder existed but was never scheduled. Fixed (beat task, compose mount).
-- Notification retries were never scheduled. Fixed.
-- Field permissions (`field:*`) referenced by code did not exist. Added.
-- Deprecated DuckDB and Pillow calls. Fixed.
-- Library page checked status names and collection keys the API never sends. Fixed.
-- Events published from the CLI were silently dropped (no subscribers loaded). Fixed at the root
-  with a start-up guard (ADR 0018); `cli corpus requeue` re-sent the three affected samples.
-- A file whose held lines were all settled stayed at "Needs a person". Fixed and tested.
-- The web image did not include `public/`, so logos were missing in the container. Fixed.
-- On phones the top bar row stretched to half the screen and wrapped. Fixed (compact bar).
-- Authenticator set-up showed only a key to type; it now shows a QR code drawn by the API.
-- PDF review (render-samples): double bullets on every quotation inclusion, a section heading left
-  alone at a page foot, page numbers in a fallback serif, an empty "Proven by" column on the plan,
-  and a failed configuration check labelled "passed" on the task record. All fixed.
-- Cleaning v2 corrects three more misspellings seen in the ITCraft quotation; the dev library was
-  rebuilt through `cli corpus rebuild`.
+- [x] Field engineer flow with offline outbox, review queue, plan and field tabs
+- [x] Library: corpus, data quality, held lines
+- [x] Completion tab, Director dashboard, certificate settings, public check page
+- [x] Playwright smoke tests across roles, desktop and phone
+- [x] BOQ version compare view
+- [x] Installable web app (manifest and service worker) for field engineers
+- [ ] Playwright test that walks one field task end to end on a phone
 
-## Next batch questions (phases 9 to 11)
+### Phase 13: Learning from the library
 
-See `MEMORY.md`, section "Open questions".
+- [ ] Features from frozen snapshots only (RULES 2.6)
+- [ ] Learned ranker behind the recommender contract, in shadow mode next to the rules
+- [ ] Agreement report: where the ranker and the rules disagree, and on what
+
+### Phase 14: Hardening and performance
+
+- [ ] Load test of the busiest paths, with numbers recorded
+- [ ] Security pass: dependency audit, image scan, permission matrix, secrets
+- [ ] Backup and restore drill with timings
+- [ ] Pin CI actions by commit SHA and image digests
+
+### Phase 15: Go-live
+
+- [ ] Production compose and TLS
+- [ ] Deploy, rollback and incident runbooks
+- [ ] First-day checklist and a short training guide per role
+
+## Questions still open
+
+1. Severity rules beyond critical, major and minor (ADR 0019).
+2. The IITPL stamp image.

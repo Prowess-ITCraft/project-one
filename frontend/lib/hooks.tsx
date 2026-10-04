@@ -1,11 +1,45 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
-import { get, message, type S } from "./api";
+import { ApiError, get, message, type S } from "./api";
 
-/** Load data once and on demand. Keeps the last good data while reloading. */
+// What an engineer needs to reopen a task with no signal: who they are and their field work.
+// Field responses never carry prices. Cleared on sign-out (forgetKept), since phones get shared.
+const KEEP = /^\/(auth\/me$|field\/)/;
+const KEPT = "p1-kept:";
+
+function keep(path: string, data: unknown) {
+  if (!KEEP.test(path)) return;
+  try {
+    localStorage.setItem(KEPT + path, JSON.stringify(data));
+  } catch {
+    /* storage full or blocked: the page still works online */
+  }
+}
+
+function kept<T>(path: string): T | null {
+  if (!KEEP.test(path)) return null;
+  try {
+    const raw = localStorage.getItem(KEPT + path);
+    return raw ? (JSON.parse(raw) as T) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function forgetKept() {
+  try {
+    for (const k of Object.keys(localStorage)) if (k.startsWith(KEPT)) localStorage.removeItem(k);
+  } catch {
+    /* nothing kept */
+  }
+}
+
+/** Load data once and on demand. Keeps the last good data while reloading. With no network,
+ * field pages fall back to what they last loaded and say so through `stale`. */
 export function useData<T>(path: string | null) {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [stale, setStale] = useState(false);
   const [loading, setLoading] = useState(path !== null);
   const seq = useRef(0);
   const load = useCallback(async () => {
@@ -17,9 +51,16 @@ export function useData<T>(path: string | null) {
       if (n === seq.current) {
         setData(d);
         setError(null);
+        setStale(false);
+        keep(path, d);
       }
     } catch (e) {
-      if (n === seq.current) setError(message(e));
+      if (n !== seq.current) return;
+      const old = e instanceof ApiError ? null : kept<T>(path);
+      if (old !== null) {
+        setData((cur) => cur ?? old);
+        setStale(true);
+      } else setError(message(e));
     } finally {
       if (n === seq.current) setLoading(false);
     }
@@ -27,7 +68,7 @@ export function useData<T>(path: string | null) {
   useEffect(() => {
     load();
   }, [load]);
-  return { data, error, loading, reload: load };
+  return { data, error, stale, loading, reload: load };
 }
 
 type Me = S["MeOut"];

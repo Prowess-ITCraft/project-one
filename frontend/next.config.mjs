@@ -17,6 +17,8 @@ const nextConfig = {
   },
   async headers() {
     return [
+      // The browser checks for a new service worker on every visit; never let a proxy keep an old one.
+      { source: "/sw.js", headers: [{ key: "Cache-Control", value: "no-cache" }] },
       {
         source: "/(.*)",
         headers: [

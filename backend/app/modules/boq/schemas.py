@@ -120,6 +120,21 @@ class VersionRowOut(_Out):
     po_number: str | None = None
 
 
+class CompareSideOut(_Out):
+    number: int
+    state: str
+    totals: dict[str, Any]
+
+
+class CompareOut(_Out):
+    older: CompareSideOut
+    newer: CompareSideOut
+    summary: str
+    added: list[str]
+    removed: list[str]
+    changed: list[dict[str, Any]]
+
+
 class EditRowOut(_Out):
     at: str
     by: str

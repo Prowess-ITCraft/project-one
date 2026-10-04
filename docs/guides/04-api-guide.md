@@ -78,11 +78,15 @@ Each refresh token works once. The answer contains the next one.
 | Infrastructure | `/projects/{id}/infra` | build, read and lock current and ideal states |
 | Rules | `/infra/rules` | list, propose, approve rule changes |
 | Gaps | `/projects/{id}/gaps` | draft, edit, add, lock the gap register |
-| BOQ | `/projects/{id}/boq`, `/boq/{id}` | generate, edit operations, refresh prices, submit, pricing decision, issue, accept, reopen, render |
+| BOQ | `/projects/{id}/boq`, `/boq/{id}` | generate, edit operations, refresh prices, submit, pricing decision, issue, compare versions, accept, reopen, render |
 | Plan | `/projects/{id}/plan`, `/planning` | generate, schedule, tasks, baselines, downtime, leave, lock, `render` (plan PDF) |
 | Field work | `/projects/{id}/field` | `start`, `runs`, `summary`, `events?after=`, `stream` (server-sent events) |
 | Field tasks | `/field` | `my`, `runs/{id}`, `accept`, `depart`, `codes/{check_in or handover}`, `check-in`, `evidence`, `prechecks-done`, `steps/{n}`, `values`, `configured`, `submit-evidence`, `hand-over`, `block`, `unblock`, `reassign`, `review-queue`, `decision`, `render` |
 | Notifications | `/account/notification-preferences`, `/notifications` | mute optional messages; message log for auditors |
+| Verification | `/verification` | `projects/{id}/deviations`, add or `accept` a deviation, severity `policy`, brand `mappings`, `inspect` an export |
+| Dashboard | `/dashboard` | every visible project: stage, field progress, blocked work, open deviations (Director) |
+| Completion | `/reporting` | `projects/{id}/conditions`, `waivers` and their `decision`, `field-summary`, `report/preview`, `reports` (lock, `pdf`), `certificates` (issue, `revoke`, `pdf`), `settings` (wording, stamp) |
+| Public | `/public/waivers/{token}`, `/public/certificates/{number}` | customer waiver acknowledgement; certificate check behind the QR code |
 
 ## Worked example: from report to approved audit
 

@@ -298,6 +298,7 @@ export default function TaskPage() {
             {run.asset ?? "No device"}
             {run.requires_downtime ? ", needs downtime" : ""}. Planned {dateTime(run.planned_start)}.
           </p>
+          {d.stale && <Notice tone="warn">No signal. This is what was loaded earlier; anything you do is saved on this phone and sent when signal returns.</Notice>}
         </div>
         <Badge tone={stateTone(run.state)}>{STATE_SHORT[run.state]}</Badge>
       </div>

@@ -731,6 +731,7 @@ export function BoqTab({ projectId }: { projectId: string }) {
             </tbody>
           </table>
         )}
+        {(versions.data?.length ?? 0) > 1 && <CompareVersions boqId={boq.id} numbers={versions.data!.map((v) => v.number)} />}
         {acceptable && can("boq:accept") && !showAccept && (
           <button className="btn primary" style={{ marginTop: 12 }} onClick={() => setShowAccept(true)}>
             The customer accepted: record the purchase order
@@ -762,6 +763,94 @@ export function BoqTab({ projectId }: { projectId: string }) {
       )}
       {drawer?.kind === "blank" && <BlankLineDrawer sectionId={drawer.section} onClose={() => setDrawer(null)} queue={queue} />}
     </>
+  );
+}
+
+const CHANGE_LABEL: Record<string, string> = {
+  title: "Title",
+  qty: "Quantity",
+  unit_price: "Price",
+  gst_rate: "GST %",
+  option_group: "Alternative group",
+};
+
+function changeText(field: string, [was, now]: [string, string]) {
+  const show = (v: string) => (v === "None" ? "none" : field === "unit_price" ? money(v) : v);
+  return `${CHANGE_LABEL[field] ?? field}: ${show(was)} to ${show(now)}`;
+}
+
+function CompareVersions({ boqId, numbers }: { boqId: string; numbers: number[] }) {
+  // numbers arrive newest first; default to the latest against the one before it
+  const [newer, setNewer] = useState(numbers[0]);
+  const [older, setOlder] = useState(numbers[1]);
+  const res = useData<S["CompareOut"]>(older !== newer ? `/boq/${boqId}/compare?older=${older}&newer=${newer}` : null);
+  const pick = (id: string, label: string, value: number, set: (n: number) => void) => (
+    <Field id={id} label={label}>
+      <select id={id} value={value} onChange={(e) => set(Number(e.target.value))}>
+        {numbers.map((n) => (
+          <option key={n} value={n}>
+            v{n}
+          </option>
+        ))}
+      </select>
+    </Field>
+  );
+  const c = res.data;
+  return (
+    <div className="stack" style={{ marginTop: 16 }}>
+      <h3>Compare versions</h3>
+      <div className="row">
+        {pick("cmp-old", "From", older, setOlder)}
+        {pick("cmp-new", "To", newer, setNewer)}
+      </div>
+      {older === newer ? (
+        <p className="stepnote">Pick two different versions.</p>
+      ) : res.loading && !c ? (
+        <Skeleton lines={3} />
+      ) : res.error ? (
+        <Notice tone="bad">{res.error}</Notice>
+      ) : c ? (
+        <>
+          <p>
+            <strong>{c.summary}</strong>{" "}
+            <span className="muted">
+              Total v{c.older.number}: {rangeText(String(c.older.totals.total_min), String(c.older.totals.total_max))}. Total v{c.newer.number}:{" "}
+              {rangeText(String(c.newer.totals.total_min), String(c.newer.totals.total_max))}.
+            </span>
+          </p>
+          <table className="table">
+            <tbody>
+              {c.added.map((t, i) => (
+                <tr key={`a${i}`}>
+                  <td data-label="Change"><Badge tone="ok">Added</Badge></td>
+                  <td data-label="Line">{t}</td>
+                </tr>
+              ))}
+              {c.removed.map((t, i) => (
+                <tr key={`r${i}`}>
+                  <td data-label="Change"><Badge tone="bad">Removed</Badge></td>
+                  <td data-label="Line">{t}</td>
+                </tr>
+              ))}
+              {c.changed.map((x, i) => (
+                <tr key={`c${i}`}>
+                  <td data-label="Change"><Badge tone="accent">Changed</Badge></td>
+                  <td data-label="Line">
+                    {String(x.line)}
+                    <div className="muted small">
+                      {Object.entries(x)
+                        .filter(([k]) => k !== "line")
+                        .map(([k, v]) => changeText(k, v as [string, string]))
+                        .join("; ")}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      ) : null}
+    </div>
   );
 }
 

@@ -134,6 +134,8 @@ Open http://localhost:9597 and sign in with the admin you created. Then:
 11. **Gaps** tab: draft the register, decide every verify item, lock it.
 12. **BOQ** tab: draft the BOQ. Type a price (with its source) for any line the price book lacks. Edit, add or delete lines as the Director would, then **Save changes** with a reason.
 13. Submit for pricing review. Sign in as another sales head, **Approve pricing**, then **Issue as a new version** and open the PDF.
+    Once there are two versions, **Compare versions** under the list shows the lines added, removed and changed
+    between any two, with both totals.
 14. Record the customer PO to accept the BOQ. Then the **Plan** tab: **Draft the plan**, add a downtime window,
     **Schedule the plan**, and as the technical lead **Lock plan**. **Download plan (PDF)** shows the schedule.
 15. After the plan stage is approved, the **Field work** tab: **Start field work**. Each engineer is emailed their list.
@@ -141,10 +143,25 @@ Open http://localhost:9597 and sign in with the admin you created. Then:
     sentence under the timeline: accept, take the site photo, send the code to the customer and type it in, confirm
     backup and access, tick the steps, type what the device shows, add the evidence, send it for the check, then
     get the hand over code. With no signal, work is kept on the phone and sent later.
+    To install it like an app: open the site in Chrome on the phone, then menu, **Add to Home screen**. It opens
+    on **My tasks**, and a task page that was opened earlier still opens with no signal.
 17. Sign in as a technical lead (not the engineer). **Review** lists the handed over task. Open it, then **Approve
     and close** or **Send back** with what must be fixed. The Director sees every change live on the Field work tab.
 18. **Library**: drop the two BOQ PDFs from `samples`. **Files** shows what was read and the one repaired line to
     confirm; **Corpus** shows each document converted to compact data; **Data quality** shows labels and price bands.
+19. When field work is finished, the project manager opens the **Completion** tab: lock the field work summary,
+    import the after-work PrismSuite rescan, then preview and lock the completion report. The tab lists the eight
+    conditions and says exactly what is still missing for each.
+20. Sign in as the Director: **Dashboard** shows every project, blocked work and open deviations. On the
+    **Completion** tab, approve the stage, then **Issue certificate**. Anyone can scan its QR code to check it.
+
+### The demo data
+
+`python -m app.cli demo-projects` builds two projects through the API, one finished with a certificate and one
+part way through field work, using the ITCraft / IITPL team as the staff accounts (Sattish Agadii as Director,
+Akash Agadii as Sales head, Ashwini Sawant as Project manager, Yash Raikar and Sakshi Rajbhar as field engineers,
+and so on). It writes the shared password and the authenticator secrets to `demo-accounts.json`. Because the
+accounts use real work addresses, it refuses to run unless outgoing mail goes to Mailpit.
 
 For quick testing in development, `python -m app.cli seed-demo` creates the demo user `adi@test.com` (password `test1234`). It holds Admin and every role except Director, so the first sign-in asks you to set up an authenticator app: scan the QR code, type the 6 digit code and save the recovery codes. On `localhost` the sign-in page offers a **Fill in** button for this login. The command refuses to run outside development.
 

@@ -72,6 +72,7 @@ export default function MyTasks() {
           <p>Open a task to see the next step. Work you do without signal is kept on this phone and sent later.</p>
         </div>
       </div>
+      {runs.stale && <Notice tone="warn">No signal. This is what was loaded earlier; anything you do is saved on this phone and sent when signal returns.</Notice>}
 
       {waiting > 0 && (
         <div className="outbox-note row between">

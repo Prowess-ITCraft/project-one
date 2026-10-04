@@ -711,6 +711,27 @@ async def get_version(
     return v
 
 
+async def compare_versions(
+    session: AsyncSession, principal: Principal, boq_id: uuid.UUID, older: int, newer: int
+) -> dict[str, Any]:
+    """What changed between any two issued versions, not only neighbours. Uses the same diff as
+    the change summary stored on each version, so the two always agree."""
+    if older == newer:
+        raise ValidationFailed("Pick two different versions to compare.")
+    older, newer = sorted((older, newer))
+    a = await get_version(session, principal, boq_id, older)
+    b = await get_version(session, principal, boq_id, newer)
+    delta = d.diff(d.Draft.model_validate(a.content), d.Draft.model_validate(b.content))
+    return {
+        "older": {"number": a.number, "state": a.state, "totals": a.totals},
+        "newer": {"number": b.number, "state": b.state, "totals": b.totals},
+        "summary": d.summarise(delta),
+        "added": delta["added"],
+        "removed": delta["removed"],
+        "changed": delta["changed"],
+    }
+
+
 def version_view(v: BoqVersion, principal: Principal) -> dict[str, Any]:
     draft = d.Draft.model_validate(v.content)
     comp = d.compute(draft, today_ist())

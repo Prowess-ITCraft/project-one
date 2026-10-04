@@ -15,7 +15,13 @@ from app.modules.boq import draft as d
 from app.modules.boq import render, service
 from app.modules.boq.generate import rank_category
 from app.modules.boq.recommend import Context
-from app.modules.boq.schemas import BoqOut, EditRowOut, VersionRowOut, VersionViewOut
+from app.modules.boq.schemas import (
+    BoqOut,
+    CompareOut,
+    EditRowOut,
+    VersionRowOut,
+    VersionViewOut,
+)
 from app.modules.customers.contracts import get_brief_ref
 from app.modules.identity.contracts import P, Principal, require
 
@@ -367,6 +373,18 @@ async def get_version(
     return service.version_view(
         await service.get_version(session, principal, boq_id, number), principal
     )
+
+
+@router.get("/{boq_id}/compare", response_model=CompareOut)
+async def compare(
+    session: Session,
+    principal: Reader,
+    boq_id: uuid.UUID,
+    older: Annotated[int, Query(ge=1)],
+    newer: Annotated[int, Query(ge=1)],
+) -> dict[str, Any]:
+    """Lines added, removed and changed between two issued versions, with both totals."""
+    return await service.compare_versions(session, principal, boq_id, older, newer)
 
 
 @router.post("/{boq_id}/versions/{number}/accept")

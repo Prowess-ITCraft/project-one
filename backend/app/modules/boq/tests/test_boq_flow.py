@@ -527,6 +527,21 @@ async def test_issue_assigns_the_quote_reference_and_versions_with_a_diff(client
         for v in (await client.get(f"{API}/boq/{b['id']}/versions", headers=c.sm.headers)).json()
     }
     assert states == {1: "superseded", 2: "issued"}
+    # Any two versions can be compared, in either order, and agree with the stored summary.
+    cmp = await client.get(
+        f"{API}/boq/{b['id']}/compare", params={"older": 2, "newer": 1}, headers=c.sm.headers
+    )
+    assert cmp.status_code == 200, cmp.text
+    cmp = cmp.json()
+    assert cmp["older"]["number"] == 1 and cmp["newer"]["number"] == 2
+    assert cmp["summary"] == v2["change_summary"] and cmp["added"] == []
+    assert any("Acronis XDR" in t for t in cmp["removed"])
+    qty = next(x["qty"] for x in cmp["changed"] if "sanitization" in x["line"].lower())
+    assert float(qty[1]) == 31
+    same = await client.get(
+        f"{API}/boq/{b['id']}/compare", params={"older": 1, "newer": 1}, headers=c.sm.headers
+    )
+    assert same.status_code == 422
     # Issued versions are immutable in the database too.
     import pytest
 
