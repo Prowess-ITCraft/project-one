@@ -183,7 +183,8 @@ The exact matrix is `ROLE_PERMISSIONS` in `identity/permissions.py`, also availa
 
 - Branch from `main`: `feature/short-name`. Small pull requests.
 - Commit messages: what and why in the first line. The pull request template lists the checks.
-- CI must pass: lint, types, import boundaries, tests, security scans, image build.
+- Run `scripts/dev.ps1 lint`, `typecheck` and `test` before pushing (no hosted CI for now). Pre-commit
+  runs ruff, gitleaks and import-linter on each commit.
 - Never commit `.env`, keys or customer data.
 
 ## 9. Code map for common questions

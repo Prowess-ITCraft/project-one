@@ -73,11 +73,11 @@ Every change follows these. Changing a rule needs Aditya's sign-off and an ADR.
 - Golden tests against `samples/` for parsers and rendered documents.
 - Property tests (hypothesis) for parsers, money and the expression DSL.
 
-## 6. Git and CI
+## 6. Git and checks
 
 - Branch from `main` as `feature/<short-name>`. Small pull requests with the template checklist.
-- CI: lint, types, import boundaries, tests, bandit, pip-audit, Trivy, SBOM, image build,
-  migration up and down. All green before merge.
+- There is no hosted CI for now. Before pushing, run `scripts/dev.ps1 lint`, `typecheck` and `test`; pre-commit runs
+  ruff, gitleaks and import-linter on every commit. All green before merge.
 - Never commit `.env`, keys, customer data outside `samples/`, or generated binaries.
 
 ## 7. Definition of done

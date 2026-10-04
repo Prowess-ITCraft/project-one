@@ -62,7 +62,8 @@ logging, money, time, background work or storage again.
 - Ruff, strict mypy, import-linter (modules may only talk through `contracts.py`), bandit,
   pip-audit, gitleaks, CodeQL, Trivy image scan and SBOM in GitHub Actions.
 - Migration checks: apply, roll back and detect model drift.
-- Pre-commit hooks, pull request template, Dependabot.
+- Pre-commit hooks, pull request template. (The GitHub Actions workflows and Dependabot were
+  removed on 4 Oct 2026; the same checks run locally.)
 
 ## Acceptance criteria
 

@@ -45,7 +45,7 @@ Only Next.js and React are runtime dependencies. See `docs/DESIGN.md`.
 | Reverse proxy | Nginx: routes `/api` to the API and everything else to the web app |
 | Monitoring | Prometheus and Grafana (provisioned dashboard) |
 | Dev mail capture | Mailpit |
-| CI | GitHub Actions: lint, types, boundaries, tests, security scans, image scan, migrations |
+| Checks | Local: `scripts/dev.ps1 lint`, `typecheck`, `test`; pre-commit for ruff, gitleaks, import-linter |
 
 ## 2. Repository map
 
@@ -151,7 +151,7 @@ documented restore drill in the [operations guide](03-operations-guide.md).
 
 ### 3.12 Releasing
 
-1. Merge to `main` with CI green. 2. Build the images and tag them. 3. Back up. 4. Deploy with
+1. Merge to `main` with the local checks green. 2. Build the images and tag them. 3. Back up. 4. Deploy with
 the prod compose files; the `migrate` job runs first. 5. Check `/readyz` and the dashboard.
 6. Roll back by redeploying the previous tag.
 

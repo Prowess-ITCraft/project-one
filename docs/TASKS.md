@@ -35,7 +35,7 @@ Planned dates are in `ROADMAP.md`, decisions in `decisions/`.
 ### Phase 6: BOQ and recommendations
 
 - [ ] Store issued PDFs in MinIO linked to the BOQ version (needs a column and migration)
-- [ ] Visual golden test (rasterise page 1, compare to a reference) in the container CI job
+- [ ] Visual golden test (rasterise page 1, compare to a reference) inside the container
 
 ### Phase 8: Field operations
 
@@ -81,7 +81,7 @@ Planned dates are in `ROADMAP.md`, decisions in `decisions/`.
 - [ ] Load test of the busiest paths, with numbers recorded
 - [ ] Security pass: dependency audit, image scan, permission matrix, secrets
 - [ ] Backup and restore drill with timings
-- [ ] Pin CI actions by commit SHA and image digests
+- [ ] Pin image digests; decide whether to bring back hosted CI and dependency updates
 
 ### Phase 15: Go-live
 

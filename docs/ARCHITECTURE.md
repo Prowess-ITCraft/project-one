@@ -40,7 +40,7 @@ samples/       the reference inputs; samples/corpus/ holds their canonical JSON
 Every module has `api.py`, `schemas.py`, `models.py`, `service.py` (the only place rules live),
 `contracts.py` (the only file other modules import), optional `handlers.py`, and `tests/`.
 
-### Dependency rules (enforced by import-linter in CI, `.importlinter`)
+### Dependency rules (enforced by import-linter in pre-commit, `.importlinter`)
 
 - A module never imports another module's `models`, `service` or `repository`. It uses that
   module's `contracts.py`, or reacts to its events.

@@ -13,4 +13,4 @@ docker-compose.yml defines services without published ports. docker-compose.dev.
 
 ## Consequences
 
-Ports cannot leak from the base file. Image digests are pinned by dependabot and CI, not by hand.
+Ports cannot leak from the base file. Image digests are pinned by hand during hardening (phase 14).
