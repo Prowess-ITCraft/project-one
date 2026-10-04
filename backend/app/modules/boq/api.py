@@ -12,7 +12,7 @@ from app.core.db import get_session
 from app.core.errors import NotFound
 from app.core.idempotency import IdempotencyGuard, require_idempotency_key, run_idempotent
 from app.modules.boq import draft as d
-from app.modules.boq import render, service
+from app.modules.boq import render, service, storage
 from app.modules.boq.generate import rank_category
 from app.modules.boq.recommend import Context
 from app.modules.boq.schemas import (
@@ -190,7 +190,7 @@ ESTIMATE_REF = "ESTIMATE, NOT APPROVED"
 @project_router.get("/estimate")
 async def estimate(
     session: Session,
-    principal: Editor,
+    principal: Annotated[Principal, Depends(require(P.BOQ_ESTIMATE))],
     project_id: uuid.UUID,
     fmt: Literal["json", "pdf", "xlsx"] = "json",
     kind: Literal["quotation", "summary"] = "quotation",
@@ -471,6 +471,17 @@ async def render_doc(
     ref: str | None
     if version is not None:
         v = await service.get_version(session, principal, boq_id, version)
+        if fmt == "pdf" and kind == "quotation" and v.pdf_key and v.pdf_sha256:
+            # The quotation as issued, byte for byte, rather than a fresh render.
+            name = f"{v.quote_ref.replace('/', '-')}-v{v.number}-quotation.pdf"
+            return Response(
+                content=await storage.get_pdf(v.pdf_key),
+                media_type="application/pdf",
+                headers={
+                    "Content-Disposition": f'attachment; filename="{name}"',
+                    "X-Content-SHA256": v.pdf_sha256,
+                },
+            )
         draft, ref = d.Draft.model_validate(v.content), v.quote_ref
     else:
         draft, ref = d.Draft.model_validate(b.draft), b.quote_ref

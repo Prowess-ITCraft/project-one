@@ -103,6 +103,7 @@ class VersionViewOut(_Out):
     po_number: str | None = None
     po_date: str | None = None
     accepted_at: str | None = None
+    pdf_sha256: str | None = None
     settings: dict[str, Any]
     groups: list[GroupOut]
     sections: list[SectionOut]

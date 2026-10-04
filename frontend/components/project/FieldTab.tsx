@@ -19,15 +19,25 @@ function useLiveEvents(projectId: string, enabled: boolean, onEvent: () => void)
     let stop = false;
     let poll: ReturnType<typeof setInterval> | undefined;
     let es: EventSource | undefined;
+    // Many events can arrive together; the lists are reloaded once for the lot.
+    let pending: ReturnType<typeof setTimeout> | undefined;
     const take = (list: Ev[], fresh: boolean) => {
-      if (!list.length) return;
-      cursor.current = Math.max(cursor.current, ...list.map((e) => e.seq));
-      setEvents((x) => [...list.map((e) => ({ ...e, fresh })).reverse(), ...x].slice(0, 60));
-      if (fresh) cb.current();
+      const seen = cursor.current;
+      const news = list.filter((e) => e.seq > seen);
+      if (!news.length) return;
+      cursor.current = Math.max(seen, ...news.map((e) => e.seq));
+      setEvents((x) => [...news.map((e) => ({ ...e, fresh })).reverse(), ...x].slice(0, 60));
+      if (fresh && !pending) {
+        pending = setTimeout(() => {
+          pending = undefined;
+          cb.current();
+        }, 1_000);
+      }
     };
-    void get<Ev[]>(`/projects/${projectId}/field/events?after=0&limit=500`).then((all) => {
+    // Start from the newest events, however long the project's history is.
+    void get<Ev[]>(`/projects/${projectId}/field/events?latest=true&limit=40`).then((recent) => {
       if (stop) return;
-      take(all.slice(-40), false);
+      take(recent, false);
       const source = new EventSource(`/api/v1/projects/${projectId}/field/stream?after=${cursor.current}`);
       es = source;
       source.addEventListener("run_event", (m) => take([JSON.parse((m as MessageEvent).data) as Ev], true));
@@ -43,6 +53,7 @@ function useLiveEvents(projectId: string, enabled: boolean, onEvent: () => void)
       stop = true;
       es?.close();
       if (poll) clearInterval(poll);
+      if (pending) clearTimeout(pending);
     };
   }, [projectId, enabled]);
   return events;

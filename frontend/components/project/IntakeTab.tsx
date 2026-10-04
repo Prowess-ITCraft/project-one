@@ -12,7 +12,7 @@ export function IntakeTab({ projectId, onEstimate }: { projectId: string; onEsti
   const { can } = useMe();
   const brief = useData<Brief>(`/projects/${projectId}/brief`);
   const { busy, run } = useAction();
-  const editable = can("project:write");
+  const editable = can("brief:write");
   const [f, setF] = useState({
     company_size: "small",
     budget_tier: "standard",
@@ -60,6 +60,7 @@ export function IntakeTab({ projectId, onEstimate }: { projectId: string; onEsti
       preferred_brands: toList(f.preferred),
       excluded_brands: toList(f.excluded),
       budget_ceiling: f.ceiling || null,
+      category_budgets: brief.data?.category_budgets ?? {}, // set through the API; kept as is
       keep_assets: toList(f.keep),
       compliance: toList(f.compliance),
       notes: f.notes || null,

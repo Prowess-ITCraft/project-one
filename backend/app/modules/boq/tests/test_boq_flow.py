@@ -690,16 +690,56 @@ async def test_quotation_documents_follow_the_itcraft_format(client: Any) -> Non
     pdf = await client.get(
         f"{API}/boq/{b['id']}/render", params={"fmt": "pdf", "version": 1}, headers=c.sm.headers
     )
-    assert pdf.status_code in (
-        200,
-        503,
-    )  # 503 only where the PDF libraries are missing (this Windows host)
-    if pdf.status_code == 200:
-        assert pdf.content[:4] == b"%PDF"
+    assert pdf.status_code == 200 and pdf.content[:4] == b"%PDF"
     draft = await client.get(
         f"{API}/boq/{b['id']}/render", params={"fmt": "html"}, headers=c.sm.headers
     )
     assert "Draft" in draft.text or "ITCraft/" in draft.text
+
+
+async def test_the_issued_quotation_pdf_is_kept_as_sent(client: Any) -> None:
+    import hashlib
+
+    import pytest
+
+    c = await ready(client)
+    b = await _approved(client, c)
+    v1 = (
+        await client.post(f"{API}/boq/{b['id']}/issue", headers={**c.sm.headers, **idem()})
+    ).json()
+    assert len(v1["pdf_sha256"]) == 64
+
+    async def pdf() -> Any:
+        return await client.get(
+            f"{API}/boq/{b['id']}/render", params={"fmt": "pdf", "version": 1}, headers=c.sm.headers
+        )
+
+    first = await pdf()
+    assert first.status_code == 200
+    assert first.headers["X-Content-SHA256"] == v1["pdf_sha256"]
+    assert hashlib.sha256(first.content).hexdigest() == v1["pdf_sha256"]
+    assert "-v1-quotation.pdf" in first.headers["Content-Disposition"]
+
+    # A new letterhead changes fresh renders, never the quotation the customer already has.
+    async with get_sessionmaker()() as s:
+        await s.execute(
+            text(
+                'UPDATE company_settings SET data = data || \'{"legal_name": "Renamed Ltd"}\'::jsonb'
+            )
+        )
+        await s.commit()
+    html = await client.get(
+        f"{API}/boq/{b['id']}/render", params={"fmt": "html", "version": 1}, headers=c.sm.headers
+    )
+    assert "Renamed Ltd" in html.text
+    assert (await pdf()).content == first.content
+
+    async with get_sessionmaker()() as s:
+        with pytest.raises(Exception):
+            await s.execute(
+                text("UPDATE boq_versions SET pdf_key = 'elsewhere', state = 'superseded'")
+            )
+            await s.commit()
 
 
 async def test_totals_rows_appear_only_when_asked_and_options_are_not_summed(client: Any) -> None:

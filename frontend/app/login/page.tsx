@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ApiError, message, post, type S } from "@/lib/api";
+import { ApiError, message, post, resumeSession, type S } from "@/lib/api";
 import { Field, Notice } from "@/components/ui";
 import { forgetKept } from "@/lib/hooks";
 import { Wordmark } from "@/components/field";
@@ -93,6 +93,10 @@ export default function Login() {
   const [busy, setBusy] = useState(false);
   const [local, setLocal] = useState(false);
   useEffect(() => setLocal(isLocal()), []);
+  // Still signed in from earlier (the session lasts 14 days): no password or code needed.
+  useEffect(() => {
+    void resumeSession().then((ok) => ok && router.replace("/projects"));
+  }, [router]);
 
   async function go(fn: () => Promise<void>) {
     setBusy(true);

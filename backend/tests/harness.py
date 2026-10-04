@@ -205,3 +205,31 @@ def fake_scanner() -> Iterator[None]:
     set_scanner(EicarScanner())
     yield
     set_scanner(None)
+
+
+@pytest.fixture(autouse=True)
+def boq_pdf_renderer(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Issuing a BOQ stores its quotation PDF. WeasyPrint renders in the container; on a laptop
+    without its system libraries a stand-in returns the HTML as bytes so issuing still works."""
+    import hashlib
+
+    from app.core.documents import RenderedDocument, pdf_available
+    from app.modules.boq import render
+
+    if pdf_available():
+        return
+
+    def fake(html: str) -> RenderedDocument:
+        data = b"%PDF-1.7 stand-in\n" + html.encode()
+        return RenderedDocument(data, hashlib.sha256(data).hexdigest(), 1)
+
+    monkeypatch.setattr(render, "render_pdf", fake)
+
+
+@pytest.fixture(autouse=True)
+def customer_codes_on(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Customer codes are off in the product for now (ADR 0025), but the whole code flow stays
+    built, so the field tests keep walking it. Tests of the off path switch it back."""
+    from app.core import flags
+
+    monkeypatch.setitem(flags.DEFAULTS, "field_customer_codes", True)

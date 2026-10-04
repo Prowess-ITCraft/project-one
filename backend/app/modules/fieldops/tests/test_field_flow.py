@@ -269,6 +269,15 @@ async def test_a_task_walks_from_assigned_to_closed(client: Any) -> None:
         )
     ).json()
     assert [e["seq"] for e in later] == seqs[-1:]
+    # A feed starts from the newest events, oldest first, however long the history is.
+    newest = (
+        await client.get(
+            f"{API}/projects/{p.pid}/field/events",
+            params={"latest": "true", "limit": 3},
+            headers=p.pm.headers,
+        )
+    ).json()
+    assert [e["seq"] for e in newest] == seqs[-3:]
     summary = (
         await client.get(f"{API}/projects/{p.pid}/field/summary", headers=p.pm.headers)
     ).json()
@@ -280,6 +289,7 @@ async def test_a_task_walks_from_assigned_to_closed(client: Any) -> None:
     ).text
     assert "Timeline" in html and "Configuration check 1" in html and "Failed" in html
     assert "data:image/png;base64," in html  # photos are embedded, never fetched
+    assert html.count("(customer code confirmed)") == 2  # check-in and hand over
 
 
 async def test_blocking_dependencies_and_access(client: Any) -> None:
@@ -346,3 +356,45 @@ async def test_the_completion_gate_reads_field_status(client: Any) -> None:
     assert st.total == len(runs) and st.closed == 0 and not st.complete
     assert sorted(st.open_refs) == sorted(r["task_ref"] for r in runs)
     assert st.open_critical_deviations == 0
+
+
+async def test_without_customer_codes_the_photo_still_comes_first(
+    client: Any, monkeypatch: Any
+) -> None:
+    """Customer codes are switched off for now (ADR 0025): no code is sent or asked for, and
+    everything else about check-in stays."""
+    from app.core import flags
+
+    monkeypatch.setitem(flags.DEFAULTS, "field_customer_codes", False)
+    p, eng, runs = await field_ready(client)
+    run = next(r for r in runs if not r["depends_on"])
+    rid = run["id"]
+    r = await _post(
+        client, p.pm, f"{rid}/reassign", {"assignee_id": str(eng.id), "reason": "Nearer"}
+    )
+    assert r.status_code == 200, r.text
+    assert (await _post(client, eng, f"{rid}/accept")).status_code == 200
+    sent = await client.post(f"{FIELD}/runs/{rid}/codes/check_in", headers=eng.headers)
+    assert sent.status_code == 409 and sent.json()["code"] == "codes_off"
+    no_photo = await _post(client, eng, f"{rid}/check-in")
+    assert no_photo.json()["code"] == "evidence_missing"
+    assert (await _evidence(client, eng, run, 0)).status_code == 201
+    r = await _post(client, eng, f"{rid}/check-in", {"lat": 19.07, "lng": 72.87})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["run"]["state"] == "checked_in" and body["customer_codes"] is False
+    event = next(e for e in body["events"] if e["action"] == "check_in")
+    assert event["detail"] == {"customer_code": "off"}
+    # The task record never claims a code that was not used.
+    record = await client.get(
+        f"{FIELD}/runs/{rid}/render", params={"fmt": "html"}, headers=eng.headers
+    )
+    assert record.status_code == 200 and "Checked in" in record.text
+    assert "customer code confirmed" not in record.text
+
+
+def test_customer_codes_are_off_by_default(monkeypatch: Any) -> None:
+    from app.core import flags
+
+    monkeypatch.undo()  # drop the test harness switch and read the product default
+    assert flags.DEFAULTS["field_customer_codes"] is False

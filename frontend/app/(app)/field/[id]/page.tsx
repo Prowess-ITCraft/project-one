@@ -166,7 +166,8 @@ function EvidenceItem({
   );
 }
 
-/** Ask the customer for a code, then type it in. Used at check-in and at hand over. */
+/** Ask the customer for a code, then type it in. Used at check-in and at hand over. While
+ * customer codes are switched off (ADR 0025) it is a single button. */
 function CodeStep({
   run,
   purpose,
@@ -174,10 +175,12 @@ function CodeStep({
   label,
   onDone,
   waitFor,
+  codes,
 }: {
   run: Run;
   purpose: "check_in" | "handover";
   action: string;
+  codes: boolean;
   label: string;
   onDone: (r: FlushResult) => void;
   /** Why the code cannot be asked for yet; the button stays off and says so. */
@@ -187,6 +190,20 @@ function CodeStep({
   const { busy, run: act } = useAction();
   const [sent, setSent] = useState<S["CodeSentOut"] | null>(null);
   const [code, setCode] = useState("");
+  if (!codes) {
+    return (
+      <div className="stack">
+        {waitFor && <p className="small muted">{waitFor}</p>}
+        <button
+          className="btn primary big"
+          disabled={!!waitFor}
+          onClick={async () => onDone(await queueAction(run.id, `/field/runs/${run.id}/${action}`, label, await locate()))}
+        >
+          {label}
+        </button>
+      </div>
+    );
+  }
   return (
     <div className="stack">
       {waitFor && !sent && <p className="small muted">{waitFor}</p>}
@@ -382,9 +399,12 @@ export default function TaskPage() {
                     action="check-in"
                     label="Check in"
                     onDone={after}
+                    codes={detail.customer_codes}
                     waitFor={
                       stageItems("check_in").some(({ i }) => !evidenceFor(i).length && !queuedFor(i).length)
-                        ? "Add the arrival evidence above first, then ask the customer for the code."
+                        ? detail.customer_codes
+                          ? "Add the arrival evidence above first, then ask the customer for the code."
+                          : "Add the arrival evidence above first."
                         : undefined
                     }
                   />
@@ -498,8 +518,10 @@ export default function TaskPage() {
           {run.state === "engine_check" && (
             <>
               <h2>Hand over to the customer</h2>
-              <p className="muted">Show the customer the finished work, then ask for the hand over code.</p>
-              <CodeStep run={run} purpose="handover" action="hand-over" label="Confirm hand over" onDone={after} />
+              <p className="muted">
+                Show the customer the finished work{detail.customer_codes ? ", then ask for the hand over code" : ", then confirm the hand over"}.
+              </p>
+              <CodeStep run={run} purpose="handover" action="hand-over" label="Confirm hand over" onDone={after} codes={detail.customer_codes} />
             </>
           )}
 

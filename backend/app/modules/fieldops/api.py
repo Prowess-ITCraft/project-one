@@ -69,6 +69,7 @@ def _run(r: Any) -> RunOut:
 async def _detail(session: AsyncSession, principal: Principal, run_id: uuid.UUID) -> RunDetailOut:
     run, events, evidence, checks, waiting = await service.get_run(session, principal, run_id)
     brief = (await service.project_briefs(session, principal, {run.project_id})).get(run.project_id)
+    codes = await service.codes_on(session)
     return RunDetailOut(
         run=_run(run),
         project=ProjectBriefOut(**brief) if brief else None,
@@ -76,7 +77,10 @@ async def _detail(session: AsyncSession, principal: Principal, run_id: uuid.UUID
         evidence=[EvidenceOut.model_validate(e, from_attributes=True) for e in evidence],
         checks=[CheckOut.model_validate(c, from_attributes=True) for c in checks],
         waiting_on=waiting,
-        next_action=service.next_action(run, {e.requirement_index for e in evidence}, waiting),
+        next_action=service.next_action(
+            run, {e.requirement_index for e in evidence}, waiting, codes
+        ),
+        customer_codes=codes,
     )
 
 
@@ -127,11 +131,15 @@ async def project_events(
     project_id: uuid.UUID,
     after: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=500)] = 100,
+    latest: bool = False,
 ) -> list[EventOut]:
-    """Polling fallback for the live feed: events after the last `seq` you saw."""
+    """Polling fallback for the live feed: events after the last `seq` you saw. `latest=true`
+    gives the newest `limit` events instead, which is where a feed should start."""
     return [
         EventOut.model_validate(e, from_attributes=True)
-        for e in await service.events_after(session, principal, project_id, after, limit)
+        for e in await service.events_after(
+            session, principal, project_id, after, limit, latest=latest
+        )
     ]
 
 

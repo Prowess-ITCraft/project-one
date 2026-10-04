@@ -21,7 +21,7 @@ Planned dates are in `ROADMAP.md`, decisions in `decisions/`.
 | 3 | PrismSuite intake, catalogue, price book | done | docx v1 and JSON v1 parsers |
 | 4 | Dataset engine and library | done | plus the document corpus |
 | 5 | Infra model, rule library, gap engine | done | |
-| 6 | BOQ and recommendation engine | done | two open items below |
+| 6 | BOQ and recommendation engine | done | one open item below |
 | 7 | Planning, scheduling, baselines | done | plan PDF |
 | 8 | Field ops, evidence, OTP, notifications, realtime | done | |
 | 9 | Verification engine, Director dashboard API | done | SonicWall mappings unconfirmed until a real export |
@@ -36,7 +36,7 @@ Planned dates are in `ROADMAP.md`, decisions in `decisions/`.
 
 ### Phase 6: BOQ and recommendations
 
-- [ ] Store issued PDFs in MinIO linked to the BOQ version (needs a column and migration)
+- [x] Store issued PDFs in MinIO linked to the BOQ version (migration 0014)
 - [ ] Visual golden test (rasterise page 1, compare to a reference) inside the container
 
 ### Phase 8: Field operations

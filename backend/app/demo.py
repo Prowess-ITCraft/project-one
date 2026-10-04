@@ -691,15 +691,14 @@ class Demo:
         async def post(path: str, who: Person, body: dict[str, Any] | None = None) -> Any:
             return await self.call("POST", f"/field/runs/{rid}/{path}", who, json_body=body or {})
 
-        await post("accept", eng)
+        codes = (await post("accept", eng))["customer_codes"]  # ADR 0025: off for now
         await self._clear_limits()
-        await post("codes/check_in", eng)
         await self.evidence(eng, run, 0)
-        await post(
-            "check-in",
-            eng,
-            {"code": await self._code(rid, "otp_check_in"), "lat": 19.1972, "lng": 72.9722},
-        )
+        where: dict[str, Any] = {"lat": 19.1972, "lng": 72.9722}
+        if codes:
+            await post("codes/check_in", eng)
+            where["code"] = await self._code(rid, "otp_check_in")
+        await post("check-in", eng, where)
         for i in (1, 2):
             await self.evidence(eng, run, i)
         await post("prechecks-done", eng)
@@ -717,8 +716,11 @@ class Demo:
             await post("values", eng, {"values": self.values(run)})
             await post("submit-evidence", eng)
         await self._clear_limits()
-        await post("codes/handover", eng)
-        await post("hand-over", eng, {"code": await self._code(rid, "otp_handover")})
+        if codes:
+            await post("codes/handover", eng)
+            await post("hand-over", eng, {"code": await self._code(rid, "otp_handover")})
+        else:
+            await post("hand-over", eng)
         if until == "verifier_review":
             return
         await post("decision", lead, {"decision": "approve"})

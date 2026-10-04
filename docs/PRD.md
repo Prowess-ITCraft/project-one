@@ -64,7 +64,7 @@ The four reporting lenses everywhere: **Productivity, Resilience, Security, Heal
 | 08 | Recommendations with reasons and runner-ups, same contract for rules and learned ranker | 6, 13 | Built; learned ranker in shadow mode |
 | 09 | Tasks, dependencies and schedule from the accepted BOQ, around leave and downtime windows | 7 | Built, with plan PDF |
 | 10 | Target configuration baseline per device | 7 | Built |
-| 11 | Gated task state machine, mandatory evidence, customer OTP at check-in and handover | 8 | Built |
+| 11 | Gated task state machine, mandatory evidence, customer OTP at check-in and handover | 8 | Built; OTP switched off for now (ADR 0025) |
 | 12 | Customer and Director notified at every task transition | 8 | Built |
 | 13 | Compare actual to target configuration, raise deviations with severity | 9 | Built (SonicWall exports first) |
 | 14 | Director live dashboard | 9, 12 | Built |

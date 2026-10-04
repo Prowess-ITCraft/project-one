@@ -112,6 +112,9 @@ class BoqVersion(UUIDPk, Base):
     )
     pricing_approved_by: Mapped[uuid.UUID] = mapped_column(nullable=False)
     selected_options: Mapped[dict[str, str]] = mapped_column(JSONB, nullable=False, default=dict)
+    # The quotation PDF as issued. Null only for versions issued before it was stored.
+    pdf_key: Mapped[str | None] = mapped_column(String(300))
+    pdf_sha256: Mapped[str | None] = mapped_column(String(64))
     po_number: Mapped[str | None] = mapped_column(String(60))
     po_date: Mapped[date | None] = mapped_column(Date)
     po_file_id: Mapped[uuid.UUID | None] = mapped_column()

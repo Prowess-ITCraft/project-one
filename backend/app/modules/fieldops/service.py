@@ -3,12 +3,14 @@
     assigned -> accepted -> checked_in -> prechecks_done -> configured -> evidence_uploaded
              -> engine_check -> verifier_review -> closed
 
-- Check-in needs the customer's one-time code, a site photo and every dependency handed over.
+- Check-in needs a site photo and every dependency handed over, and the customer's one-time
+  code while customer codes are on (off for now, ADR 0025).
 - Prechecks need backup and access confirmed with evidence.
 - Configured needs every step ticked in order and a value recorded for every target setting.
 - Evidence uploaded needs every required item; the engine check then runs at once. A failed
   critical or major setting sends the task back to configured.
-- Hand over needs the customer's second code and a passed check; the task goes to a verifier.
+- Hand over needs a passed check, and the customer's second code while codes are on; the task
+  goes to a verifier.
 - The verifier (never the engineer who did the work) closes it or sends it back to configured.
 
 Nothing can be skipped. Every action is recorded with who, when and where, and every state
@@ -29,7 +31,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core import outbox
+from app.core import flags, outbox
 from app.core.db import get_sessionmaker
 from app.core.errors import Conflict, Forbidden, NotFound, ValidationFailed
 from app.core.events import DomainEvent
@@ -532,15 +534,22 @@ async def get_run(
 
 
 async def events_after(
-    session: AsyncSession, principal: Principal, project_id: uuid.UUID, after: int, limit: int = 100
+    session: AsyncSession,
+    principal: Principal,
+    project_id: uuid.UUID,
+    after: int,
+    limit: int = 100,
+    *,
+    latest: bool = False,
 ) -> list[RunEvent]:
-    """The live feed: every event after the cursor `after` (the last `seq` the client saw)."""
+    """The live feed: every event after the cursor `after` (the last `seq` the client saw).
+    With `latest`, the newest `limit` events instead, oldest first: where a feed starts."""
     principal.require(P.FIELD_READ)
     await get_project_ref(session, principal, project_id)
     stmt = (
         select(RunEvent)
         .where(RunEvent.project_id == project_id, RunEvent.seq > after)
-        .order_by(RunEvent.seq)
+        .order_by(RunEvent.seq.desc() if latest else RunEvent.seq)
         .limit(min(limit, 500))
     )
     if not (principal.has(P.FIELD_MANAGE) or principal.has(P.FIELD_VERIFY)):
@@ -548,7 +557,8 @@ async def events_after(
             TaskRun.project_id == project_id, TaskRun.assignee_id == principal.user_id
         )
         stmt = stmt.where(RunEvent.run_id.in_(mine))
-    return list(await session.scalars(stmt))
+    rows = list(await session.scalars(stmt))
+    return rows[::-1] if latest else rows
 
 
 async def summary(
@@ -656,6 +666,23 @@ async def depart(
     return run
 
 
+async def codes_on(session: AsyncSession) -> bool:
+    """Whether check-in and hand over need the customer's one-time code (ADR 0025)."""
+    return await flags.is_enabled(session, "field_customer_codes")
+
+
+async def _confirm(
+    session: AsyncSession, run: TaskRun, purpose: str, code: str | None
+) -> dict[str, Any]:
+    """The customer's code when codes are on; otherwise the step goes ahead without one."""
+    if not await codes_on(session):
+        return {"customer_code": "off"}
+    if not code:
+        raise ValidationFailed("Enter the code the customer received.", code="code_required")
+    ch = await _consume_code(session, run, purpose, code)
+    return {"confirmed_by_contact": str(ch.contact_id)}
+
+
 async def request_code(
     session: AsyncSession,
     principal: Principal,
@@ -663,6 +690,8 @@ async def request_code(
     purpose: str,
 ) -> dict[str, Any]:
     """Send a one-time code to the customer's sign-off contact. The engineer never sees it."""
+    if not await codes_on(session):
+        raise Conflict("Customer codes are switched off.", code="codes_off")
     run = await _load(session, principal, run_id)
     _mine(principal, run)
     if purpose == "check_in":
@@ -790,7 +819,7 @@ async def check_in(
     principal: Principal,
     run_id: uuid.UUID,
     *,
-    code: str,
+    code: str | None,
     client_event_id: uuid.UUID | None,
     captured_at: datetime | None,
     lat: float | None,
@@ -818,7 +847,7 @@ async def check_in(
         )
     _check_location(lat, lng)
     cap = _captured(captured_at)
-    ch = await _consume_code(session, run, "check_in", code)
+    confirmed = await _confirm(session, run, "check_in", code)
     run.checked_in_at = cap
     ids = await _transition(
         session,
@@ -826,7 +855,7 @@ async def check_in(
         run,
         "check_in",
         "checked_in",
-        detail={"confirmed_by_contact": str(ch.contact_id)},
+        detail=confirmed,
         client_event_id=client_event_id,
         captured_at=cap,
         lat=lat,
@@ -1208,7 +1237,7 @@ async def hand_over(
     principal: Principal,
     run_id: uuid.UUID,
     *,
-    code: str,
+    code: str | None,
     client_event_id: uuid.UUID | None,
     captured_at: datetime | None,
     lat: float | None,
@@ -1224,7 +1253,7 @@ async def hand_over(
         raise Conflict("The configuration check has not passed.", code="check_not_passed")
     _check_location(lat, lng)
     cap = _captured(captured_at)
-    ch = await _consume_code(session, run, "handover", code)
+    confirmed = await _confirm(session, run, "handover", code)
     run.handed_over_at = cap
     ids = await _transition(
         session,
@@ -1232,7 +1261,7 @@ async def hand_over(
         run,
         "hand_over",
         "verifier_review",
-        detail={"confirmed_by_contact": str(ch.contact_id)},
+        detail=confirmed,
         client_event_id=client_event_id,
         captured_at=cap,
         lat=lat,
@@ -1448,7 +1477,7 @@ async def decide(
 # ------------------------------------------------------------------ guidance for the phone
 
 
-def next_action(run: TaskRun, have: set[int], waiting: list[str]) -> str:
+def next_action(run: TaskRun, have: set[int], waiting: list[str], codes: bool = True) -> str:
     """One plain sentence: what the engineer (or the office) should do next on this task."""
 
     def missing(stage: str) -> list[str]:
@@ -1466,7 +1495,11 @@ def next_action(run: TaskRun, have: set[int], waiting: list[str]) -> str:
             return f"Wait until {', '.join(waiting)} is handed over."
         if m := missing("check_in"):
             return f"Add: {m[0]}."
-        return "Send the visit code to the customer and enter it to check in."
+        return (
+            "Send the visit code to the customer and enter it to check in."
+            if codes
+            else "Check in."
+        )
     if s == "checked_in":
         m = missing("prechecks")
         return f"Add: {m[0]}." if m else "Mark the prechecks done."
@@ -1487,7 +1520,11 @@ def next_action(run: TaskRun, have: set[int], waiting: list[str]) -> str:
     if s == "evidence_uploaded":
         return "The configuration check is running."
     if s == "engine_check":
-        return "Send the hand over code to the customer and enter it."
+        return (
+            "Send the hand over code to the customer and enter it."
+            if codes
+            else "Show the customer the finished work, then hand over."
+        )
     if s == "verifier_review":
         return "Waiting for a verifier."
     if s == "closed":

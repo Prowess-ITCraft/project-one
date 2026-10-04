@@ -1011,6 +1011,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/public/files/{file_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Open a file through a signed download link
+         * @description The link from `/files/{id}/download` when storage is not public. The signature stands in
+         *     for sign-in (an image tag cannot send a token); it names one file and ends in minutes.
+         */
+        get: operations["open_signed_api_v1_public_files__file_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/prismsuite/imports": {
         parameters: {
             query?: never;
@@ -2943,7 +2964,8 @@ export interface paths {
         };
         /**
          * Project Events
-         * @description Polling fallback for the live feed: events after the last `seq` you saw.
+         * @description Polling fallback for the live feed: events after the last `seq` you saw. `latest=true`
+         *     gives the newest `limit` events instead, which is where a feed should start.
          */
         get: operations["project_events_api_v1_projects__project_id__field_events_get"];
         put?: never;
@@ -4396,7 +4418,7 @@ export interface components {
             /** Accuracy M */
             accuracy_m?: number | null;
             /** Code */
-            code: string;
+            code?: string | null;
         };
         /** CodeSentOut */
         CodeSentOut: {
@@ -6850,6 +6872,8 @@ export interface components {
             waiting_on: string[];
             /** Next Action */
             next_action: string;
+            /** Customer Codes */
+            customer_codes: boolean;
         };
         /**
          * RunOut
@@ -7786,6 +7810,8 @@ export interface components {
             po_date?: string | null;
             /** Accepted At */
             accepted_at?: string | null;
+            /** Pdf Sha256 */
+            pdf_sha256?: string | null;
             /** Settings */
             settings: {
                 [key: string]: unknown;
@@ -10320,6 +10346,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DownloadOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    open_signed_api_v1_public_files__file_id__get: {
+        parameters: {
+            query: {
+                expires: number;
+                sig: string;
+            };
+            header?: never;
+            path: {
+                file_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
@@ -14312,6 +14372,7 @@ export interface operations {
             query?: {
                 after?: number;
                 limit?: number;
+                latest?: boolean;
             };
             header?: never;
             path: {

@@ -25,7 +25,7 @@ Maintained by Aditya Kumar.
 | Quote refs | One sequence per FY, issuer initials in the ref | 0013, 0017 |
 | Pricing approval | Sales head or Director who did not edit | 0013 |
 | Engineer hours | Mon to Sat, 10:00 to 18:00 IST, 30 min buffer | 0017 |
-| OTP channel | Email to the sign-off contact (SMS, WhatsApp adapters off) | 0017 |
+| OTP channel | Email to the sign-off contact (SMS, WhatsApp adapters off). Customer codes at check-in and hand over are switched off for now (flag `field_customer_codes`) | 0017, 0025 |
 | Offline window | 72 hours | 0017 |
 | Field states | Dependents may start after hand over | 0015 |
 | Originals retention | Keep forever (0 days) | 0014 |
@@ -67,8 +67,8 @@ Maintained by Aditya Kumar.
   Confirm them with `/verification/inspect` on the first real export.
 - Free-text targets such as "Managed, reachable on the management VLAN" cannot be judged by a
   driver; they are `not_checked` and the verifier decides.
-- Issued BOQ PDFs are rendered on request, not stored in MinIO yet. Locked completion reports and
-  certificates are stored.
+- BOQ versions issued before 5 October 2026 have no stored PDF and are still rendered on
+  request. Every version issued since keeps its quotation PDF in MinIO.
 - The cleaning taxonomy is keyword rules. More real BOQs will show gaps; unlabelled lines are
   listed in the analysis as `other`.
 - One PrismSuite sample and two BOQ samples. Parser and label quality need more.
@@ -80,6 +80,29 @@ Maintained by Aditya Kumar.
 
 ## Changelog
 
+- 2026-10-05: Customer codes at check-in and hand over switched off (ADR 0025). The code flow,
+  its emails and its tests stay; the admin flag `field_customer_codes` turns it back on.
+  Bug check: the task record PDF failed (500) for any task with steps still open, and it said
+  "customer code confirmed" even when no code was used; both fixed. Worker logs no longer show
+  routine messages as WARNING. A sweep of every document and detail route over all demo
+  projects (913 requests) found no other server error.
+- 2026-10-05: **Upload report and draft BOQ** on the project Overview: report, five questions
+  and the priced estimate in one step (ADR 0024). Sales can import reports; audit engineers can
+  save the questionnaire, draft the estimate and see prices. Same file twice is refused with
+  `already_imported` and the button carries on. Sign-in fix: people were asked for the password
+  and authenticator code again after 15 minutes, because the web app never renewed the session
+  when the first request on a page was `/auth/me`. It now renews, so a sign-in lasts 14 days;
+  the sign-in page also goes straight in when the session is still valid.
+  Found in a full check the same day: the Field work tab started its live feed from the
+  oldest 500 events, so a project with a longer history replayed every later event as new and
+  reloaded the lists for each one until the rate limit answered 429 (now starts from the newest
+  events, `?latest=true`, and reloads once per burst); the Audit intake list needed review
+  rights even for people allowed to upload (new `prismsuite:read`); saving the questionnaire
+  from the web app wiped `category_budgets`.
+- 2026-10-05: Issuing a BOQ now stores the quotation PDF in MinIO (`boq/<id>/v<n>-quotation.pdf`)
+  with its SHA-256 on the version (migration 0014). Downloads of an issued quotation return
+  those exact bytes, so a later letterhead or template change cannot alter what the customer
+  was sent. The database guard refuses any change to the stored key or hash.
 - 2026-10-04 (night): Sign-in refused after browsing: the strict nginx and API sign-in limits
   also counted `/auth/me` and token refresh. Now only sign-in and MFA, 60 a minute per address.
   Accounts panel, Back on inner pages, Help guide, recovery codes at sign-in, sign-in redesign

@@ -18,6 +18,7 @@ from app.core.sequences import next_value
 from app.core.timeutil import financial_year_code, today_ist, utcnow
 from app.modules.audit_log.contracts import record
 from app.modules.boq import draft as d
+from app.modules.boq import render, storage
 from app.modules.boq.generate import build_draft, line_from_item
 from app.modules.boq.models import (
     Boq,
@@ -407,7 +408,7 @@ async def estimate(
     """A BOQ worked out from the report and the questionnaire, before any gate is approved.
     Nothing is saved, nothing is published and no gate moves: it is an estimate for the sales
     team. The official BOQ is still generated from the locked gap register."""
-    principal.require(P.BOQ_EDIT)
+    principal.require(P.BOQ_ESTIMATE)
     project = await get_project_ref(session, principal, project_id)
     gapset, basis = await estimate_gaps(session, principal, project_id)
     # "Verify on site" items are questions, not things to quote: in the official flow someone
@@ -722,12 +723,20 @@ async def issue(session: AsyncSession, principal: Principal, boq_id: uuid.UUID) 
             f"{c.get('quote_prefix', 'ITCraft')}/{principal.initials.upper()}/{fy}/{seq:03d}"
         )
     delta = d.diff(d.Draft.model_validate(prev.content) if prev else None, draft)
+    number = (prev.number + 1) if prev else 1
+    # Keep the PDF exactly as issued, so a later change to company details or the template
+    # never alters what the customer was sent. Stored before the row: the row cannot change.
+    doc = render.render_pdf(
+        render.render_html(draft, await company(session), quote_ref=b.quote_ref, kind="quotation")
+    )
+    pdf_key = storage.key_for(b.id, number)
+    await storage.put_pdf(pdf_key, doc.pdf)
     if prev is not None:
         prev.state = "superseded"
     v = BoqVersion(
         boq_id=b.id,
         project_id=b.project_id,
-        number=(prev.number + 1) if prev else 1,
+        number=number,
         quote_ref=b.quote_ref,
         content=draft.model_dump(mode="json"),
         totals=comp.totals.model_dump(mode="json"),
@@ -736,6 +745,8 @@ async def issue(session: AsyncSession, principal: Principal, boq_id: uuid.UUID) 
         issued_by=principal.user_id,
         pricing_approved_by=b.pricing_approved_by,
         selected_options=dict(draft.selected_options),
+        pdf_key=pdf_key,
+        pdf_sha256=doc.sha256,
     )
     session.add(v)
     b.stage, b.submitted_by, b.pricing_approved_by = (
@@ -829,6 +840,7 @@ def version_view(v: BoqVersion, principal: Principal) -> dict[str, Any]:
         "po_number": v.po_number,
         "po_date": str(v.po_date) if v.po_date else None,
         "accepted_at": v.accepted_at.isoformat() if v.accepted_at else None,
+        "pdf_sha256": v.pdf_sha256,
         "settings": draft.settings.model_dump(mode="json"),
         "groups": [g.model_dump(mode="json") for g in draft.groups],
         "sections": [s.model_dump(mode="json") for s in draft.sections],

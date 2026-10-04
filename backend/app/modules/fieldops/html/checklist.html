@@ -31,8 +31,8 @@
   <dt>Engineer</dt><dd>{{ run.engineer }}</dd>
   <dt>Device or asset</dt><dd>{{ run.asset or "None" }}</dd>
   <dt>Planned</dt><dd>{{ run.planned }}</dd>
-  {% if run.checked_in %}<dt>Checked in</dt><dd>{{ run.checked_in }} (customer code confirmed)</dd>{% endif %}
-  {% if run.handed_over %}<dt>Handed over</dt><dd>{{ run.handed_over }} (customer code confirmed)</dd>{% endif %}
+  {% if run.checked_in %}<dt>Checked in</dt><dd>{{ run.checked_in }}{% if run.checked_in_by_code %} (customer code confirmed){% endif %}</dd>{% endif %}
+  {% if run.handed_over %}<dt>Handed over</dt><dd>{{ run.handed_over }}{% if run.handed_over_by_code %} (customer code confirmed){% endif %}</dd>{% endif %}
   {% if run.closed %}<dt>Closed</dt><dd>{{ run.closed }}, verified by {{ run.verified_by }}</dd>{% endif %}
   <dt>Sent back</dt><dd>{{ run.rework }} time(s)</dd>
 </dl>

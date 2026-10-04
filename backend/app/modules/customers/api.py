@@ -609,7 +609,7 @@ async def get_brief(
 @projects_router.put("/{project_id}/brief", response_model=BriefOut)
 async def put_brief(
     session: Session,
-    principal: Annotated[Principal, Depends(require(P.PROJECT_WRITE))],
+    principal: Annotated[Principal, Depends(require(P.BRIEF_WRITE))],
     project_id: uuid.UUID,
     body: BriefIn,
 ) -> BriefOut:

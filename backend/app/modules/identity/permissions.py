@@ -60,6 +60,7 @@ class P(StrEnum):
     PROJECT_READ = "project:read"
     PROJECT_READ_ALL = "project:read_all"
     PROJECT_WRITE = "project:write"
+    BRIEF_WRITE = "brief:write"  # the intake questionnaire; also audit engineers (ADR 0024)
     PROJECT_MEMBERS = "project:manage_members"
     PROJECT_DELETE = "project:delete"
 
@@ -71,6 +72,7 @@ class P(StrEnum):
     FILE_UPLOAD = "file:upload"
     FILE_READ = "file:read"
 
+    PRISMSUITE_READ = "prismsuite:read"  # the list of a project's imports, status only
     PRISMSUITE_IMPORT = "prismsuite:import"
     PRISMSUITE_REVIEW = "prismsuite:review"
     PRISMSUITE_APPROVE = "prismsuite:approve"
@@ -91,6 +93,9 @@ class P(StrEnum):
 
     BOQ_READ = "boq:read"
     BOQ_EDIT = "boq:edit"
+    # The estimate straight from the PrismSuite report: saved nowhere, so it needs less than
+    # editing a BOQ. Audit engineers hold it too (ADR 0024).
+    BOQ_ESTIMATE = "boq:estimate"
     BOQ_APPROVE_PRICING = "boq:approve_pricing"
     BOQ_ISSUE = "boq:issue"
     BOQ_ACCEPT = "boq:accept"
@@ -187,11 +192,14 @@ ROLE_PERMISSIONS: dict[Role, frozenset[P]] = {
             P.PROJECT_READ,
             P.PROJECT_READ_ALL,
             P.PROJECT_WRITE,
+            P.BRIEF_WRITE,
             P.PROJECT_MEMBERS,
             P.GATE_SUBMIT,
             P.GATE_APPROVE,
             P.CUSTOMER_ACK_ISSUE,
             P.FILE_UPLOAD,
+            P.PRISMSUITE_READ,
+            P.PRISMSUITE_IMPORT,
             P.FILE_READ,
             P.PRISMSUITE_REVIEW,
             P.PRISMSUITE_APPROVE,
@@ -204,6 +212,7 @@ ROLE_PERMISSIONS: dict[Role, frozenset[P]] = {
             P.RULE_APPROVE,
             P.BOQ_READ,
             P.BOQ_EDIT,
+            P.BOQ_ESTIMATE,
             P.BOQ_APPROVE_PRICING,
             P.BOQ_ISSUE,
             P.BOQ_ACCEPT,
@@ -221,11 +230,14 @@ ROLE_PERMISSIONS: dict[Role, frozenset[P]] = {
             P.CUSTOMER_WRITE,
             P.PROJECT_READ_ALL,
             P.PROJECT_WRITE,
+            P.BRIEF_WRITE,
             P.PROJECT_MEMBERS,
             P.GATE_SUBMIT,
             P.GATE_APPROVE,
             P.CUSTOMER_ACK_ISSUE,
             P.FILE_UPLOAD,
+            P.PRISMSUITE_READ,
+            P.PRISMSUITE_IMPORT,
             P.CATALOGUE_WRITE,
             P.PRICE_READ,
             P.PRICE_WRITE,
@@ -234,6 +246,7 @@ ROLE_PERMISSIONS: dict[Role, frozenset[P]] = {
             P.INFRA_READ,
             P.BOQ_READ,
             P.BOQ_EDIT,
+            P.BOQ_ESTIMATE,
             P.BOQ_APPROVE_PRICING,
             P.BOQ_ISSUE,
             P.BOQ_ACCEPT,
@@ -245,9 +258,12 @@ ROLE_PERMISSIONS: dict[Role, frozenset[P]] = {
             *_READ_WORK,
             P.CUSTOMER_WRITE,
             P.PROJECT_WRITE,
+            P.BRIEF_WRITE,
             P.GATE_SUBMIT,
             P.CUSTOMER_ACK_ISSUE,
             P.FILE_UPLOAD,
+            P.PRISMSUITE_READ,
+            P.PRISMSUITE_IMPORT,
             P.PRICE_READ,
             P.PRICE_WRITE,
             P.DATASET_READ,
@@ -255,6 +271,7 @@ ROLE_PERMISSIONS: dict[Role, frozenset[P]] = {
             P.INFRA_READ,
             P.BOQ_READ,
             P.BOQ_EDIT,
+            P.BOQ_ESTIMATE,
             P.BOQ_ISSUE,
             P.BOQ_ACCEPT,
         }
@@ -270,6 +287,7 @@ ROLE_PERMISSIONS: dict[Role, frozenset[P]] = {
             P.GATE_APPROVE,
             P.CUSTOMER_ACK_ISSUE,
             P.FILE_UPLOAD,
+            P.PRISMSUITE_READ,
             P.PRISMSUITE_IMPORT,
             P.PRISMSUITE_REVIEW,
             P.PRISMSUITE_APPROVE,
@@ -281,6 +299,7 @@ ROLE_PERMISSIONS: dict[Role, frozenset[P]] = {
             P.INFRA_WRITE,
             P.BOQ_READ,
             P.BOQ_EDIT,
+            P.BOQ_ESTIMATE,
         }
     ),
     Role.AUDIT_ENGINEER: frozenset(
@@ -288,8 +307,13 @@ ROLE_PERMISSIONS: dict[Role, frozenset[P]] = {
             *_READ_WORK,
             P.GATE_SUBMIT,
             P.FILE_UPLOAD,
+            P.PRISMSUITE_READ,
             P.PRISMSUITE_IMPORT,
             P.PRISMSUITE_REVIEW,
+            P.BRIEF_WRITE,
+            P.PRICE_READ,
+            P.INFRA_READ,
+            P.BOQ_ESTIMATE,
             P.DATASET_READ,
             P.DATASET_WRITE,
         }
@@ -308,6 +332,7 @@ ROLE_PERMISSIONS: dict[Role, frozenset[P]] = {
             P.GATE_SUBMIT,
             P.GATE_APPROVE,
             P.FILE_UPLOAD,
+            P.PRISMSUITE_READ,
             P.PRISMSUITE_REVIEW,
             P.PRISMSUITE_APPROVE,
             P.DATASET_READ,
@@ -326,6 +351,7 @@ ROLE_PERMISSIONS: dict[Role, frozenset[P]] = {
             P.PLAN_BASELINE,
             *_READ_WORK,
             P.PROJECT_WRITE,
+            P.BRIEF_WRITE,
             P.PROJECT_MEMBERS,
             P.GATE_SUBMIT,
             P.GATE_APPROVE,

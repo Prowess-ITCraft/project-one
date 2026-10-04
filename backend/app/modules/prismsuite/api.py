@@ -66,7 +66,7 @@ async def create_import(
 @router.get("/by-project/{project_id}", response_model=list[ImportOut])
 async def list_for_project(
     session: Session,
-    principal: Annotated[Principal, Depends(require(P.PRISMSUITE_REVIEW))],
+    principal: Annotated[Principal, Depends(require(P.PRISMSUITE_READ))],
     project_id: uuid.UUID,
 ) -> list[ImportOut]:
     return [_out(r) for r in await service.list_imports(session, principal, project_id)]

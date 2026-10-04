@@ -36,12 +36,37 @@ async function refresh(): Promise<boolean> {
     method: "POST",
     headers: { "X-Auth-Mode": "cookie", "X-CSRF-Token": cookie("p1_csrf") },
   })
-    .then((r) => r.ok)
+    .then(async (r) => {
+      // Always read the body: an unread response stays open in the browser.
+      const body = await r.json().catch(() => null);
+      if (r.ok) return true;
+      // Another tab renewed the session a moment ago; its new cookies are already ours.
+      return body?.code === "refresh_race";
+    })
     .catch(() => false)
     .finally(() => {
       refreshing = null;
     });
   return refreshing;
+}
+
+// The sign-in steps themselves never trigger a renewal. Everything else does, including
+// /auth/me, which every page asks first: the short sign-in cookie lasts 15 minutes and the
+// renewal keeps people signed in for 14 days without the password or the code.
+const NO_RENEWAL = ["/auth/login", "/auth/mfa", "/auth/refresh", "/auth/logout"];
+
+/** True when the browser still holds a session, renewing the short cookie if it has to. The
+ * sign-in page uses it so a returning person goes straight in. */
+export async function resumeSession(): Promise<boolean> {
+  const me = () =>
+    fetch(`${BASE}/auth/me`)
+      .then(async (r) => {
+        await r.arrayBuffer(); // read it, so the response does not stay open
+        return r.ok;
+      })
+      .catch(() => false);
+  if (await me()) return true;
+  return (await refresh()) && (await me());
 }
 
 export async function api<T = unknown>(
@@ -61,7 +86,7 @@ export async function api<T = unknown>(
     payload = JSON.stringify(body);
   }
   const res = await fetch(`${BASE}${path}`, { method, headers, body: payload });
-  if (res.status === 401 && !opts.noRefresh && !path.startsWith("/auth/")) {
+  if (res.status === 401 && !opts.noRefresh && !NO_RENEWAL.some((p) => path.startsWith(p))) {
     if (await refresh()) return api<T>(method, path, body, { ...opts, noRefresh: true });
     if (typeof window !== "undefined") window.location.href = "/login";
   }

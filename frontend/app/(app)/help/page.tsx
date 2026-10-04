@@ -33,7 +33,8 @@ const ROLE_SECTIONS: { role: string; title: string; steps: ReactNode[] }[] = [
     title: "Sales",
     steps: [
       <>Open <b>Projects</b> and choose <b>New project</b>. Pick the customer, or add a new one.</>,
-      <>Once the audit report and questionnaire are in, the <b>BOQ</b> tab offers <b>Draft BOQ estimate</b>. It is a quick, unofficial figure marked "Not approved", useful for an early conversation. It is not saved.</>,
+      <>For a quick BOQ, open the project and choose <b>Upload report and draft BOQ</b> on the Overview. Pick the PrismSuite report, answer five questions and the estimate appears with PDF and Excel downloads. It is marked "Not approved" and is not saved.</>,
+      <>Prices come only from the price book. Enter or refresh them by hand under <b>Catalogue</b>: open an item and choose <b>Enter a new price</b>. Lines without a price stay blank until you do.</>,
       <>When the gaps are approved, use <b>Draft the BOQ from the gap register</b>. Adjust lines with <b>Add from catalogue</b> or <b>Add by hand</b>.</>,
       <>Download the quotation as PDF or Excel from the BOQ tab, then submit the stage for approval.</>,
     ],
@@ -50,7 +51,7 @@ const ROLE_SECTIONS: { role: string; title: string; steps: ReactNode[] }[] = [
     role: "audit_engineer",
     title: "Audit engineer",
     steps: [
-      <>Open the project, go to <b>Audit intake</b>, choose the PrismSuite Word or JSON file and select <b>Upload and import</b>.</>,
+      <>Open the project, go to <b>Audit intake</b>, choose the PrismSuite Word or JSON file and select <b>Upload and import</b>. Or use <b>Upload report and draft BOQ</b> on the Overview to see the BOQ estimate straight away.</>,
       <>Read what was imported. Where the report disagrees with itself, pick the right value. Then approve the import.</>,
       <>Fill in the <b>Questionnaire</b> tab and choose <b>Save questionnaire</b>.</>,
       <>At the top of the project, pick the locked output and choose <b>Submit for approval</b>.</>,
@@ -80,7 +81,7 @@ const ROLE_SECTIONS: { role: string; title: string; steps: ReactNode[] }[] = [
     steps: [
       <>Open <b>My tasks</b>. <b>Needs you</b> lists what you can do now, with the customer and project on each task.</>,
       <>Open a task and choose <b>Accept task</b>.</>,
-      <>On site, choose <b>Send code to the customer</b>. The customer reads you the 6 digit code; type it and choose <b>Check in</b>.</>,
+      <>On site, add the arrival photo and choose <b>Check in</b>. When the work is checked, show the customer and choose <b>Confirm hand over</b>.</>,
       <>Work through <b>Before you change anything</b> and the <b>Steps</b>. Record <b>What the device shows</b> and add photos under <b>Evidence</b>.</>,
       <>Choose <b>Send for the check</b>. If a setting does not match, the page says which; fix it and send again.</>,
       <>Finish with <b>Hand over to the customer</b>. The technical lead then verifies your work.</>,
@@ -222,7 +223,7 @@ export default function Help() {
               Directors and admins: install Google Authenticator or Microsoft Authenticator, choose <b>Show my code</b>,
               scan the QR code and type the 6 digit code. Save the recovery codes somewhere safe.
             </>,
-            <>Afterwards, each sign-in asks for the code from the app.</>,
+            <>Afterwards, signing in asks for the code from the app. You then stay signed in on that computer or phone for 14 days, until you sign out.</>,
           ]}
         />
       </section>

@@ -44,6 +44,9 @@ celery_app.conf.update(
     task_soft_time_limit=240,
     broker_connection_retry_on_startup=True,
     task_ignore_result=True,
+    # Our structured logs go to stdout with their own level inside the JSON. Celery would
+    # otherwise relabel every line WARNING, which makes routine scans look like warnings.
+    worker_redirect_stdouts_level="INFO",
     beat_schedule={
         "outbox-dispatch": {"task": "p1.outbox.dispatch", "schedule": 5.0},
         # 00:10 IST is 18:40 UTC the previous day.

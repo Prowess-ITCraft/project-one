@@ -29,7 +29,7 @@ class LocatedIn(ClientIn):
 
 
 class CodeIn(LocatedIn):
-    code: Code
+    code: Code | None = None  # needed only while customer codes are on
 
 
 class StepIn(ClientIn):
@@ -159,6 +159,7 @@ class RunDetailOut(BaseModel):
     checks: list[CheckOut]
     waiting_on: list[str]
     next_action: str
+    customer_codes: bool  # whether check-in and hand over ask for the customer's code
 
 
 class CodeSentOut(BaseModel):

@@ -8,6 +8,7 @@ import { InfraTab } from "@/components/project/InfraTab";
 import { GapsTab } from "@/components/project/GapsTab";
 import { BoqTab } from "@/components/project/BoqTab";
 import { EstimateReadiness } from "@/components/project/EstimatePanel";
+import { QuickBoq } from "@/components/project/QuickBoq";
 import { PlanTab } from "@/components/project/PlanTab";
 import { FieldTab } from "@/components/project/FieldTab";
 import { CompletionTab } from "@/components/project/CompletionTab";
@@ -258,13 +259,13 @@ function GatePanel({
 
 function AuditSection({ projectId, stage, onEstimate }: { projectId: string; stage: string; onEstimate: () => void }) {
   const { can } = useMe();
-  const imports = useData<S["ImportOut"][]>(can("prismsuite:review") ? `/prismsuite/imports/by-project/${projectId}` : null);
+  const imports = useData<S["ImportOut"][]>(can("prismsuite:read") ? `/prismsuite/imports/by-project/${projectId}` : null);
   const { busy, run } = useAction();
   const [file, setFile] = useState<File | null>(null);
   const [kind, setKind] = useState<"baseline" | "rescan">("baseline");
   const hasBaseline = (imports.data ?? []).some((i) => i.status === "approved" && (i.kind ?? "baseline") === "baseline");
 
-  if (!can("prismsuite:review")) return null;
+  if (!can("prismsuite:read")) return null;
 
   async function upload() {
     if (!file) return;
@@ -329,7 +330,7 @@ function AuditSection({ projectId, stage, onEstimate }: { projectId: string; sta
               return (
                 <tr key={i.id}>
                   <td data-label="Revision">
-                    <Link href={`/imports/${i.id}`}>Revision {i.revision}</Link>
+                    {can("prismsuite:review") ? <Link href={`/imports/${i.id}`}>Revision {i.revision}</Link> : <>Revision {i.revision}</>}
                     {i.kind === "rescan" && <span className="muted small"> rescan after the work</span>}
                   </td>
                   <td data-label="Status">
@@ -492,6 +493,7 @@ export default function Project() {
 
       <Tabs tabs={tabs} value={tab} onChange={go} label="Project sections" />
 
+      {tab === "overview" && <QuickBoq projectId={id} stage={cur?.stage ?? ""} onImported={tracker.reload} />}
       {tab === "overview" && (
         <GatePanel
           projectId={id}

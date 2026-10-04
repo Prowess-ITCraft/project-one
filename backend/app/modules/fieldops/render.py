@@ -94,6 +94,12 @@ async def checklist_context(
             }
         )
 
+    def by_code(action: str) -> bool:
+        """Whether the latest check-in or hand over was confirmed with the customer's code;
+        not so while customer codes are switched off (ADR 0025)."""
+        last = [e for e in events if e.action == action]
+        return bool(last) and "confirmed_by_contact" in (last[-1].detail or {})
+
     return {
         "company": await get_company_profile(session),
         "title": f"Task record {run.task_ref}",
@@ -108,7 +114,9 @@ async def checklist_context(
             "engineer": await name(run.assignee_id),
             "planned": f"{_when(run.planned_start)} to {_when(run.planned_end)}",
             "checked_in": _when(run.checked_in_at),
+            "checked_in_by_code": by_code("check_in"),
             "handed_over": _when(run.handed_over_at),
+            "handed_over_by_code": by_code("hand_over"),
             "closed": _when(run.closed_at),
             "verified_by": await name(run.verified_by) if run.verified_by else "",
             "rework": run.rework_count,
@@ -117,7 +125,7 @@ async def checklist_context(
             {
                 "text": s["text"],
                 "done": s["done"],
-                "when": s.get("done_at", "")[:16].replace("T", " "),
+                "when": (s.get("done_at") or "")[:16].replace("T", " "),
             }
             for s in run.steps
         ],

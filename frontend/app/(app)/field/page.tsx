@@ -47,7 +47,7 @@ function nextShort(r: Run, all: Run[]): string {
   }
   if (r.state === "configured") return r.rework_count ? "Fix what was sent back" : "Add the evidence";
   if (r.state === "evidence_uploaded") return "Run the check";
-  if (r.state === "engine_check") return "Get the hand over code";
+  if (r.state === "engine_check") return "Hand over to the customer";
   if (r.state === "verifier_review") return "Waiting for a verifier";
   if (r.state === "blocked") return r.block_reason ? `Blocked: ${r.block_reason}` : "Blocked";
   return STATE_SHORT[r.state] ?? r.state;

@@ -33,6 +33,12 @@ async function codeFromEmail(page: Page, subject: string, since: number): Promis
 }
 
 async function enterCustomerCode(page: Page, purpose: "check_in" | "handover", subject: string, label: string) {
+  // Customer codes are switched off for now (ADR 0025): the step is a single button.
+  if (!(await page.getByRole("button", { name: "Send code to the customer" }).count())) {
+    await page.getByRole("button", { name: label, exact: true }).click();
+    await settle(page);
+    return;
+  }
   const since = Date.now() - 2000;
   await page.getByRole("button", { name: "Send code to the customer" }).click();
   await page.locator(`#otp-${purpose}`).fill(await codeFromEmail(page, subject, since));
@@ -121,7 +127,8 @@ test.describe("Field engineer @phone", () => {
     await expect(page.getByRole("heading", { name: "Arrive on site" })).toBeVisible();
     // the code cannot be asked for until the arrival evidence is in
     if (await page.locator('input[type="file"], input[id^="ev-"]').count()) {
-      await expect(page.getByRole("button", { name: "Send code to the customer" })).toBeDisabled();
+      const send = page.getByRole("button", { name: "Send code to the customer" });
+      await expect((await send.count()) ? send : page.getByRole("button", { name: "Check in", exact: true })).toBeDisabled();
       await addEvidence(page);
     }
     await enterCustomerCode(page, "check_in", "visit code", "Check in");

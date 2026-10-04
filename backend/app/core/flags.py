@@ -15,6 +15,9 @@ from app.core.db import Base
 DEFAULTS: dict[str, bool] = {
     "customer_portal_login": False,  # customer reps sign in with a password (v1: links + OTP only)
     "prismsuite_json_import": True,  # accept AuditSnapshot JSON uploads
+    # The customer's one-time code at check-in and hand over. Built and tested, switched off
+    # for now: the arrival photo, evidence and checks still apply (ADR 0025).
+    "field_customer_codes": False,
 }
 
 _CACHE_TTL = 30.0

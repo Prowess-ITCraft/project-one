@@ -20,8 +20,8 @@ const range = (a: string, b: string) => (a === b ? money(a) : `${money(a)} to ${
 export function EstimateReadiness({ projectId, onOpen }: { projectId: string; onOpen?: () => void }) {
   const { can } = useMe();
   const brief = useData<S["BriefOut"] | null>(`/projects/${projectId}/brief`);
-  const imports = useData<S["ImportOut"][]>(can("prismsuite:review") ? `/prismsuite/imports/by-project/${projectId}` : null);
-  if (!can("boq:edit")) return null;
+  const imports = useData<S["ImportOut"][]>(can("prismsuite:read") ? `/prismsuite/imports/by-project/${projectId}` : null);
+  if (!can("boq:estimate")) return null;
   const report = imports.data?.some((i) => (i.kind ?? "baseline") === "baseline" && ["in_review", "approved"].includes(i.status));
   const briefDone = !!brief.data;
   const ready = briefDone && (report ?? true);
@@ -81,7 +81,7 @@ export function EstimatePanel({ projectId, autoStart }: { projectId: string; aut
     if (autoStart) void draft();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoStart]);
-  if (!can("boq:edit")) return null;
+  if (!can("boq:estimate")) return null;
 
   const doc = (fmt: "pdf" | "xlsx", kind = "quotation") =>
     window.open(`/api/v1/projects/${projectId}/boq/estimate?fmt=${fmt}&kind=${kind}`, "_blank");

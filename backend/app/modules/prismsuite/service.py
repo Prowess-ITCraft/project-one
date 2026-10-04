@@ -109,7 +109,9 @@ async def create_import(
         )
     )
     if clash:
-        raise Conflict("This exact report was already imported for the project.")
+        raise Conflict(
+            "This exact report was already imported for the project.", code="already_imported"
+        )
 
     if kind == "rescan" and not await session.scalar(
         select(AuditImport.id).where(

@@ -34,16 +34,6 @@ async function everyNavPage(page: Page, prefix: string) {
 }
 
 test.describe("Director", () => {
-  test("dashboard, every page and the finished project", async ({ page, problems }) => {
-    await signIn(page, "director");
-    const links = await everyNavPage(page, "director");
-    expect(links).toContain("/dashboard");
-    await visit(page, "/dashboard", "director-dashboard");
-    await expect(page.locator(".figures")).toBeVisible();
-    for (const p of await projects(page)) await everyTab(page, p, "director");
-    void problems;
-  });
-
   test("the certificate of the finished project is valid and downloadable", async ({ page, problems }) => {
     await signIn(page, "director");
     const done = (await projects(page)).find((p) => p.status === "completed");
@@ -54,6 +44,19 @@ test.describe("Director", () => {
     await expect(page.locator(".certline")).toContainText("IITPL-");
     const pdf = await page.request.get(await page.getByRole("link", { name: "Download PDF" }).getAttribute("href") as string);
     expect(pdf.headers()["content-type"]).toContain("application/pdf");
+    void problems;
+  });
+
+  test("dashboard, every page and the finished project", async ({ page, problems }) => {
+    await signIn(page, "director");
+    const links = await everyNavPage(page, "director");
+    expect(links).toContain("/dashboard");
+    await visit(page, "/dashboard", "director-dashboard");
+    await expect(page.locator(".figures")).toBeVisible();
+    // One project per stage covers every state the tabs can show, without hundreds of
+    // requests a minute from one person (the per-person limit is 300).
+    const byStage = new Map((await projects(page)).map((p) => [`${p.current_stage}/${p.status}`, p]));
+    for (const p of byStage.values()) await everyTab(page, p, "director");
     void problems;
   });
 });
@@ -77,6 +80,7 @@ test.describe("Sales", () => {
     await signIn(page, "sales_manager");
     await everyNavPage(page, "sales");
     const p = (await projects(page))[0];
+    expectFailure(page, /\/boq$/); // a project before the BOQ stage has none yet (404)
     await page.goto(`/projects/${p.id}#boq`);
     await settle(page);
     await page.screenshot({ path: "e2e/screens/sales-boq.png", fullPage: true });

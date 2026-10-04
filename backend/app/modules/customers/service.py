@@ -1315,7 +1315,7 @@ async def get_brief(
 async def upsert_brief(
     session: AsyncSession, principal: Principal, project_id: uuid.UUID, body: BriefIn
 ) -> ProjectBrief:
-    principal.require(P.PROJECT_WRITE)
+    principal.require(P.BRIEF_WRITE)
     project = await get_project(session, principal, project_id)
     brief = await session.get(ProjectBrief, project.id)
     data = body.model_dump(exclude={"version"})
