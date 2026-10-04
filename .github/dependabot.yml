@@ -2,10 +2,31 @@ version: 2
 updates:
   - package-ecosystem: pip
     directory: /backend
-    schedule: {interval: weekly}
+    schedule: {interval: monthly}
+    open-pull-requests-limit: 5
+    groups:
+      backend-minor-and-patch:
+        update-types: [minor, patch]
+
   - package-ecosystem: docker
     directory: /backend
-    schedule: {interval: weekly}
+    schedule: {interval: monthly}
+    ignore:
+      # The project is pinned to Python 3.12 (pyproject requires-python); only take 3.12.x patches.
+      - dependency-name: python
+        update-types: [version-update:semver-major, version-update:semver-minor]
+
   - package-ecosystem: github-actions
     directory: /
-    schedule: {interval: weekly}
+    schedule: {interval: monthly}
+    groups:
+      actions:
+        patterns: ["*"]
+
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule: {interval: monthly}
+    open-pull-requests-limit: 5
+    groups:
+      frontend-minor-and-patch:
+        update-types: [minor, patch]

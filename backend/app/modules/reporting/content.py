@@ -1,6 +1,6 @@
 """What the completion report says, gathered from the other modules' contracts. No prices.
 
-Sections (PRD, completion report): scope delivered, exclusions (waivers), before and after scores on the
+Sections (see the PRD): scope delivered, exclusions (waivers), before and after scores on the
 four lenses, configuration summary per device, deviations, and recommendations still open.
 """
 
