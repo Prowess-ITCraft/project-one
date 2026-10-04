@@ -13,7 +13,7 @@ jobs:
   image:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: docker build -t project-one/backend:ci backend
       - uses: aquasecurity/trivy-action@0.28.0
         with:
@@ -28,7 +28,7 @@ jobs:
   smoke:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Write a throwaway .env
         run: |
           cp .env.example .env

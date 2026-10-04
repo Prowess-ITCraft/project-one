@@ -22,7 +22,7 @@ jobs:
       P1_DATABASE_OWNER_URL: postgresql+asyncpg://p1_owner:owner@localhost:5432/project_one
       P1_FERNET_KEYS: ${{ secrets.CI_FERNET_KEY }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v5
       - run: uv sync --frozen
       - name: Create roles and database
