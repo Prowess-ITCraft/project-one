@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 # One image runs the API, the Celery worker and beat (different commands in compose).
 
-FROM python:3.12.8-slim-bookworm AS builder
+FROM python:3.12.14-slim-bookworm AS builder
 ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1 PYTHONDONTWRITEBYTECODE=1
 WORKDIR /build
 RUN python -m venv /opt/venv
@@ -9,7 +9,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-FROM python:3.12.8-slim-bookworm AS runtime
+FROM python:3.12.14-slim-bookworm AS runtime
 ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 \
     PATH="/opt/venv/bin:$PATH" \
     P1_ENV=prod \
