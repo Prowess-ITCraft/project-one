@@ -380,6 +380,7 @@ async def _add_recommended(
         "category": cat,
         "ranked": [
             {
+                "item_id": str(r.candidate.item.id),
                 "item": r.candidate.item.name,
                 "score": r.score,
                 "reasons": r.reasons,

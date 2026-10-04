@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.boq import draft as _d
 from app.modules.boq.models import Boq, BoqVersion
-from app.modules.boq.service import ARTIFACT, BOQ_ACCEPTED, VERSION_ISSUED
+from app.modules.boq.service import ARTIFACT, BOQ_ACCEPTED, BOQ_RECOMMENDED, VERSION_ISSUED
 from app.modules.customers.contracts import get_project_ref
 from app.modules.identity.contracts import P, Principal
 
@@ -103,6 +103,7 @@ async def get_company_profile(session: AsyncSession) -> dict[str, Any]:
 __all__ = [
     "ARTIFACT",
     "BOQ_ACCEPTED",
+    "BOQ_RECOMMENDED",
     "VERSION_ISSUED",
     "AcceptedBoq",
     "AcceptedLine",

@@ -25,6 +25,7 @@ MODULES = [
     "fieldops",
     "verification",
     "reporting",
+    "ml",
 ]
 
 _HANDLER_MODULES = [
@@ -33,6 +34,7 @@ _HANDLER_MODULES = [
     "app.modules.prismsuite.handlers",
     "app.modules.datasets.handlers",
     "app.modules.verification.handlers",
+    "app.modules.ml.handlers",
 ]
 
 
@@ -91,6 +93,7 @@ def routers() -> list[APIRouter]:
         "fieldops",
         "verification",
         "reporting",
+        "ml",
     ):
         try:
             mod = importlib.import_module(f"app.modules.{optional}.api")

@@ -495,3 +495,62 @@ h1 {
   height: 16px;
   accent-color: var(--accent);
 }
+
+/* ---------- learning ---------- */
+.learn-progress {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 16px;
+  max-width: 62ch;
+}
+.learn-progress p {
+  margin: 0;
+}
+.learn-progress progress {
+  width: 100%;
+  height: 10px;
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+.learn-progress progress::-webkit-progress-bar {
+  background: var(--line);
+}
+.learn-progress progress::-webkit-progress-value {
+  background: var(--accent);
+}
+.learn-progress progress::-moz-progress-bar {
+  background: var(--accent);
+}
+.model-card {
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+.model-card h3 {
+  margin: 0;
+}
+.weights td {
+  white-space: nowrap;
+}
+.wbar {
+  display: inline-block;
+  vertical-align: middle;
+  width: calc(var(--w) * 240px);
+  min-width: 2px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 2px;
+  background: var(--muted);
+  opacity: 0.55;
+}
+.wbar.learned {
+  background: var(--accent);
+  opacity: 1;
+}
+@media (max-width: 560px) {
+  .wbar {
+    width: calc(var(--w) * 140px);
+  }
+}

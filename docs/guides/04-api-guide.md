@@ -86,6 +86,7 @@ Each refresh token works once. The answer contains the next one.
 | Verification | `/verification` | `projects/{id}/deviations`, add or `accept` a deviation, severity `policy`, brand `mappings`, `inspect` an export |
 | Dashboard | `/dashboard` | every visible project: stage, field progress, blocked work, open deviations (Director) |
 | Completion | `/reporting` | `projects/{id}/conditions`, `waivers` and their `decision`, `field-summary`, `report/preview`, `reports` (lock, `pdf`), `certificates` (issue, `revoke`, `pdf`), `settings` (wording, stamp) |
+| Learning | `/ml` | `report`, `training-sets` (list, freeze), `models` (list, train, `status`: shadow or retired) |
 | Public | `/public/waivers/{token}`, `/public/certificates/{number}` | customer waiver acknowledgement; certificate check behind the QR code |
 
 ## Worked example: from report to approved audit

@@ -16,7 +16,7 @@ field work, verification, and a "Certified by IITPL" certificate.
 | M2 | 4, 5, 6 | 12 Oct to 6 Nov | Datasets, infrastructure gaps, BOQ and recommendations | Built |
 | M3 | 7, 8, 9 | 2 Nov to 24 Nov | Planning, field operations, verification, Director dashboard | Built |
 | M4 | 10, 11, 12 | 23 Nov to 16 Dec | Completion certificate, then the whole web app | 10 and 11 built, 12 nearly done |
-| M5 | 13, 14, 15 | 14 Dec to 31 Dec | Learning from the library, hardening, go-live | Next |
+| M5 | 13, 14, 15 | 14 Dec to 31 Dec | Learning from the library, hardening, go-live | 13 built (waiting for data); 14 next |
 
 ## Timeline
 

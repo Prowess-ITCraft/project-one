@@ -120,12 +120,18 @@ class P(StrEnum):
     CERT_ISSUE = "certificate:issue"
     CERT_SETTINGS = "certificate:settings"
 
+    # Learning from accepted BOQs (phase 13). The ranker only runs in shadow mode (ADR 0020).
+    ML_READ = "ml:read"
+    ML_MANAGE = "ml:manage"
+
 
 _READ_WORK = {P.CUSTOMER_READ, P.PROJECT_READ, P.FILE_READ, P.CATALOGUE_READ}
 
 ROLE_PERMISSIONS: dict[Role, frozenset[P]] = {
     Role.ADMIN: frozenset(
         {
+            P.ML_READ,
+            P.ML_MANAGE,
             P.POLICY_EDIT,
             P.CERT_SETTINGS,
             P.PLAN_READ,
@@ -158,6 +164,8 @@ ROLE_PERMISSIONS: dict[Role, frozenset[P]] = {
     ),
     Role.DIRECTOR: frozenset(
         {
+            P.ML_READ,
+            P.ML_MANAGE,
             P.DASHBOARD_READ,
             P.POLICY_EDIT,
             P.REPORT_READ,
@@ -204,6 +212,7 @@ ROLE_PERMISSIONS: dict[Role, frozenset[P]] = {
     ),
     Role.SALES_HEAD: frozenset(
         {
+            P.ML_READ,
             P.DASHBOARD_READ,
             P.REPORT_READ,
             *_READ_WORK,
@@ -252,6 +261,7 @@ ROLE_PERMISSIONS: dict[Role, frozenset[P]] = {
     ),
     Role.SOLUTION_ARCHITECT: frozenset(
         {
+            P.ML_READ,
             P.REPORT_READ,
             P.PLAN_READ,
             P.PLAN_WRITE,

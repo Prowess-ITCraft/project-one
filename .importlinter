@@ -21,6 +21,7 @@ source_modules =
     app.modules.fieldops
     app.modules.verification
     app.modules.reporting
+    app.modules.ml
 forbidden_modules =
     app.modules.audit_log.models
     app.modules.audit_log.service
@@ -51,6 +52,8 @@ forbidden_modules =
     app.modules.verification.service
     app.modules.reporting.models
     app.modules.reporting.service
+    app.modules.ml.models
+    app.modules.ml.service
 allow_indirect_imports = True
 ignore_imports =
     app.modules.audit_log.** -> app.modules.audit_log.**
@@ -67,6 +70,7 @@ ignore_imports =
     app.modules.fieldops.** -> app.modules.fieldops.**
     app.modules.verification.** -> app.modules.verification.**
     app.modules.reporting.** -> app.modules.reporting.**
+    app.modules.ml.** -> app.modules.ml.**
     app.modules.**.tests.** -> app.modules.**
 
 [importlinter:contract:core-is-independent]

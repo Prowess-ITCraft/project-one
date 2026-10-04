@@ -8,7 +8,7 @@ Planned dates are in `ROADMAP.md`, decisions in `decisions/`.
 - Phases 1 to 10 are built. Backend: 320 tests pass at 84 percent coverage (4 Oct).
 - The web app covers every stage, from audit intake to the certificate. Phase 12 has a few
   screens and the installable phone app left.
-- Next: finish phase 12, then 13 (learning from the library), 14 (hardening), 15 (go-live).
+- Phase 13 (learning) is built and waits for data. Next: 14 (hardening) and 15 (go-live).
 
 ## Phase status
 
@@ -26,7 +26,7 @@ Planned dates are in `ROADMAP.md`, decisions in `decisions/`.
 | 10 | Completion report and certificate | done | real IITPL stamp still needed |
 | 11 | Frontend foundation | done | |
 | 12 | Frontend core workflows | in progress | see below |
-| 13 | Learning from the library (ML) | not started | corpus, labels and frozen snapshots ready |
+| 13 | Learning from accepted BOQs | done | shadow mode only; needs about 20 accepted BOQs before a model can train |
 | 14 | Hardening and performance | not started | |
 | 15 | Go-live | not started | |
 
@@ -72,9 +72,11 @@ Planned dates are in `ROADMAP.md`, decisions in `decisions/`.
 
 ### Phase 13: Learning from the library
 
-- [ ] Features from frozen snapshots only (RULES 2.6)
-- [ ] Learned ranker behind the recommender contract, in shadow mode next to the rules
-- [ ] Agreement report: where the ranker and the rules disagree, and on what
+- [x] Trains only on frozen training sets with a data card (RULES 2.6)
+- [x] Learned ranker behind the recommender contract, in shadow mode next to the rules
+- [x] Agreement report and Learning page
+- [ ] Train the first model once about 20 accepted BOQs exist
+- [ ] Decide (new ADR, Director) whether a model may ever influence real BOQs
 
 ### Phase 14: Hardening and performance
 

@@ -14,6 +14,7 @@ const NAV = [
   { href: "/projects", label: "Projects", perm: "project:read" },
   { href: "/catalogue", label: "Catalogue", perm: "catalogue:read" },
   { href: "/library", label: "Library", perm: "dataset:read" },
+  { href: "/learning", label: "Learning", perm: "ml:read" },
   { href: "/users", label: "Users", perm: "user:manage" },
   { href: "/settings/certificate", label: "Certificate", perm: "certificate:settings" },
 ];

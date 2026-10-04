@@ -61,7 +61,7 @@ The four reporting lenses everywhere: **Productivity, Resilience, Security, Heal
 | 05 | BOQ from approved gaps: templates, quantity rules, options, priority groups, price book | 6 | Built |
 | 06 | Version every BOQ, block on expired prices, lock the accepted version with a PO | 6 | Built |
 | 07 | Quotation and summary BOQ in the exact ITCraft format, PDF (WeasyPrint) and Excel | 6 | Built |
-| 08 | Recommendations with reasons and runner-ups, same contract for rules and learned ranker | 6, 13 | Rules built |
+| 08 | Recommendations with reasons and runner-ups, same contract for rules and learned ranker | 6, 13 | Built; learned ranker in shadow mode |
 | 09 | Tasks, dependencies and schedule from the accepted BOQ, around leave and downtime windows | 7 | Built, with plan PDF |
 | 10 | Target configuration baseline per device | 7 | Built |
 | 11 | Gated task state machine, mandatory evidence, customer OTP at check-in and handover | 8 | Built |

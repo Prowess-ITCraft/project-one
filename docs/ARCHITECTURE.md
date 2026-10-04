@@ -35,7 +35,7 @@ samples/       the reference inputs; samples/corpus/ holds their canonical JSON
 | `fieldops` | task run state machine, evidence, OTP, offline idempotency, live events | built |
 | `verification` | export parsers, brand key mappings, deviation register, severity policy, Director dashboard | built |
 | `reporting` | release conditions, waivers, completion report, certificate, QR verification | built |
-| `ml` | training on frozen snapshots, learned ranker, shadow mode | Phase 13 |
+| `ml` | examples from drafted BOQs, frozen training sets, learned ranker, shadow runs | built |
 
 Every module has `api.py`, `schemas.py`, `models.py`, `service.py` (the only place rules live),
 `contracts.py` (the only file other modules import), optional `handlers.py`, and `tests/`.
@@ -71,6 +71,7 @@ Main contract edges: `boq -> infra, catalogue, customers, datasets(history)`;
 | Field ops | task_runs, run_events (append only), run_evidence (append only), otp_challenges |
 | Verification | brand_field_maps, deviations, verification_settings |
 | Reporting | waivers, completion_reports, certificates, report_settings |
+| Learning | ml_examples, ml_training_sets (frozen), ml_models, ml_shadow_runs |
 | Platform | outbox, idempotency keys, sequences, feature flags |
 
 Money is `NUMERIC(14,2)`. Editable rows carry a `version` column for optimistic locking.
@@ -153,7 +154,7 @@ No other PDF generator is allowed without an ADR.
 | 9601 / 9602 | MinIO API / console | no |
 | 9603 / 9604 | Prometheus / Grafana | admin only |
 | 9605 | Mailpit | dev only |
-| 9606 | MLflow | Phase 13 |
+| 9606 | Reserved (MLflow not needed, ADR 0020) | no |
 
 Compose files: `docker-compose.yml` (base), `docker-compose.dev.yml` (publishes ports, Mailpit),
 `docker-compose.prod.yml`. On Windows `scripts/dev.ps1` replaces `make`.
@@ -190,3 +191,4 @@ salted hashes and wiped from the message log after an hour.
 | [0017](decisions/0017-boq-planning-field-defaults.md) | Defaults for BOQ, planning and field work |
 | [0018](decisions/0018-outbox-subscribers-load-first.md) | Event subscribers load before anything publishes |
 | [0019](decisions/0019-verification-and-certificate-answers.md) | Verification and certificate decisions |
+| [0020](decisions/0020-learned-ranker-in-shadow.md) | A learned ranker that only runs in shadow mode |

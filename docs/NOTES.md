@@ -33,6 +33,7 @@ Maintained by Aditya Kumar.
 | First device brand | SonicWall, read from config exports, no remote access | 0019 |
 | Certificate | Director signs, IITPL stamp, rescan required first | 0019 |
 | Severity policy | Critical blocks the certificate and cannot be accepted | 0019 |
+| Learned ranker | Shadow mode only, at least 20 accepted recommendations to train | 0020 |
 
 ## Machine quirks
 
@@ -54,7 +55,7 @@ Maintained by Aditya Kumar.
 | `fieldops.engine.ConfigCheckDriver` | `ExportDriver` reads SonicWall exports; everything else falls back to `AnswerDriver` (recorded values) | One driver per new brand, via `register_driver` |
 | `verification.exports.ExportParser` | SonicWall (`.exp`, key/value text, JSON) | One parser per brand |
 | `notifications.providers` SMS, WhatsApp | `UnconfiguredProvider` (recorded as skipped) | When a provider is chosen |
-| `boq.recommend` learned ranker | Rule-based only | Phase 13 (shadow mode) |
+| `boq.recommend` learned ranker | Rules decide; a learned model can run in shadow mode (ADR 0020) | A new ADR before it may influence a BOQ |
 | Market data feed | Manual entry | Later, behind the feed adapter |
 
 ## Known limitations
@@ -77,6 +78,8 @@ Maintained by Aditya Kumar.
 
 ## Changelog
 
+- 2026-10-04 (later): Phase 13, learning from accepted BOQs, in shadow mode (ADR 0020).
+  BOQ version compare; the web app installs on phones. GitHub Actions and Dependabot removed.
 - 2026-10-04: Verification (phase 9) and completion report and certificate (phase 10) built,
   with the Director dashboard, completion tab, certificate settings and the public QR page.
   Demo walker builds two projects, one through to a signed certificate. Playwright smoke tests.

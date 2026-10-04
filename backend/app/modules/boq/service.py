@@ -45,6 +45,9 @@ from app.modules.infra.contracts import get_locked_gaps
 ARTIFACT = "boq_version"
 VERSION_ISSUED = "boq.version_issued"
 BOQ_ACCEPTED = "boq.accepted"
+# Every candidate the recommender ranked while drafting, with its criteria. The learning module
+# keeps these and labels them when the customer accepts a version (ADR 0020).
+BOQ_RECOMMENDED = "boq.recommended"
 
 
 # ------------------------------------------------------------------ master data
@@ -351,9 +354,55 @@ async def generate(
         f"Drafted from gap register v{gapset.number}",
         [f"{len(draft.lines)} lines", f"{len(report['unmatched'])} unmatched gaps"],
     )
+    groups = [
+        {
+            "key": key,
+            "category": rec["category"],
+            "candidates": [
+                {
+                    "item_id": r["item_id"],
+                    "name": r["item"],
+                    "score": r["score"],
+                    "criteria": r["criteria"],
+                }
+                for r in rec["ranked"]
+            ],
+        }
+        for key, rec in report.get("recommendations", {}).items()
+        if rec.get("ranked")
+    ]
+    if groups:
+        outbox.publish(
+            session,
+            DomainEvent(
+                event_type=BOQ_RECOMMENDED,
+                aggregate_type="boq",
+                aggregate_id=str(b.id),
+                actor_id=principal.user_id,
+                payload={"project_id": str(project_id), "groups": groups},
+            ),
+        )
     await session.commit()
     await session.refresh(b)
     return b
+
+
+def _accepted_item_ids(draft: d.Draft) -> list[str]:
+    """Catalogue items the customer actually took: every plain line, and only the chosen
+    alternative of each option group."""
+    chosen = {
+        x.line.id
+        for g, members in d.option_members(draft).items()
+        for x in members
+        if x.letter == draft.selected_options.get(g)
+    }
+    return sorted(
+        {
+            ln.item_id
+            for ln in draft.lines
+            if ln.item_id and (not ln.option_group or ln.id in chosen)
+        }
+    )
 
 
 def view(b: Boq, principal: Principal) -> dict[str, Any]:
@@ -846,6 +895,7 @@ async def accept(
                 "version_id": str(v.id),
                 "version": v.number,
                 "po_number": v.po_number,
+                "item_ids": _accepted_item_ids(draft),
             },
         ),
     )

@@ -3748,6 +3748,88 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/ml/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Report
+         * @description How much the ranker has to learn from, and how the shadow model compares with the rules.
+         */
+        get: operations["report_api_v1_ml_report_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ml/training-sets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Training Sets */
+        get: operations["training_sets_api_v1_ml_training_sets_get"];
+        put?: never;
+        /**
+         * Freeze
+         * @description Freeze every labelled example into a new numbered training set with a data card.
+         */
+        post: operations["freeze_api_v1_ml_training_sets_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ml/models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Models */
+        get: operations["models_api_v1_ml_models_get"];
+        put?: never;
+        /**
+         * Train
+         * @description Train on one frozen training set. Refused, with the count, when there is too little data.
+         */
+        post: operations["train_api_v1_ml_models_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ml/models/{model_id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Set Status
+         * @description Run a model in shadow mode (it never changes a BOQ) or retire it.
+         */
+        post: operations["set_status_api_v1_ml_models__model_id__status_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -5846,6 +5928,36 @@ export interface components {
             /** Recovery Code */
             recovery_code?: string | null;
         };
+        /** ModelOut */
+        ModelOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Number */
+            number: number;
+            /**
+             * Training Set Id
+             * Format: uuid
+             */
+            training_set_id: string;
+            /** Weights */
+            weights: {
+                [key: string]: number;
+            };
+            /** Metrics */
+            metrics: {
+                [key: string]: unknown;
+            };
+            /** Status */
+            status: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
         /** NotificationOut */
         NotificationOut: {
             /**
@@ -6943,6 +7055,14 @@ export interface components {
              */
             created_at: string;
         };
+        /** StatusIn */
+        StatusIn: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "shadow" | "retired";
+        };
         /** StepIn */
         StepIn: {
             /** Client Event Id */
@@ -7271,6 +7391,33 @@ export interface components {
             complete: boolean;
         } & {
             [key: string]: unknown;
+        };
+        /** TrainIn */
+        TrainIn: {
+            /**
+             * Training Set Id
+             * Format: uuid
+             */
+            training_set_id: string;
+        };
+        /** TrainingSetOut */
+        TrainingSetOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Number */
+            number: number;
+            /** Data Card */
+            data_card: {
+                [key: string]: unknown;
+            };
+            /**
+             * Frozen At
+             * Format: date-time
+             */
+            frozen_at: string;
         };
         /** UserCreateIn */
         UserCreateIn: {
@@ -15607,6 +15754,156 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    report_api_v1_ml_report_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    training_sets_api_v1_ml_training_sets_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrainingSetOut"][];
+                };
+            };
+        };
+    };
+    freeze_api_v1_ml_training_sets_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrainingSetOut"];
+                };
+            };
+        };
+    };
+    models_api_v1_ml_models_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModelOut"][];
+                };
+            };
+        };
+    };
+    train_api_v1_ml_models_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TrainIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModelOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_status_api_v1_ml_models__model_id__status_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                model_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatusIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModelOut"];
+                };
             };
             /** @description Validation Error */
             422: {
