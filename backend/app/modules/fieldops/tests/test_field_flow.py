@@ -174,6 +174,9 @@ async def test_a_task_walks_from_assigned_to_closed(client: Any) -> None:
         assert (await _post(client, eng, f"{rid}/steps/1")).json()["code"] == "step_order"
     for i in range(len(run["steps"])):
         assert (await _post(client, eng, f"{rid}/steps/{i}")).status_code == 200
+    # a double tap on a finished step is harmless: no error, nothing changes
+    again = await _post(client, eng, f"{rid}/steps/0")
+    assert again.status_code == 200 and all(s["done"] for s in again.json()["run"]["steps"])
     assert (await _post(client, eng, f"{rid}/configured")).json()["code"] == "work_incomplete"
     critical = next(f for f in run["baseline"] if _judgeable(f))
     good = {f["key"]: "enabled" for f in run["baseline"]}

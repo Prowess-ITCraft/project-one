@@ -5,17 +5,48 @@ import { ApiError, message, post, type S } from "@/lib/api";
 import { Field, Notice } from "@/components/ui";
 import { forgetKept } from "@/lib/hooks";
 import { Wordmark } from "@/components/field";
+import {
+  CalendarCheck,
+  Certificate,
+  Copy,
+  Desktop,
+  DeviceMobile,
+  EnvelopeSimple,
+  Eye,
+  EyeSlash,
+  FileText,
+  Key,
+  ListChecks,
+  LockSimple,
+  Question,
+  Receipt,
+  ShieldCheck,
+  SignIn,
+  Target,
+  Warning,
+  Wrench,
+  type Icon,
+} from "@phosphor-icons/react";
 
-/** The eight stages every project walks, drawn as the circuit on the right. */
-const PATH = [
-  "Audit intake",
-  "Current IT",
-  "Ideal IT",
-  "Gap analysis",
-  "Quotation",
-  "Plan",
-  "Field work",
-] as const;
+/** The steps every project walks, and who does each, drawn as the trace on the right. */
+const PATH: { name: string; who: string; icon: Icon }[] = [
+  { name: "Audit intake", who: "Audit engineer", icon: FileText },
+  { name: "Current IT", who: "Solution architect", icon: Desktop },
+  { name: "Ideal IT", who: "Solution architect", icon: Target },
+  { name: "Gap analysis", who: "Solution architect", icon: ListChecks },
+  { name: "Quotation", who: "Sales", icon: Receipt },
+  { name: "Plan", who: "Project manager", icon: CalendarCheck },
+  { name: "Field work", who: "Field engineers", icon: Wrench },
+];
+
+/** The round icon at the top of each sign-in step. */
+function StepIcon({ icon: I }: { icon: Icon }) {
+  return (
+    <span className="signin-icon" aria-hidden="true">
+      <I size={22} weight="duotone" />
+    </span>
+  );
+}
 
 type Step =
   | { kind: "password" }
@@ -56,6 +87,8 @@ export default function Login() {
   const [show, setShow] = useState(false);
   const [caps, setCaps] = useState(false);
   const [code, setCode] = useState("");
+  const [useRecovery, setUseRecovery] = useState(false);
+  const [recovery, setRecovery] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [local, setLocal] = useState(false);
@@ -101,7 +134,8 @@ export default function Login() {
     if (step.kind !== "code") return;
     const token = step.token;
     go(async () => {
-      await post("/auth/mfa/verify", { challenge_token: token, code }, { cookieMode: true });
+      const body = useRecovery ? { challenge_token: token, recovery_code: recovery.trim() } : { challenge_token: token, code };
+      await post("/auth/mfa/verify", body, { cookieMode: true });
       finish();
     });
   };
@@ -154,21 +188,27 @@ export default function Login() {
         <div className="signin-body">
           {step.kind === "password" && (
             <form onSubmit={signIn} noValidate>
+              <StepIcon icon={ShieldCheck} />
               <h1>Sign in</h1>
-              <p className="lede">Use your ITCraft work email.</p>
+              <p className="lede">Use your ITCraft or IITPL work email.</p>
               <Field id="email" label="Work email">
-                <input
-                  id="email"
-                  type="email"
-                  autoComplete="username"
-                  autoFocus
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
+                <div className="with-icon">
+                  <EnvelopeSimple size={18} aria-hidden="true" />
+                  <input
+                    id="email"
+                    type="email"
+                    autoComplete="username"
+                    placeholder="name@itcraft.net.in"
+                    autoFocus
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
               </Field>
-              <Field id="password" label="Password" hint={caps ? "Caps Lock is on." : undefined}>
-                <div className="with-action">
+              <Field id="password" label="Password">
+                <div className="with-icon with-action">
+                  <LockSimple size={18} aria-hidden="true" />
                   <input
                     id="password"
                     type={show ? "text" : "password"}
@@ -178,35 +218,86 @@ export default function Login() {
                     onChange={(e) => setPassword(e.target.value)}
                     onKeyUp={(e) => setCaps(e.getModifierState("CapsLock"))}
                   />
-                  <button type="button" className="btn quiet small" aria-pressed={show} onClick={() => setShow(!show)}>
-                    {show ? "Hide" : "Show"}
+                  <button
+                    type="button"
+                    className="icon-btn"
+                    aria-pressed={show}
+                    aria-label={show ? "Hide password" : "Show password"}
+                    title={show ? "Hide password" : "Show password"}
+                    onClick={() => setShow(!show)}
+                  >
+                    {show ? <EyeSlash size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
+                {caps && (
+                  <span className="caps-warn">
+                    <Warning size={15} weight="fill" aria-hidden="true" /> Caps Lock is on
+                  </span>
+                )}
               </Field>
               {error && <Notice tone="bad">{error}</Notice>}
               <button className="btn primary wide" disabled={busy}>
+                <SignIn size={18} weight="bold" aria-hidden="true" />
                 {busy ? "Signing in" : "Sign in"}
               </button>
-              <p className="signin-help">Locked out or forgot your password? Ask your Admin to unlock your account.</p>
+              <p className="signin-help">
+                <Question size={16} aria-hidden="true" />
+                <span>Forgot your password or locked out? Your admin can unlock your account or set a new password.</span>
+              </p>
             </form>
           )}
 
           {step.kind === "code" && (
             <form onSubmit={verify}>
-              <h1>Enter your code</h1>
-              <p className="lede">Open your authenticator app and type the 6 digit code for Project One.</p>
-              <CodeInput value={code} onChange={setCode} label="6 digit code" error={error} />
+              <StepIcon icon={useRecovery ? Key : DeviceMobile} />
+              <h1>{useRecovery ? "Use a recovery code" : "Enter your code"}</h1>
+              {useRecovery ? (
+                <>
+                  <p className="lede">Type one of the recovery codes you saved when you set up the authenticator. Each works once.</p>
+                  <Field id="recovery" label="Recovery code" hint="For example ABCDE-FGH23" error={error}>
+                    <input
+                      id="recovery"
+                      type="text"
+                      className="mono"
+                      autoComplete="off"
+                      autoCapitalize="characters"
+                      required
+                      autoFocus
+                      value={recovery}
+                      onChange={(e) => setRecovery(e.target.value)}
+                    />
+                  </Field>
+                </>
+              ) : (
+                <>
+                  <p className="lede">Open your authenticator app and type the 6 digit code for Project One.</p>
+                  <CodeInput value={code} onChange={setCode} label="6 digit code" error={error} />
+                </>
+              )}
               <div className="row">
-                <button className="btn primary" disabled={busy || code.length < 6}>
+                <button className="btn primary" disabled={busy || (useRecovery ? recovery.trim().length < 10 : code.length < 6)}>
                   {busy ? "Checking" : "Verify"}
                 </button>
                 {back}
               </div>
+              <p className="signin-help">
+                <button
+                  type="button"
+                  className="linklike"
+                  onClick={() => {
+                    setUseRecovery(!useRecovery);
+                    setError("");
+                  }}
+                >
+                  {useRecovery ? "Use the code from my app instead" : "Lost your phone? Use a recovery code"}
+                </button>
+              </p>
             </form>
           )}
 
           {step.kind === "enrol" && (
             <form onSubmit={confirmEnrol}>
+              <StepIcon icon={DeviceMobile} />
               <h1>Set up your authenticator</h1>
               <p className="lede">Your role needs a second step at sign-in. It takes about a minute, once.</p>
               {!step.secret ? (
@@ -248,6 +339,7 @@ export default function Login() {
 
           {step.kind === "recovery" && (
             <div>
+              <StepIcon icon={Key} />
               <h1>Save your recovery codes</h1>
               <p className="lede">
                 Each code works once if you lose your phone. They are shown only now, so store them somewhere safe.
@@ -263,6 +355,7 @@ export default function Login() {
                   className="btn"
                   onClick={() => void navigator.clipboard?.writeText(step.codes.join("\n"))}
                 >
+                  <Copy size={16} aria-hidden="true" />
                   Copy codes
                 </button>
                 <button className="btn primary" onClick={finish}>
@@ -271,14 +364,14 @@ export default function Login() {
               </div>
             </div>
           )}
-        </div>
 
-        {local && step.kind === "password" && (
+          {local && step.kind === "password" && (
           <aside className="demo" aria-label="Development login">
+            <Wrench size={20} aria-hidden="true" className="demo-icon" />
             <div>
               <strong>Development login</strong>
               <span className="muted small">
-                {DEMO.email} with password {DEMO.password}. Admin, so the first sign-in sets up an authenticator.
+                {DEMO.email}, password {DEMO.password}. An admin, so the first sign-in sets up an authenticator.
               </span>
             </div>
             <button
@@ -292,20 +385,33 @@ export default function Login() {
               Fill in
             </button>
           </aside>
-        )}
+          )}
+        </div>
       </main>
 
-      <aside className="signin-panel" aria-hidden="true">
+      <aside className="signin-panel" aria-label="What Project One does">
         <p className="signin-claim">From the audit report to a signed certificate.</p>
         <ol className="circuit">
-          {PATH.map((name, i) => (
-            <li key={name} style={{ "--i": i } as React.CSSProperties}>
-              {name}
+          {PATH.map(({ name, who, icon: I }) => (
+            <li key={name}>
+              <span className="station" aria-hidden="true">
+                <I size={18} />
+              </span>
+              <span className="stop">
+                {name}
+                <small>{who}</small>
+              </span>
             </li>
           ))}
-          <li className="cert" style={{ "--i": PATH.length } as React.CSSProperties}>
-            <span>Certified by IITPL</span>
-            <img src="/brand/iitpl-logo.png" alt="" width={124} height={80} />
+          <li className="cert">
+            <span className="station" aria-hidden="true">
+              <Certificate size={20} weight="fill" />
+            </span>
+            <span className="stop">
+              Certified by IITPL
+              <small>Signed by the Director</small>
+            </span>
+            <img src="/brand/iitpl-logo.png" alt="International Infocom Technologies" width={112} height={72} />
           </li>
         </ol>
       </aside>

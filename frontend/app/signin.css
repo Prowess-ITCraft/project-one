@@ -1,24 +1,25 @@
-/* Sign-in (docs/DESIGN.md section 5c). The form stays on the light paper; the right panel is
-   shield navy with the eight stages drawn as a circuit that lights once, ending at IITPL. */
+/* Sign-in (docs/DESIGN.md section 5c). The form sits on a white panel over the light paper; the
+   right panel is certificate navy with the project's steps drawn as a trace, each with its icon
+   and who does it, ending at IITPL. Nothing moves. */
 
 .signin {
   --navy: #0f2a45;
-  --navy-ink: #eaf1f8;
-  --navy-muted: #a8bdd3;
-  --trace-off: #3b5a7a;
+  --navy-raised: #163657;
+  --navy-ink: #eef3f9;
+  --navy-muted: #b9cbdd;
   --trace-on: #4fce5d;
   min-height: 100dvh;
   display: grid;
-  grid-template-columns: minmax(360px, 520px) minmax(0, 1fr);
+  grid-template-columns: minmax(380px, 540px) minmax(0, 1fr);
   background: var(--paper);
 }
 
 /* ---------- form side ---------- */
 .signin-form {
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto 1fr;
   min-height: 100dvh;
-  padding: 28px clamp(24px, 5vw, 64px);
+  padding: 28px clamp(24px, 5vw, 56px) 40px;
   gap: 24px;
 }
 .signin-brand {
@@ -39,52 +40,124 @@
   color: var(--muted);
   letter-spacing: 0;
 }
+.signin-brand .wordmark {
+  font-size: 13px;
+}
 .signin-body {
   align-self: center;
-  width: min(100%, 400px);
+  width: min(100%, 420px);
+  display: grid;
+  gap: 14px;
+}
+.signin-body > form,
+.signin-body > div {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  padding: 28px 28px 24px;
+  box-shadow: 0 1px 2px rgb(20 34 48 / 0.04), 0 8px 24px rgb(20 34 48 / 0.06);
+}
+.signin-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 14px;
+  border-radius: 50%;
+  background: var(--accent-wash);
+  color: var(--accent);
 }
 .signin-body h1 {
-  font-size: 30px;
-  letter-spacing: -0.025em;
-  margin-bottom: 6px;
+  font-size: 26px;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
 }
 .signin-body .lede {
   color: var(--muted);
-  margin-bottom: 26px;
+  margin-bottom: 22px;
   max-width: 44ch;
   font-size: 15px;
 }
 .signin-body input[type="email"],
 .signin-body input[type="password"],
 .signin-body input[type="text"] {
-  min-height: 44px;
+  min-height: 46px;
   font-size: 15px;
 }
-.with-action {
+
+/* An input with an icon at the start, and optionally a button at the end. */
+.with-icon {
   position: relative;
 }
-.with-action input {
-  padding-right: 64px;
+.with-icon > svg {
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
 }
-.with-action .btn {
+.with-icon input {
+  padding-left: 40px;
+}
+.with-action input {
+  padding-right: 48px;
+}
+.with-action .btn,
+.with-action .icon-btn {
   position: absolute;
   right: 4px;
   top: 50%;
   transform: translateY(-50%);
 }
-.with-action .btn:active {
-  transform: translateY(calc(-50% + 1px));
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.icon-btn:hover {
+  color: var(--ink);
+  background: var(--accent-wash);
+}
+.icon-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.caps-warn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--warn);
 }
 .btn.wide {
   width: 100%;
-  min-height: 44px;
+  min-height: 46px;
   font-size: 15px;
-  margin-top: 6px;
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 .signin-help {
-  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 18px 0 0;
   font-size: 13px;
   color: var(--muted);
+}
+.signin-help > svg {
+  flex: none;
+  margin-top: 1px;
 }
 .code-input {
   font: 600 24px/1 var(--font-mono-stack) !important;
@@ -125,41 +198,46 @@
   font-size: 15px;
   line-height: 1.8;
 }
-.demo {
-  display: flex;
+.signin-body .row .btn {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  width: min(100%, 400px);
+  gap: 6px;
+}
+
+/* The development login, only on this computer: clearly not part of the real form. */
+.demo {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
   padding: 12px 14px;
   border: 1px dashed var(--line-strong);
   border-radius: var(--r-panel);
-  background: var(--surface);
+  background: transparent;
+}
+.demo-icon {
+  color: var(--muted);
 }
 .demo div {
   display: grid;
   gap: 2px;
 }
 
-/* ---------- the circuit panel ---------- */
+/* ---------- the journey panel ---------- */
 .signin-panel {
-  position: relative;
   display: grid;
   align-content: center;
-  padding: clamp(40px, 7vw, 112px);
-  background:
-    radial-gradient(120% 80% at 100% 0%, rgb(79 206 93 / 0.08), transparent 60%),
-    var(--navy);
+  padding: clamp(40px, 6vw, 96px);
+  background: var(--navy);
   color: var(--navy-ink);
-  overflow: hidden;
 }
 .signin-claim {
-  font-size: clamp(26px, 2.9vw, 38px);
+  font-size: clamp(26px, 2.6vw, 36px);
   font-weight: 650;
-  letter-spacing: -0.03em;
-  line-height: 1.12;
-  max-width: 16ch;
-  margin-bottom: 40px;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  max-width: 17ch;
+  margin-bottom: 36px;
   text-wrap: balance;
 }
 .circuit {
@@ -167,124 +245,95 @@
   margin: 0;
   padding: 0;
   display: grid;
+  max-width: 440px;
 }
 .circuit li {
   position: relative;
-  padding: 0 0 20px 38px;
-  font-size: clamp(15px, 1.35vw, 18px);
-  color: var(--navy-muted);
-}
-.circuit li::before {
-  /* station */
-  content: "";
-  position: absolute;
-  left: 3px;
-  top: 4px;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 2px solid var(--trace-on);
-  background: var(--trace-on);
-  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 14px;
 }
 .circuit li::after {
-  /* trace to the next station */
+  /* the trace down to the next step */
   content: "";
   position: absolute;
-  left: 9px;
-  top: 20px;
-  bottom: 2px;
+  left: 17px;
+  top: 36px;
+  bottom: 0;
   width: 2px;
   background: var(--trace-on);
+  opacity: 0.55;
+}
+.circuit .station {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--navy-raised);
+  border: 1.5px solid rgb(79 206 93 / 0.6);
+  color: var(--navy-ink);
+}
+.circuit .stop {
+  display: grid;
+  font-size: 16px;
+  font-weight: 550;
+  line-height: 1.25;
+}
+.circuit .stop small {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--navy-muted);
 }
 .circuit li.cert {
-  padding-bottom: 0;
-  color: var(--navy-ink);
-  font-weight: 650;
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  flex-wrap: wrap;
-}
-.circuit li.cert::before {
-  width: 20px;
-  height: 20px;
-  left: 0;
-  top: calc(50% - 10px);
-  background: var(--navy);
-  border-width: 4px;
-  box-shadow: 0 0 0 6px rgb(79 206 93 / 0.18);
+  grid-template-columns: 36px max-content max-content;
+  column-gap: 20px;
+  padding: 6px 0 0;
 }
 .circuit li.cert::after {
   display: none;
 }
+.circuit li.cert .station {
+  background: var(--trace-on);
+  border-color: var(--trace-on);
+  color: var(--navy);
+}
 .circuit li.cert img {
   background: #ffffff;
   border-radius: var(--r-panel);
-  padding: 8px 12px;
-  height: 96px;
+  padding: 6px 10px;
+  height: 64px;
   width: auto;
 }
 
-/* The one authored moment: stations light up in order, once. */
-@media (prefers-reduced-motion: no-preference) {
-  .circuit li::before {
-    animation: station 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
-    animation-delay: calc(var(--i) * 110ms + 200ms);
-  }
-  .circuit li::after {
-    transform-origin: top;
-    animation: trace 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
-    animation-delay: calc(var(--i) * 110ms + 300ms);
-  }
-  .circuit li {
-    animation: label 0.45s ease-out both;
-    animation-delay: calc(var(--i) * 110ms + 200ms);
-  }
-  @keyframes station {
-    from {
-      background: transparent;
-      border-color: var(--trace-off);
-      transform: scale(0.8);
-    }
-  }
-  @keyframes trace {
-    from {
-      transform: scaleY(0);
-    }
-  }
-  @keyframes label {
-    from {
-      color: var(--trace-off);
-    }
-  }
-}
-
-/* ---------- phones: the panel becomes a short band above the form ---------- */
+/* ---------- phones: a slim brand band, then the form; the journey is for big screens ---------- */
 @media (max-width: 860px) {
   .signin {
     grid-template-columns: minmax(0, 1fr);
   }
   .signin-panel {
     order: -1;
-    padding: 18px 24px;
+    padding: 16px 24px;
   }
   .signin-claim {
-    font-size: 20px;
+    font-size: 17px;
     margin: 0;
-    max-width: 24ch;
+    max-width: 30ch;
   }
   .circuit {
     display: none;
   }
   .signin-form {
     min-height: auto;
-    padding-top: 24px;
+    padding: 20px 16px 32px;
+  }
+  .signin-body > form,
+  .signin-body > div {
+    padding: 22px 18px 20px;
   }
   .enrol-qr {
     grid-template-columns: minmax(0, 1fr);
   }
-}
-.signin-brand .wordmark {
-  font-size: 13px;
 }

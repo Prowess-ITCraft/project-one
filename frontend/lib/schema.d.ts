@@ -2515,6 +2515,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{project_id}/boq/estimate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Estimate
+         * @description A BOQ worked out straight from the PrismSuite report and the questionnaire, before the
+         *     gates are approved. Saved nowhere; documents carry "ESTIMATE, NOT APPROVED" as their ref.
+         */
+        get: operations["estimate_api_v1_projects__project_id__boq_estimate_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects/{project_id}/boq": {
         parameters: {
             query?: never;
@@ -2963,7 +2984,8 @@ export interface paths {
         };
         /**
          * My Tasks
-         * @description Today and later: the signed-in engineer's open tasks, in planned order.
+         * @description Today and later: the signed-in engineer's open tasks, in planned order, each with the
+         *     project and customer it belongs to.
          */
         get: operations["my_tasks_api_v1_field_my_get"];
         put?: never;
@@ -5958,6 +5980,92 @@ export interface components {
              */
             created_at: string;
         };
+        /** MyRunOut */
+        MyRunOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Task Ref */
+            task_ref: string;
+            /** Kind */
+            kind: string;
+            /** Title */
+            title: string;
+            /** Asset */
+            asset: string | null;
+            /** Device Type */
+            device_type: string | null;
+            /** Requires Downtime */
+            requires_downtime: boolean;
+            /** Depends On */
+            depends_on: string[];
+            /** Steps */
+            steps: {
+                [key: string]: unknown;
+            }[];
+            /** Evidence Reqs */
+            evidence_reqs: {
+                [key: string]: unknown;
+            }[];
+            /** Baseline */
+            baseline: {
+                [key: string]: unknown;
+            }[];
+            /** Actuals */
+            actuals: {
+                [key: string]: unknown;
+            };
+            /**
+             * Assignee Id
+             * Format: uuid
+             */
+            assignee_id: string;
+            /**
+             * Planned Start
+             * Format: date-time
+             */
+            planned_start: string;
+            /**
+             * Planned End
+             * Format: date-time
+             */
+            planned_end: string;
+            /** State */
+            state: string;
+            /** Blocked From */
+            blocked_from: string | null;
+            /** Block Reason */
+            block_reason: string | null;
+            /**
+             * State Changed At
+             * Format: date-time
+             */
+            state_changed_at: string;
+            /** Accepted At */
+            accepted_at: string | null;
+            /** Checked In At */
+            checked_in_at: string | null;
+            /** Handed Over At */
+            handed_over_at: string | null;
+            /** Closed At */
+            closed_at: string | null;
+            /** Verified By */
+            verified_by: string | null;
+            /** Last Check Passed */
+            last_check_passed: boolean | null;
+            /** Rework Count */
+            rework_count: number;
+            /** Version */
+            version: number;
+            project?: components["schemas"]["ProjectBriefOut"] | null;
+        };
         /** NotificationOut */
         NotificationOut: {
             /**
@@ -6240,6 +6348,19 @@ export interface components {
             price?: components["schemas"]["PriceOut"] | null;
             /** Days Left */
             days_left?: number | null;
+        };
+        /**
+         * ProjectBriefOut
+         * @description Which job a task belongs to. Task refs (T01, T02) restart in every project, so an
+         *     engineer needs this to tell two sites apart.
+         */
+        ProjectBriefOut: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Customer */
+            customer: string | null;
         };
         /** ProjectCreateIn */
         ProjectCreateIn: {
@@ -6718,6 +6839,7 @@ export interface components {
         /** RunDetailOut */
         RunDetailOut: {
             run: components["schemas"]["RunOut"];
+            project?: components["schemas"]["ProjectBriefOut"] | null;
             /** Events */
             events: components["schemas"]["EventOut"][];
             /** Evidence */
@@ -13398,6 +13520,40 @@ export interface operations {
             };
         };
     };
+    estimate_api_v1_projects__project_id__boq_estimate_get: {
+        parameters: {
+            query?: {
+                fmt?: "json" | "pdf" | "xlsx";
+                kind?: "quotation" | "summary";
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_project_boq_api_v1_projects__project_id__boq_get: {
         parameters: {
             query?: never;
@@ -14235,7 +14391,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RunOut"][];
+                    "application/json": components["schemas"]["MyRunOut"][];
                 };
             };
         };

@@ -250,3 +250,54 @@ input[type="datetime-local"] {
 :root[data-theme="dark"] .wordmark .craft {
   color: #7fb0e8;
 }
+
+/* ---------- icons (Phosphor, ADR 0023): icon and label side by side, never icon alone ---------- */
+.nav a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.nav a svg {
+  flex: none;
+  opacity: 0.85;
+}
+.nav a[aria-current="page"] svg {
+  opacity: 1;
+}
+.btn.with-glyph,
+.btn.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.who > span:last-child {
+  display: grid;
+  min-width: 0;
+}
+.who-name {
+  font-weight: 600;
+  color: var(--ink);
+}
+.avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 650;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+@media (max-width: 800px) {
+  .who > span:last-child {
+    display: none;
+  }
+}

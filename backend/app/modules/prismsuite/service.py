@@ -458,6 +458,27 @@ async def reject(
     return row
 
 
+async def latest_snapshot(
+    session: AsyncSession, principal: Principal, project_id: uuid.UUID, kind: str = "baseline"
+) -> tuple[AuditImport, AuditSnapshot]:
+    """The approved report if there is one, otherwise the newest one still in review (with the
+    reviewer's corrections so far). For estimates only; official steps use the approved one."""
+    await get_project_ref(session, principal, project_id)
+    row = await session.scalar(
+        select(AuditImport)
+        .where(
+            AuditImport.project_id == project_id,
+            AuditImport.kind == kind,
+            AuditImport.status.in_((APPROVED, IN_REVIEW)),
+        )
+        .order_by((AuditImport.status == APPROVED).desc(), AuditImport.revision.desc())
+        .limit(1)
+    )
+    if row is None:
+        raise NotFound("Upload the PrismSuite report first.", code="no_audit")
+    return row, AuditSnapshot.model_validate(row.snapshot)
+
+
 async def approved_snapshot(
     session: AsyncSession, principal: Principal, project_id: uuid.UUID, kind: str = "baseline"
 ) -> tuple[AuditImport, AuditSnapshot]:

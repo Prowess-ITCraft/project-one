@@ -42,7 +42,7 @@ API = "/api/v1"
 # The ITCraft / IITPL team. Their real work addresses are used, so `run` refuses to start
 # unless mail goes to the local Mailpit catcher (nothing reaches a real inbox).
 STAFF = [
-    ("sattish", "sattishagadii@iitpl.co.in", "Sattish Agadii", "SA", "Director", ["director"]),
+    ("sattish", "sattishagadii@iitpl.co.in", "Satish Agadi", "SA", "Director", ["director"]),
     ("charmi", "charmi@itcraft.net.in", "Charmi Shah", "CS", "Sales manager", ["sales_manager"]),
     ("akash", "akash@itcraft.net.in", "Akash Agadii", "AA", "Sales head", ["sales_head"]),
     ("shruti", "shruti@itcraft.net.in", "Shruti Satam", "SS", "Audit engineer", ["audit_engineer"]),
@@ -191,6 +191,16 @@ class Demo:
         async for k in r.scan_iter(match="rl:*"):
             await r.delete(k)
 
+    async def _mailpit_text(self, to: str, subject: str) -> str:
+        """The newest message to `to` with this subject, as Mailpit received it."""
+        host = get_settings().smtp_host or "mailpit"
+        async with httpx.AsyncClient(base_url=f"http://{host}:8025/api/v1", timeout=10) as mp:
+            found = (await mp.get("/search", params={"query": f"to:{to}", "limit": 20})).json()
+            for msg in found.get("messages", []):
+                if msg.get("Subject") == subject:
+                    return str((await mp.get(f"/message/{msg['ID']}")).json().get("Text", ""))
+        return ""
+
     async def _code(self, related: str, template: str) -> str:
         from app.modules.notifications.models import Notification
 
@@ -203,9 +213,11 @@ class Demo:
             )
         if n is None:
             raise DemoError(f"No {template} message for {related}")
-        m = re.search(r"\b(\d{6})\b", n.body) or re.search(
-            r"/ack/waiver/([A-Za-z0-9_\-]{20,})", n.body
-        )
+        body = n.body
+        if n.status == "sent" and not re.search(r"\d{6}|/ack/waiver/", body):
+            # Codes are wiped from the database once sent; the copy is in Mailpit.
+            body = await self._mailpit_text(n.to_address, n.subject)
+        m = re.search(r"\b(\d{6})\b", body) or re.search(r"/ack/waiver/([A-Za-z0-9_\-]{20,})", body)
         if not m:
             raise DemoError(f"No code in {template}")
         return m.group(1)
@@ -254,7 +266,8 @@ class Demo:
         from app.modules.identity.models import User
 
         if not self.previous:
-            raise DemoError("Demo staff exist but the accounts file is missing. Nothing changed.")
+            await self._reissue_staff()
+            return
         self.password = self.previous["password"]
         known = {u["email"]: u for u in self.previous["users"]}
         for key, email, name, _i, _d, roles in STAFF:
@@ -266,6 +279,32 @@ class Demo:
         for p in self.people.values():
             await self.login(p)
         self.say("Reusing the demo staff accounts")
+
+    async def _reissue_staff(self) -> None:
+        """The staff exist but their accounts file is gone (a run stopped before writing it):
+        give everyone the new demo password, unlock them, and new authenticator secrets for the
+        roles that need one. Development data only; `run` refuses production."""
+        from app.modules.identity.models import User
+        from app.modules.identity.permissions import MFA_REQUIRED_ROLES, Role
+        from app.modules.identity.security import hash_password
+
+        for key, email, name, _i, _d, roles in STAFF:
+            secret = None
+            async with get_sessionmaker()() as s:
+                u = await s.scalar(select(User).where(User.email == email))
+                if u is None:
+                    raise DemoError(f"Demo staff are incomplete: {email} is missing.")
+                u.password_hash = hash_password(self.password)
+                u.failed_logins, u.locked_until = 0, None
+                if {Role(r) for r in roles} & MFA_REQUIRED_ROLES:
+                    secret = pyotp.random_base32()
+                    u.mfa_secret_enc, u.mfa_enabled = crypto.encrypt_str(secret), True
+                    u.mfa_pending_secret_enc = u.mfa_last_used_step = None
+                await s.commit()
+                self.people[key] = Person(key, name, email, roles, str(u.id), secret)
+        for p in self.people.values():
+            await self.login(p)
+        self.say("Accounts file was missing: demo staff given a new password")
 
     async def login(self, p: Person) -> None:
         await self._clear_limits()
@@ -873,6 +912,8 @@ async def run(samples: Path, out: Path) -> dict[str, Any]:
         d = Demo(client, samples)
         d.previous = _read(out)
         await d.staff()
+        # Written now, not only at the end: a run stopped half way still leaves working logins.
+        _write(out, d.accounts())
         await d.reference()
         d.cust = await d.customer()
         try:

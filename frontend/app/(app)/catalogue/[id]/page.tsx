@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import { Back } from "@/components/kit";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { dateTime, date, money, post, type S } from "@/lib/api";
@@ -79,9 +79,7 @@ export default function Item() {
     <>
       <div className="page-head">
         <div>
-          <div className="crumbs">
-            <Link href="/catalogue">Catalogue</Link>
-          </div>
+          <Back href="/catalogue" label="Catalogue" />
           <h1>{i.name}</h1>
           <p className="mono">{i.code}</p>
         </div>

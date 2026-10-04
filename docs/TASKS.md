@@ -5,10 +5,12 @@ Planned dates are in `ROADMAP.md`, decisions in `decisions/`.
 
 ## Where we are (4 October 2026)
 
-- Phases 1 to 10 are built. Backend: 320 tests pass at 84 percent coverage (4 Oct).
-- The web app covers every stage, from audit intake to the certificate. Phase 12 has a few
-  screens and the installable phone app left.
-- Phase 13 (learning) is built and waits for data. Next: 14 (hardening) and 15 (go-live).
+- Phases 1 to 14 are done. Backend: 355 tests pass at 85 percent coverage; 13 browser tests
+  on desktop and phone, including one field task walked from accept to verified (4 Oct, night).
+- Phase 13 (learning) is built and waits for data (about 20 accepted BOQs).
+- Phase 15 (go-live): everything is ready to deploy (DEPLOYMENT.md, incident runbook, a
+  production dry run that passed). Left: deploy on the real server, the IITPL stamp, and the
+  first real SonicWall export.
 
 ## Phase status
 
@@ -25,10 +27,10 @@ Planned dates are in `ROADMAP.md`, decisions in `decisions/`.
 | 9 | Verification engine, Director dashboard API | done | SonicWall mappings unconfirmed until a real export |
 | 10 | Completion report and certificate | done | real IITPL stamp still needed |
 | 11 | Frontend foundation | done | |
-| 12 | Frontend core workflows | in progress | see below |
+| 12 | Frontend core workflows | done | accounts panel, Help guide, phone test of a whole field task |
 | 13 | Learning from accepted BOQs | done | shadow mode only; needs about 20 accepted BOQs before a model can train |
-| 14 | Hardening and performance | not started | |
-| 15 | Go-live | not started | |
+| 14 | Hardening and performance | done | one decision left for the owner: hosted CI and dependency updates |
+| 15 | Go-live | in progress | ready to deploy: DEPLOYMENT.md, prod dry run passed; real server next |
 
 ## Open items by phase
 
@@ -68,7 +70,13 @@ Planned dates are in `ROADMAP.md`, decisions in `decisions/`.
 - [x] Playwright smoke tests across roles, desktop and phone
 - [x] BOQ version compare view
 - [x] Installable web app (manifest and service worker) for field engineers
-- [ ] Playwright test that walks one field task end to end on a phone
+- [x] Playwright test that walks one field task end to end on a phone (`e2e/field-task.spec.ts`;
+  each run uses one assigned task, so add demo data when they run out)
+- [x] Accounts panel: create with several roles, edit roles and details, reset password or
+  authenticator, unlock, sign out everywhere, deactivate; tabs by role and search
+- [x] Back button on every inner page; Help guide per role, linked from every sidebar
+- [x] Sign-in redesign with icons; Phosphor icons across the shell; no animation (ADR 0023)
+- [x] Recovery code accepted at sign-in (the API took it, the page had no field for it)
 
 ### Phase 13: Learning from the library
 
@@ -80,16 +88,35 @@ Planned dates are in `ROADMAP.md`, decisions in `decisions/`.
 
 ### Phase 14: Hardening and performance
 
-- [ ] Load test of the busiest paths, with numbers recorded
-- [ ] Security pass: dependency audit, image scan, permission matrix, secrets
-- [ ] Backup and restore drill with timings
-- [ ] Pin image digests; decide whether to bring back hosted CI and dependency updates
+- [x] Load test of the busiest paths, with numbers recorded (`scripts/loadtest.py`)
+- [x] Security pass: pip-audit, bandit, npm audit, permission matrix
+- [x] Backup and restore drill with timings (`scripts/restore_drill.py`); backups were failing, fixed
+- [x] Pin compose images by digest
+- [x] Rate limits answer 429 and fit an office behind one address
+- [x] Strict sign-in limit only on sign-in and MFA, 60 a minute per address; `/auth/me` and
+  token refresh no longer use it up (people were refused sign-in after browsing)
+- [x] Demo writes its accounts file before building projects, and re-issues logins if the
+  file is lost; `seed-demo` also clears the dev admin's authenticator
+- [x] Usability pass on My tasks, the task page and project pages
+- [x] BOQ estimate before approvals (ADR 0021)
+- [x] Pin the Dockerfile base images by digest
+- [x] Director dashboard in four queries for any number of projects (was about seven per project)
+- [x] Coverage back to 85 percent (355 tests, with the Accounts actions and backups tested)
+- [ ] Decide whether to bring back hosted CI and dependency updates
 
 ### Phase 15: Go-live
 
-- [ ] Production compose and TLS
-- [ ] Deploy, rollback and incident runbooks
-- [ ] First-day checklist and a short training guide per role
+- [x] Production compose and TLS (Let's Encrypt, own certificate, or a load balancer)
+- [x] DEPLOYMENT.md: server to first sign-in, updates and rollback, backups off the server
+- [x] Production dry run on a laptop: HTTPS, sign-in with authenticator, accounts, upload and
+  download, the web app over HTTPS, all passing (4 Oct)
+- [x] Production refuses unsafe settings (http or localhost addresses, dev secrets, no email)
+- [x] Files served through the app with signed links, so storage stays internal
+- [x] Every API route listed in docs/API_ROUTES.md, kept current by a test; open routes pinned
+- [x] In-app Help guide per role (the short training guide)
+- [ ] Deploy on the real server and run DEPLOYMENT.md section 8 there
+- [x] Incident runbook: docs/runbooks/incident.md (who does what, first 15 minutes, common
+  incidents, break-in, restore, messages to staff and customers)
 
 ## Questions still open
 

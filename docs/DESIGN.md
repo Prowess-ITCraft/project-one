@@ -8,10 +8,10 @@ template, then build.
 
 An internal operations tool for Indian IT services staff (sales, architects, engineers,
 directors), plus a phone flow for field engineers. Not a marketing page. Calm and minimal, dense
-where it helps (BOQ editor, library), very simple on a phone. Little variety between screens,
-very little motion, medium density.
+where it helps (BOQ editor, library), very simple on a phone, easy for someone on their first
+day. Little variety between screens, no animation, medium density.
 
-Stack limits: Next.js and React only, plain CSS with tokens, no icon or
+Stack limits: Next.js and React only, plain CSS with tokens, Phosphor icons (ADR 0023), no
 component libraries, no Tailwind, no chart library (charts are small hand-written SVG).
 
 ## 2. Tokens (brand pass, 3 Oct 2026)
@@ -107,35 +107,40 @@ Field engineer, phone (360 px)              Task (phone)
 
 ## 5c. Sign-in and shell (basic, pleasant, not heavy)
 
-Sign-in palette: shield navy #0F2A45 (the logo blue, deepened), panel text #EAF1F8 (12.8:1),
-panel secondary #A8BDD3 (7.6:1), circuit green #4FCE5D on navy (7.2:1, so here the logo green
-can carry meaning), unlit trace #3B5A7A (decorative only). The form side stays on `--paper`.
+Sign-in palette: shield navy #0F2A45 (the logo blue, deepened), raised navy #163657 for the
+step icons, panel text #EEF3F9 (13.4:1), panel secondary #B9CBDD (8.6:1), circuit green #4FCE5D
+on navy (7.2:1, so here the logo green can carry meaning). The form sits on a white panel over
+`--paper`.
 
 ```
 +-----------------------------+---------------------------------------+
 | [shield] Project One        |  navy                                 |
 |          ITCraft            |  From the audit report to a           |
-|                             |  signed certificate.                  |
-| Sign in                     |   (o) Audit intake                    |
-| Use your work email.        |    |  Current IT ... (stations light   |
-|                             |    |  up in order, once, on load)      |
-| Work email [            ]   |   (o) Field work                      |
-| Password   [        ] Show  |   (@) Certified by IITPL  [IITPL]     |
-| Caps Lock is on (if so)     |                                       |
-| [        Sign in         ]  |                                       |
-|                             |                                       |
-| Development login (local)   |                                       |
-| adi@test.com  [Use it]      |                                       |
+| +-------------------------+ |  signed certificate.                  |
+| | (shield icon)           | |   (doc) Audit intake                  |
+| | Sign in                 | |     |   Audit engineer                |
+| | ITCraft or IITPL email  | |   (pc)  Current IT                    |
+| | [@ name@itcraft.net.in] | |     |   Solution architect ...        |
+| | [lock ..........  eye ] | |   (wrench) Field work                 |
+| | [ ->] Sign in         ] | |   (cert) Certified by IITPL [IITPL]   |
+| | (?) Forgot password...  | |                                       |
+| +-------------------------+ |                                       |
+| (wrench) Development login  |                                       |
 +-----------------------------+---------------------------------------+
-Phone: the panel folds into a short navy band above the form, without the stage list.
+Phone: a slim navy band, the brand, then the form; the journey is for big screens.
 ```
 
-- The one moment: the eight stages drawn as a circuit trace that lights station by station
-  once (about one second, never with reduced motion), ending on the IITPL certificate mark.
-- Form care: autofocus, show password, Caps Lock warning, full-width 44 px button, errors under
-  the field, the authenticator set-up shows a scannable QR code.
-- Shell: sidebar on a second neutral layer (#EAEFF5), the current page as a raised white chip,
-  44 px tap targets on phones, primary buttons with a soft tinted shadow and a 1 px press.
+- The one memorable element: the project's steps on one trace, each with its icon and who does
+  it, ending on the IITPL certificate mark. Still, nothing moves.
+- Form care: autofocus, an icon in each input, show or hide password as an eye icon, Caps Lock
+  warning, full-width 46 px button, errors under the field, a recovery code option when the
+  phone is lost, the authenticator set-up shows a scannable QR code.
+- Shell: sidebar on a second neutral layer (#EAEFF5), an icon beside every item, the current
+  page as a raised white chip with a filled icon, the signed-in person as an initials badge,
+  44 px tap targets on phones, primary buttons with a soft tinted shadow.
+- Getting around: inner pages (a project, a task, a catalogue item, an import) start with
+  "Back" plus the section they belong to; Help is in every sidebar, and a one-line hint points
+  new people to it until they open it or hide it.
 - Navy with a bright green can look like every other dark landing page. We kept it because both
   colours come from the ITCraft logo and the green only marks progress; every action stays
   ITCraft blue and the form side stays light.
@@ -145,8 +150,10 @@ Phone: the panel folds into a short navy band above the form, without the stage 
 - The first accent, cobalt #2A4FD6, looked like any SaaS product. Switched to ITCraft's own blue.
 - Field progress started as a row of big number tiles. It said little, so the counts now sit on
   the same trace as the task timeline.
-- No icon library is allowed, so the only drawn marks are the company logos and the trace
-  stations (inline SVG and CSS). No glyphs stand in for icons.
+- Icons were first left out entirely. Screens read as walls of words and new people had to read
+  every label, so Phosphor icons were added beside the words (ADR 0023).
+- The sign-in trace used to light up on load. Mid-animation it looked faint and unfinished; the
+  panel is now drawn complete and still.
 - Engineers work in sunlight: the field screens use the ink colour at full strength, 16 px body
   and 48 px primary buttons.
 
@@ -161,7 +168,7 @@ Phone: the panel folds into a short navy band above the form, without the stage 
 ## 7. Quality floor
 
 Responsive to 360px, keyboard reachable with visible focus, WCAG AA contrast in both themes,
-reduced motion respected, light and dark themes following the system with a manual switch.
+no animation, light and dark themes following the system with a manual switch.
 
 ## 8. Document design (PDF)
 

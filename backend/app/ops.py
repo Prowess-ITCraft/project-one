@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-import subprocess
+import subprocess  # nosec B404
 import tempfile
 from datetime import timedelta
 from urllib.parse import urlparse
@@ -42,7 +42,7 @@ def run_backup() -> str:
     key = f"{PREFIX}{utcnow():%Y/%m/%d/%H%M%S}.dump"
     with tempfile.TemporaryDirectory() as tmp:
         out = os.path.join(tmp, "db.dump")
-        subprocess.run(  # noqa: S603
+        subprocess.run(  # nosec B603 B607  # noqa: S603
             ["pg_dump", *args, "-Fc", "-Z", "6", "--no-owner", "-f", out],  # noqa: S607
             check=True,
             env=env,
@@ -54,6 +54,29 @@ def run_backup() -> str:
     log.info("backup_done", key=key)
     prune_backups()
     return key
+
+
+def export_backups(out: str) -> int:
+    """Copy backups that are not in `out` yet (by name and size) into that folder, keeping the
+    bucket's year/month/day layout. For a daily copy off the server; returns how many were new.
+    Each file is written under a temporary name and renamed when complete, so an interrupted
+    copy never leaves a half file that looks finished."""
+    s = get_settings()
+    client = s3_client()
+    copied = 0
+    paginator = client.get_paginator("list_objects_v2")
+    for page in paginator.paginate(Bucket=s.s3_bucket_backups, Prefix=PREFIX):
+        for obj in page.get("Contents", []):
+            dest = os.path.join(out, *obj["Key"].split("/"))
+            if os.path.exists(dest) and os.path.getsize(dest) == obj["Size"]:
+                continue
+            os.makedirs(os.path.dirname(dest), exist_ok=True)
+            part = dest + ".part"
+            client.download_file(s.s3_bucket_backups, obj["Key"], part)
+            os.replace(part, dest)
+            copied += 1
+    log.info("backups_exported", copied=copied, out=out)
+    return copied
 
 
 def prune_backups() -> int:

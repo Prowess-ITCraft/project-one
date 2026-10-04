@@ -1,14 +1,22 @@
 "use client";
-import Link from "next/link";
+import { Back } from "@/components/kit";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { dateTime, get, post, type S } from "@/lib/api";
 import { useData, useMe, useToast } from "@/lib/hooks";
 import { discard, pending, queueAction, queueEvidence, subscribe, type FlushResult, type Pending } from "@/lib/offline";
 import { Badge, Field, Notice, Skeleton, roleLabel, useAction } from "@/components/ui";
-import { STATE_SHORT, TaskTimeline, stateTone } from "@/components/field";
+import { STATE_SHORT, TaskTimeline, shortTitle, stateTone } from "@/components/field";
 
 type Detail = S["RunDetailOut"];
+
+const todayKey = () => new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+/** Time only for today's events; earlier ones keep their date so a two-day task reads right. */
+function whenShort(iso: string): string {
+  const full = dateTime(iso);
+  const sameDay = new Date(iso).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }) === todayKey();
+  return sameDay ? (full.split(", ").pop() ?? full) : full.replace(/ \d{4},/, ",");
+}
 type Run = S["RunOut"];
 type Req = { type: string; label: string; required?: boolean; stage?: string };
 type BaseField = { key: string; label: string; expected: string; severity?: string; how?: string };
@@ -62,9 +70,17 @@ function EvidenceItem({
 }) {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
+  // Sent, but the task has not reloaded yet: keep the form away so it does not flash back and
+  // invite a second upload. Back after ten seconds if the item never shows as added.
+  const [sent, setSent] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const isFile = ["photo", "screenshot", "config_export"].includes(req.type);
   const done = have.length > 0;
+  useEffect(() => {
+    if (!sent) return;
+    const t = setTimeout(() => setSent(false), 10_000);
+    return () => clearTimeout(t);
+  }, [sent]);
 
   async function send(file?: File | null) {
     setBusy(true);
@@ -75,6 +91,7 @@ function EvidenceItem({
     });
     setBusy(false);
     setText("");
+    setSent(!r.failed.length && !r.waiting);
     onSent(r);
   }
 
@@ -107,7 +124,7 @@ function EvidenceItem({
           {e.text_value ?? e.note}
         </p>
       ))}
-      {canAdd && !done && !queued.length && (
+      {canAdd && !done && !queued.length && !sent && (
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -156,12 +173,15 @@ function CodeStep({
   action,
   label,
   onDone,
+  waitFor,
 }: {
   run: Run;
   purpose: "check_in" | "handover";
   action: string;
   label: string;
   onDone: (r: FlushResult) => void;
+  /** Why the code cannot be asked for yet; the button stays off and says so. */
+  waitFor?: string;
 }) {
   const toast = useToast();
   const { busy, run: act } = useAction();
@@ -169,9 +189,10 @@ function CodeStep({
   const [code, setCode] = useState("");
   return (
     <div className="stack">
+      {waitFor && !sent && <p className="small muted">{waitFor}</p>}
       <button
         className={`btn ${sent ? "" : "primary "}big`}
-        disabled={busy}
+        disabled={busy || (!!waitFor && !sent)}
         onClick={async () => {
           const r = await act(() => post<S["CodeSentOut"]>(`/field/runs/${run.id}/codes/${purpose}`));
           if (r) {
@@ -288,14 +309,22 @@ export default function TaskPage() {
     <div className="field-page">
       <div className="page-head">
         <div>
-          <div className="crumbs">
-            {can("field:work") ? <Link href="/field">My tasks</Link> : <Link href={`/projects/${run.project_id}#field`}>Field work</Link>}
-          </div>
-          <h1>
-            <span className="mono muted">{run.task_ref}</span> {run.title}
+          {can("field:work") ? (
+            <Back href="/field" label="My tasks" />
+          ) : (
+            <Back href={`/projects/${run.project_id}#field`} label="the project's field work" />
+          )}
+          <h1 className="task-title">
+            <span className="mono muted">{run.task_ref}</span> {shortTitle(run.title, run.asset)}
           </h1>
+          {detail.project && (
+            <p className="task-where">
+              {detail.project.customer ? `${detail.project.customer}, ` : ""}
+              {detail.project.name} <span className="mono muted">{detail.project.code}</span>
+            </p>
+          )}
           <p>
-            {run.asset ?? "No device"}
+            {run.asset ? <span className="mono">{run.asset}</span> : "No device"}
             {run.requires_downtime ? ", needs downtime" : ""}. Planned {dateTime(run.planned_start)}.
           </p>
           {d.stale && <Notice tone="warn">No signal. This is what was loaded earlier; anything you do is saved on this phone and sent when signal returns.</Notice>}
@@ -347,7 +376,18 @@ export default function TaskPage() {
                 <>
                   <h2>Arrive on site</h2>
                   {evidenceBlock("check_in")}
-                  <CodeStep run={run} purpose="check_in" action="check-in" label="Check in" onDone={after} />
+                  <CodeStep
+                    run={run}
+                    purpose="check_in"
+                    action="check-in"
+                    label="Check in"
+                    onDone={after}
+                    waitFor={
+                      stageItems("check_in").some(({ i }) => !evidenceFor(i).length && !queuedFor(i).length)
+                        ? "Add the arrival evidence above first, then ask the customer for the code."
+                        : undefined
+                    }
+                  />
                 </>
               )}
               <button
@@ -658,7 +698,7 @@ export default function TaskPage() {
         <ul className="feed">
           {[...detail.events].reverse().map((e) => (
             <li key={e.seq}>
-              <time dateTime={e.captured_at ?? e.at}>{dateTime(e.captured_at ?? e.at).split(", ").pop()}</time>
+              <time dateTime={e.captured_at ?? e.at}>{whenShort(e.captured_at ?? e.at)}</time>
               <span>
                 {e.action.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase())}
                 {e.to_state && e.to_state !== e.from_state ? `, now ${STATE_SHORT[e.to_state] ?? e.to_state}` : ""}

@@ -2,6 +2,8 @@
 
 Base address (dev): `http://localhost:9597/api/v1`. Interactive reference: `/docs`.
 The machine-readable schema is at `/api/v1/openapi.json` (or `python -m app.cli openapi`).
+Every route on one page, grouped by area: [API_ROUTES.md](../API_ROUTES.md) (regenerate with
+`python -m app.cli api-routes`; a test fails when it falls behind the code).
 
 ## Conventions
 
@@ -78,7 +80,7 @@ Each refresh token works once. The answer contains the next one.
 | Infrastructure | `/projects/{id}/infra` | build, read and lock current and ideal states |
 | Rules | `/infra/rules` | list, propose, approve rule changes |
 | Gaps | `/projects/{id}/gaps` | draft, edit, add, lock the gap register |
-| BOQ | `/projects/{id}/boq`, `/boq/{id}` | generate, edit operations, refresh prices, submit, pricing decision, issue, compare versions, accept, reopen, render |
+| BOQ | `/projects/{id}/boq`, `/boq/{id}` | `estimate` (json, pdf or xlsx, saved nowhere), generate, edit operations, refresh prices, submit, pricing decision, issue, compare versions, accept, reopen, render |
 | Plan | `/projects/{id}/plan`, `/planning` | generate, schedule, tasks, baselines, downtime, leave, lock, `render` (plan PDF) |
 | Field work | `/projects/{id}/field` | `start`, `runs`, `summary`, `events?after=`, `stream` (server-sent events) |
 | Field tasks | `/field` | `my`, `runs/{id}`, `accept`, `depart`, `codes/{check_in or handover}`, `check-in`, `evidence`, `prechecks-done`, `steps/{n}`, `values`, `configured`, `submit-evidence`, `hand-over`, `block`, `unblock`, `reassign`, `review-queue`, `decision`, `render` |

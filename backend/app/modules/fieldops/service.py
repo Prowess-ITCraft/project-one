@@ -39,6 +39,7 @@ from app.modules.customers.contracts import (
     STAGE_ORDER,
     ProjectRef,
     Stage,
+    get_customer_ref,
     get_project_members,
     get_project_ref,
     get_sign_off_contacts,
@@ -467,6 +468,27 @@ async def my_runs(session: AsyncSession, principal: Principal) -> list[TaskRun]:
     )
 
 
+async def project_briefs(
+    session: AsyncSession, principal: Principal, project_ids: set[uuid.UUID]
+) -> dict[uuid.UUID, dict[str, str | None]]:
+    """Code, name and customer for each project, for labelling tasks. A project the caller
+    cannot see is left out rather than failing the whole list."""
+    out: dict[uuid.UUID, dict[str, str | None]] = {}
+    for pid in project_ids:
+        try:
+            p = await get_project_ref(session, principal, pid)
+        except NotFound:
+            continue
+        try:
+            customer: str | None = (
+                await get_customer_ref(session, principal, p.customer_id)
+            ).display_name
+        except NotFound:
+            customer = None
+        out[pid] = {"code": p.code, "name": p.name, "customer": customer}
+    return out
+
+
 async def review_queue(session: AsyncSession, principal: Principal) -> list[TaskRun]:
     """Tasks waiting for a verifier, oldest first, excluding the verifier's own work."""
     principal.require(P.FIELD_VERIFY)
@@ -536,40 +558,35 @@ async def summary(
     and time against plan."""
     principal.require(P.FIELD_READ)
     await get_project_ref(session, principal, project_id)
-    rows = await session.execute(
-        select(TaskRun.state, func.count())
-        .where(TaskRun.project_id == project_id)
-        .group_by(TaskRun.state)
+    runs = await session.scalars(
+        select(TaskRun).where(TaskRun.project_id == project_id).order_by(TaskRun.task_ref)
     )
-    counts = dict.fromkeys((*FLOW, "blocked"), 0) | {str(state): int(n) for state, n in rows.all()}
-    runs = list(await session.scalars(select(TaskRun).where(TaskRun.project_id == project_id)))
-    now = utcnow()
-    late = [
-        r
-        for r in runs
-        if r.state in ("assigned", "accepted") and r.planned_start < now - timedelta(minutes=30)
-    ]
-    overdue = [
-        r for r in runs if r.state not in ("verifier_review", "closed") and r.planned_end < now
-    ]
-    failing = list(
-        await session.scalars(
-            select(TaskRun).where(
-                TaskRun.project_id == project_id,
-                TaskRun.last_check_passed.is_(False),
-                TaskRun.state == "configured",
-            )
-        )
-    )
+    return summarise_runs(list(runs), utcnow())
+
+
+def summarise_runs(runs: list[TaskRun], now: datetime) -> dict[str, Any]:
+    """One project's task runs summed up. Shared by the field summary and the Director's
+    dashboard, so "late", "overdue" and "failing" mean the same on both."""
+    counts = dict.fromkeys((*FLOW, "blocked"), 0)
+    for r in runs:
+        counts[r.state] = counts.get(r.state, 0) + 1
     total = len(runs)
     return {
         "counts": counts,
         "total": total,
         "closed_share": round(counts["closed"] / total, 4) if total else 0.0,
         "blocked": [r for r in runs if r.state == "blocked"],
-        "late": late,
-        "overdue": overdue,
-        "failing_checks": failing,
+        "late": [
+            r
+            for r in runs
+            if r.state in ("assigned", "accepted") and r.planned_start < now - timedelta(minutes=30)
+        ],
+        "overdue": [
+            r for r in runs if r.state not in ("verifier_review", "closed") and r.planned_end < now
+        ],
+        "failing_checks": [
+            r for r in runs if r.state == "configured" and r.last_check_passed is False
+        ],
         "rework": sum(r.rework_count for r in runs),
     }
 
@@ -954,6 +971,8 @@ async def complete_step(
     done = sum(1 for s in run.steps if s["done"])
     if not 0 <= index < len(run.steps):
         raise NotFound("There is no such step.")
+    if run.steps[index]["done"]:
+        return run  # already done: a double tap or a resend, not a mistake
     if index != done:
         raise Conflict(
             f"Steps go in order. Do step {done + 1} next.",

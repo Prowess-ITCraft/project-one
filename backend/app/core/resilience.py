@@ -69,7 +69,7 @@ async def call_with_retry[T](
             breaker.record_failure()
             if attempt == attempts or breaker.is_open:
                 break
-            delay = base_delay * 2 ** (attempt - 1) * (1 + random.random() / 2)  # noqa: S311
+            delay = base_delay * 2 ** (attempt - 1) * (1 + random.random() / 2)  # nosec B311  # noqa: S311
             await asyncio.sleep(delay)
             continue
         breaker.record_success()

@@ -33,7 +33,7 @@ from app.modules.infra.models import (
     InfraState,
     RuleChange,
 )
-from app.modules.prismsuite.contracts import AuditSnapshot, get_approved_audit
+from app.modules.prismsuite.contracts import AuditSnapshot, get_approved_audit, get_latest_audit
 
 ARTIFACT_CURRENT = "infra_current"
 ARTIFACT_IDEAL = "infra_ideal"
@@ -640,6 +640,34 @@ async def generate_register(
     await session.commit()
     await session.refresh(reg)
     return reg
+
+
+async def estimate_gaps(
+    session: AsyncSession, principal: Principal, project_id: uuid.UUID
+) -> tuple[list[Outcome], dict[str, Any], dict[str, Any]]:
+    """The gap register the rules would draft today, worked out in memory and saved nowhere.
+    Uses the approved audit, or the one still in review. Returns (gaps and verify items, the
+    audit facts, what the estimate was based on)."""
+    principal.require(P.INFRA_READ)
+    await get_project_ref(session, principal, project_id)
+    brief = await get_brief_ref(session, principal, project_id)
+    if brief is None:
+        raise ValidationFailed(
+            "Fill in the intake questionnaire first: the company size and budget tier choose the rules.",
+            code="brief_required",
+        )
+    audit = await get_latest_audit(session, principal, project_id)
+    sheet = build_facts(audit.snapshot)
+    outcomes, _ = evaluate_rules(await list_rules(session, active=True), sheet, brief)
+    order = {"high": 0, "consider": 1}
+    outcomes.sort(key=lambda x: (x.status != "gap", order[x.priority], x.rule.code))
+    basis = {
+        "audit_revision": audit.revision,
+        "audit_approved": audit.approved_at is not None,
+        "company_size": brief.company_size,
+        "budget_tier": brief.budget_tier,
+    }
+    return outcomes, sheet.facts, basis
 
 
 async def get_register(

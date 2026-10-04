@@ -58,6 +58,9 @@ Session = Annotated[AsyncSession, Depends(get_session)]
 AuthMode = Annotated[str | None, Header(alias="X-Auth-Mode")]
 
 _auth_limit = by_ip(Limit("auth", get_settings().rate_limit_auth_per_minute, strict=True))
+# Refresh tokens are long random values, so guessing is not the risk here; a looser per-address
+# limit keeps an office's token refreshes from using up the sign-in allowance.
+_refresh_limit = by_ip(Limit("refresh", get_settings().rate_limit_default_per_minute))
 
 auth_router = APIRouter(prefix="/auth", tags=["auth"], dependencies=[Depends(_auth_limit)])
 account_router = APIRouter(prefix="/auth", tags=["auth"])
@@ -103,7 +106,7 @@ def _deliver(response: Response, tokens: TokenOut, mode: str | None) -> TokenOut
         path="/",
         **common,  # type: ignore[arg-type]
     )
-    return tokens.model_copy(update={"access_token": None, "refresh_token": None})
+    return tokens.model_copy(update={"access_token": None, "refresh_token": None})  # nosec B105
 
 
 def _clear_cookies(response: Response) -> None:
@@ -180,8 +183,11 @@ async def mfa_enrol_confirm(
     )
 
 
-@auth_router.post(
-    "/refresh", response_model=TokenOut, summary="Swap a refresh token for new tokens"
+@account_router.post(
+    "/refresh",
+    response_model=TokenOut,
+    summary="Swap a refresh token for new tokens",
+    dependencies=[Depends(_refresh_limit)],
 )
 async def refresh(
     request: Request,

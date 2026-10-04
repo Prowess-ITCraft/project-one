@@ -144,52 +144,67 @@ async def check_summaries(
     return out
 
 
-async def field_snapshot(
-    session: AsyncSession, principal: Principal, project_id: uuid.UUID
-) -> dict[str, Any]:
-    """For the Director's dashboard: counts by state, blocked with reasons, late, overdue,
-    check-ins today and time against plan."""
+async def field_snapshots(
+    session: AsyncSession, principal: Principal, project_ids: list[uuid.UUID]
+) -> dict[uuid.UUID, dict[str, Any]]:
+    """For the Director's dashboard, all projects in two queries: counts by state, blocked with
+    reasons, late, overdue, check-ins today and time against plan. The caller passes projects
+    the principal may already see (from `list_visible_projects`)."""
     from datetime import datetime, time
 
     from sqlalchemy import func
 
-    from app.core.timeutil import IST, today_ist
+    from app.core.timeutil import IST, today_ist, utcnow
     from app.modules.fieldops import service as _service
     from app.modules.fieldops.models import RunEvent
 
-    s = await _service.summary(session, principal, project_id)
-    runs = list(await session.scalars(select(TaskRun).where(TaskRun.project_id == project_id)))
+    principal.require(P.FIELD_READ)
+    if not project_ids:
+        return {}
+    by_project: dict[uuid.UUID, list[TaskRun]] = {pid: [] for pid in project_ids}
+    for r in await session.scalars(
+        select(TaskRun)
+        .where(TaskRun.project_id.in_(project_ids))
+        .order_by(TaskRun.project_id, TaskRun.task_ref)
+    ):
+        by_project[r.project_id].append(r)
     start_today = datetime.combine(today_ist(), time(0), tzinfo=IST)
-    checkins = await session.scalar(
-        select(func.count())
-        .select_from(RunEvent)
+    rows = await session.execute(
+        select(RunEvent.project_id, func.count())
         .where(
-            RunEvent.project_id == project_id,
+            RunEvent.project_id.in_(project_ids),
             RunEvent.action == "check_in",
             RunEvent.at >= start_today,
         )
+        .group_by(RunEvent.project_id)
     )
-    planned_end = max((r.planned_end for r in runs), default=None)
-    return {
-        "counts": s["counts"],
-        "total": s["total"],
-        "closed_share": s["closed_share"],
-        "rework": s["rework"],
-        "blocked": [
-            {
-                "run_id": str(r.id),
-                "task_ref": r.task_ref,
-                "title": r.title,
-                "reason": r.block_reason,
-            }
-            for r in s["blocked"]
-        ],
-        "late": [r.task_ref for r in s["late"]],
-        "overdue": [r.task_ref for r in s["overdue"]],
-        "failing_checks": [r.task_ref for r in s["failing_checks"]],
-        "checkins_today": int(checkins or 0),
-        "planned_end": planned_end.isoformat() if planned_end else None,
-    }
+    checkins = {pid: int(n) for pid, n in rows.tuples()}
+    now = utcnow()
+    out: dict[uuid.UUID, dict[str, Any]] = {}
+    for pid, runs in by_project.items():
+        s = _service.summarise_runs(runs, now)
+        planned_end = max((r.planned_end for r in runs), default=None)
+        out[pid] = {
+            "counts": s["counts"],
+            "total": s["total"],
+            "closed_share": s["closed_share"],
+            "rework": s["rework"],
+            "blocked": [
+                {
+                    "run_id": str(r.id),
+                    "task_ref": r.task_ref,
+                    "title": r.title,
+                    "reason": r.block_reason,
+                }
+                for r in s["blocked"]
+            ],
+            "late": [r.task_ref for r in s["late"]],
+            "overdue": [r.task_ref for r in s["overdue"]],
+            "failing_checks": [r.task_ref for r in s["failing_checks"]],
+            "checkins_today": checkins.get(pid, 0),
+            "planned_end": planned_end.isoformat() if planned_end else None,
+        }
+    return out
 
 
 def register_driver(device_type: str, driver: ConfigCheckDriver) -> None:
@@ -209,7 +224,7 @@ __all__ = [
     "FieldStatus",
     "RunRef",
     "check_summaries",
-    "field_snapshot",
+    "field_snapshots",
     "field_status",
     "get_run_ref",
     "list_run_refs",

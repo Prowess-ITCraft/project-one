@@ -37,7 +37,9 @@ from app.modules.fieldops.schemas import (
     EventOut,
     EvidenceOut,
     LocatedIn,
+    MyRunOut,
     NoteIn,
+    ProjectBriefOut,
     ReassignIn,
     RunDetailOut,
     RunOut,
@@ -66,8 +68,10 @@ def _run(r: Any) -> RunOut:
 
 async def _detail(session: AsyncSession, principal: Principal, run_id: uuid.UUID) -> RunDetailOut:
     run, events, evidence, checks, waiting = await service.get_run(session, principal, run_id)
+    brief = (await service.project_briefs(session, principal, {run.project_id})).get(run.project_id)
     return RunDetailOut(
         run=_run(run),
+        project=ProjectBriefOut(**brief) if brief else None,
         events=[EventOut.model_validate(e, from_attributes=True) for e in events],
         evidence=[EvidenceOut.model_validate(e, from_attributes=True) for e in evidence],
         checks=[CheckOut.model_validate(c, from_attributes=True) for c in checks],
@@ -171,10 +175,19 @@ async def project_stream(
 # ------------------------------------------------------------------ the engineer
 
 
-@router.get("/my", response_model=list[RunOut])
-async def my_tasks(session: Session, principal: Worker) -> list[RunOut]:
-    """Today and later: the signed-in engineer's open tasks, in planned order."""
-    return [_run(r) for r in await service.my_runs(session, principal)]
+@router.get("/my", response_model=list[MyRunOut])
+async def my_tasks(session: Session, principal: Worker) -> list[MyRunOut]:
+    """Today and later: the signed-in engineer's open tasks, in planned order, each with the
+    project and customer it belongs to."""
+    runs = await service.my_runs(session, principal)
+    briefs = await service.project_briefs(session, principal, {r.project_id for r in runs})
+    out = []
+    for r in runs:
+        row = MyRunOut.model_validate(r, from_attributes=True)
+        b = briefs.get(r.project_id)
+        row.project = ProjectBriefOut(**b) if b else None
+        out.append(row)
+    return out
 
 
 @router.get("/runs/{run_id}", response_model=RunDetailOut)

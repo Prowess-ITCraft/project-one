@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import hmac
 import io
 import re
 import unicodedata
@@ -253,6 +254,30 @@ async def ingest(
     return f
 
 
+async def get_stored(session: AsyncSession, file_id: uuid.UUID) -> StoredFile:
+    """A file that is still kept, with no visibility check (callers have already proved access,
+    for example with a signed link)."""
+    f = await session.scalar(
+        select(StoredFile).where(StoredFile.id == file_id, StoredFile.deleted_at.is_(None))
+    )
+    if f is None:
+        raise NotFound("File not found.")
+    return f
+
+
+async def open_body(f: StoredFile) -> Any:
+    """The stored object as a stream, for the API to pass on without holding it in memory."""
+    kwargs: dict[str, Any] = {"Bucket": f.bucket, "Key": f.object_key}
+    if f.object_version and f.object_version != "null":
+        kwargs["VersionId"] = f.object_version
+    return await call_with_retry(
+        lambda: asyncio.to_thread(lambda: s3_client().get_object(**kwargs)["Body"]),
+        breaker=_storage_breaker,
+        timeout=30,
+        retry_on=_STORAGE_ERRORS,
+    )
+
+
 async def get_visible(
     session: AsyncSession, principal: Principal, file_id: uuid.UUID
 ) -> StoredFile:
@@ -323,8 +348,29 @@ async def purge_object(f: StoredFile, reason: str) -> None:
     f.meta = {**(f.meta or {}), "purged": True, "purge_reason": reason[:200]}
 
 
+def _link_signature(file_id: uuid.UUID, expires: int, key: str) -> str:
+    msg = f"file-download:{file_id}:{expires}".encode()
+    return hmac.new(key.encode(), msg, hashlib.sha256).hexdigest()
+
+
+def link_is_valid(file_id: uuid.UUID, expires: int, sig: str) -> bool:
+    """A download link the API signed itself: not expired, and signed with a current or older
+    signing key (so rotating keys does not break links already handed out)."""
+    if expires < int(utcnow().timestamp()):
+        return False
+    keys = get_settings().jwt_keys()
+    return any(hmac.compare_digest(_link_signature(file_id, expires, k), sig) for k in keys)
+
+
 def download_url(f: StoredFile) -> str:
     s = get_settings()
+    if not s.s3_public_endpoint_url:
+        # Storage is not reachable from browsers (production: MinIO stays on the internal
+        # network). The API serves the file itself, through a short-lived signed link on the
+        # same address as the app, so no second domain or certificate is needed.
+        expires = int(utcnow().timestamp()) + s.s3_presign_ttl_seconds
+        sig = _link_signature(f.id, expires, s.jwt_keys()[0])
+        return f"{s.api_prefix}/public/files/{f.id}?expires={expires}&sig={sig}"
     params: dict[str, Any] = {
         "Bucket": f.bucket,
         "Key": f.object_key,

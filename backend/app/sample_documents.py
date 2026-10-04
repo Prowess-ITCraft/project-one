@@ -290,7 +290,7 @@ def checklist_context(day: date) -> dict[str, Any]:
             "19.07281, 72.87760",
             "",
         ),
-        (t(17, 5), "verify", "closed and verified", "Amit Deshmukh", "", ""),
+        (t(17, 5), "verify", "closed and verified", "Aditya Kumar", "", ""),
     ]
     return {
         "company": dict(DEFAULT_COMPANY),
@@ -308,7 +308,7 @@ def checklist_context(day: date) -> dict[str, Any]:
             "checked_in": t(11, 58),
             "handed_over": t(14, 31),
             "closed": t(17, 5),
-            "verified_by": "Amit Deshmukh",
+            "verified_by": "Aditya Kumar",
             "rework": 1,
         },
         "steps": [
@@ -441,7 +441,7 @@ def report_content(start: date, quote_ref: str | None) -> dict[str, Any]:
                 "title": title,
                 "device": device,
                 "closed": format_long_date(start + timedelta(days=day)),
-                "verified_by": "Anil Deshmukh",
+                "verified_by": "Aditya Kumar",
             }
             for ref, title, device, day in tasks
         ],
@@ -450,7 +450,7 @@ def report_content(start: date, quote_ref: str | None) -> dict[str, Any]:
                 "what": "T-04 Firewall high availability (minor)",
                 "kind": "not applicable",
                 "reason": "One firewall was bought; a second unit is in next year's budget.",
-                "approved_by": "Sattish Agadii",
+                "approved_by": "Satish Agadi",
                 "acknowledged_by": "Meera Shah",
             }
         ],
@@ -466,7 +466,7 @@ def report_content(start: date, quote_ref: str | None) -> dict[str, Any]:
                 "device": "SW-01",
                 "attempts": 1,
                 "passed": True,
-                "pass": 6,
+                "pass": 6,  # nosec B105
                 "fail": 0,
                 "not_checked": 1,
             },
@@ -475,7 +475,7 @@ def report_content(start: date, quote_ref: str | None) -> dict[str, Any]:
                 "device": "FW-01",
                 "attempts": 2,
                 "passed": True,
-                "pass": 6,
+                "pass": 6,  # nosec B105
                 "fail": 0,
                 "not_checked": 1,
             },
@@ -506,7 +506,7 @@ def report_content(start: date, quote_ref: str | None) -> dict[str, Any]:
                 "recommendation": "Add a cloud backup target with 30 day retention.",
             }
         ],
-        "verifiers": ["Anil Deshmukh"],
+        "verifiers": ["Aditya Kumar"],
         "printed": format_long_date(start + timedelta(days=3)),
         "report_number": 1,
     }
@@ -517,7 +517,7 @@ def certificate_context(content: dict[str, Any], issued: date) -> dict[str, Any]
     import hashlib
 
     from app.core.documents import qr_data_url
-    from app.modules.reporting.service import DEFAULT_WORDING
+    from app.modules.reporting.service import DEFAULT_WORDING, certificate_scope
 
     number = f"IITPL-{issued.year % 100:02d}{(issued.year + 1) % 100:02d}-0001"
     payload = {
@@ -527,12 +527,12 @@ def certificate_context(content: dict[str, Any], issued: date) -> dict[str, Any]
         "project_code": content["project"]["code"],
         "quote_ref": content["quote_ref"],
         "po_number": content["po_number"],
-        "scope": [f"{d['ref']} {d['title']} ({d['device']})" for d in content["delivered"]],
+        "scope": certificate_scope(content["delivered"]),
         "exclusions": [f"{x['what']}: {x['kind']}" for x in content["exclusions"]],
         "work_started": content["work_started"],
         "work_finished": content["work_finished"],
         "verifiers": content["verifiers"],
-        "director": "Sattish Agadii",
+        "director": "Satish Agadi",
         "issued_on": format_long_date(issued),
         "report_number": 1,
         "wording": DEFAULT_WORDING,

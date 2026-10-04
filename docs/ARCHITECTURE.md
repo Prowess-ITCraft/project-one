@@ -192,3 +192,4 @@ salted hashes and wiped from the message log after an hour.
 | [0018](decisions/0018-outbox-subscribers-load-first.md) | Event subscribers load before anything publishes |
 | [0019](decisions/0019-verification-and-certificate-answers.md) | Verification and certificate decisions |
 | [0020](decisions/0020-learned-ranker-in-shadow.md) | A learned ranker that only runs in shadow mode |
+| [0021](decisions/0021-boq-estimate-before-approvals.md) | A BOQ estimate before the approvals |

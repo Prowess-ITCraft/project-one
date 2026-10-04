@@ -42,6 +42,15 @@ async def get_approved_audit(
     return ApprovedAudit(row.id, row.project_id, row.kind, row.revision, row.decided_at, snap)
 
 
+async def get_latest_audit(
+    session: AsyncSession, principal: Principal, project_id: uuid.UUID, kind: str = "baseline"
+) -> ApprovedAudit:
+    """Approved if possible, else the newest report still in review. `approved_at` is None for
+    one in review. For estimates; official steps use `get_approved_audit`."""
+    row, snap = await _service.latest_snapshot(session, principal, project_id, kind)
+    return ApprovedAudit(row.id, row.project_id, row.kind, row.revision, row.decided_at, snap)
+
+
 class ReportUnreadable(Exception):
     """The file looks like a PrismSuite report but could not be read."""
 

@@ -52,7 +52,7 @@ def build(
             if not x:
                 raise ValueError("A histogram needs a column (x).")
             _numeric(names, x)
-            mn, mx = con.execute(f"SELECT MIN({q(x)}), MAX({q(x)}) FROM t").fetchone() or (
+            mn, mx = con.execute(f"SELECT MIN({q(x)}), MAX({q(x)}) FROM t").fetchone() or (  # nosec B608
                 None,
                 None,
             )
@@ -65,7 +65,7 @@ def build(
             by = f"{q(x)}, " if x else ""
             grp = "GROUP BY 1 ORDER BY 1 LIMIT 30" if x else ""
             rows = con.execute(
-                f"SELECT {by}MIN({q(y)}), QUANTILE_CONT({q(y)}, 0.25), MEDIAN({q(y)}), QUANTILE_CONT({q(y)}, 0.75), MAX({q(y)}), COUNT({q(y)}) FROM t {grp}"
+                f"SELECT {by}MIN({q(y)}), QUANTILE_CONT({q(y)}, 0.25), MEDIAN({q(y)}), QUANTILE_CONT({q(y)}, 0.75), MAX({q(y)}), COUNT({q(y)}) FROM t {grp}"  # nosec B608
             ).fetchall()
             keys = ["min", "q1", "median", "q3", "max", "count"]
             data = []
@@ -84,7 +84,7 @@ def build(
             total = table.num_rows
             res = frame.fetch(
                 con,
-                f"SELECT {sel} FROM t WHERE {q(x)} IS NOT NULL AND {q(y)} IS NOT NULL USING SAMPLE {SCATTER_CAP} ROWS REPEATABLE (7)",
+                f"SELECT {sel} FROM t WHERE {q(x)} IS NOT NULL AND {q(y)} IS NOT NULL USING SAMPLE {SCATTER_CAP} ROWS REPEATABLE (7)",  # nosec B608
             )
             return {
                 "type": kind,
@@ -103,7 +103,7 @@ def build(
                 _numeric(names, y)
             val = "COUNT(*)" if agg == "count" else f"{agg.upper()}({q(y or x)})"
             rows = con.execute(
-                f"SELECT CAST({q(x)} AS VARCHAR), {val} v FROM t WHERE {q(x)} IS NOT NULL GROUP BY 1 ORDER BY v DESC NULLS LAST, 1 LIMIT {BAR_CAP + 1}"
+                f"SELECT CAST({q(x)} AS VARCHAR), {val} v FROM t WHERE {q(x)} IS NOT NULL GROUP BY 1 ORDER BY v DESC NULLS LAST, 1 LIMIT {BAR_CAP + 1}"  # nosec B608
             ).fetchall()
             return {
                 "type": kind,
@@ -130,7 +130,7 @@ def build(
             if x and y:
                 _need(names, x, y)
                 rows = con.execute(
-                    f"SELECT CAST({q(x)} AS VARCHAR), CAST({q(y)} AS VARCHAR), COUNT(*) FROM t WHERE {q(x)} IS NOT NULL AND {q(y)} IS NOT NULL "
+                    f"SELECT CAST({q(x)} AS VARCHAR), CAST({q(y)} AS VARCHAR), COUNT(*) FROM t WHERE {q(x)} IS NOT NULL AND {q(y)} IS NOT NULL "  # nosec B608
                     f"GROUP BY 1, 2 ORDER BY 3 DESC LIMIT 400"
                 ).fetchall()
                 return {
@@ -161,7 +161,7 @@ def build(
             _numeric(names, y)
             fn = "COUNT" if agg == "count" else agg.upper()
             rows = con.execute(
-                f"SELECT CAST({q(x)} AS VARCHAR), CAST({q(group)} AS VARCHAR), {fn}({q(y)}) FROM t GROUP BY 1, 2"
+                f"SELECT CAST({q(x)} AS VARCHAR), CAST({q(group)} AS VARCHAR), {fn}({q(y)}) FROM t GROUP BY 1, 2"  # nosec B608
             ).fetchall()
             rkeys = sorted({r[0] for r in rows if r[0] is not None})[:PIVOT_ROWS]
             ckeys = sorted({r[1] for r in rows if r[1] is not None})[:PIVOT_COLS]

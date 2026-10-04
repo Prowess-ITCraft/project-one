@@ -5,7 +5,9 @@ create-admin     create the first Admin (password from P1_ADMIN_PASSWORD or a pr
 expire-prices    run the price expiry job once
 dispatch-outbox  drain the outbox once
 backup           pg_dump to the backups bucket
+backup-export    copy backups not yet in a folder into it (a daily copy off the server)
 openapi          write the OpenAPI schema to a file (for the typed frontend client)
+api-routes       write every API route, grouped by area, as Markdown (docs/API_ROUTES.md)
 """
 
 from __future__ import annotations
@@ -42,7 +44,7 @@ async def _seed() -> None:
 
 
 DEMO_EMAIL = "adi@test.com"
-DEMO_PASSWORD = "test1234"  # noqa: S105  (a documented demo login, refused in prod)
+DEMO_PASSWORD = "test1234"  # nosec B105  # noqa: S105  (a documented demo login, refused in prod)
 
 
 async def _seed_demo() -> None:
@@ -97,6 +99,11 @@ async def _seed_demo() -> None:
                 0,
                 None,
             )
+            # Back to a first sign-in: an authenticator entry from an older database no longer
+            # matches, so the next sign-in sets one up again.
+            user.mfa_enabled = False
+            user.mfa_secret_enc = user.mfa_pending_secret_enc = None
+            user.mfa_last_used_step = None
             have = {
                 r.role for r in await s.scalars(select(UserRole).where(UserRole.user_id == user.id))
             }
@@ -104,7 +111,10 @@ async def _seed_demo() -> None:
                 if r.value not in have:
                     s.add(UserRole(user_id=user.id, role=r.value))
             await s.commit()
-            print(f"{DEMO_EMAIL} already exists; password reset to the demo value and unlocked.")
+            print(
+                f"{DEMO_EMAIL} already exists; password reset to the demo value, unlocked, "
+                "and the authenticator cleared (set it up again at sign-in)."
+            )
     perms = frozenset(
         {
             P.CUSTOMER_WRITE,
@@ -191,6 +201,55 @@ def _openapi(out: str) -> None:
     print(f"Wrote {out}")
 
 
+def api_routes_markdown(schema: dict[str, object]) -> str:
+    """Every operation in the schema as one table per area (the schema's tags)."""
+    methods = ("get", "post", "put", "patch", "delete")
+    areas: dict[str, list[tuple[str, str, str, bool]]] = {}
+    paths = schema.get("paths", {})
+    assert isinstance(paths, dict)
+    for path, ops in paths.items():
+        for method in methods:
+            op = ops.get(method)
+            if not op:
+                continue
+            area = (op.get("tags") or ["other"])[0]
+            summary = (op.get("summary") or "").replace("|", "/")
+            areas.setdefault(area, []).append(
+                (method.upper(), path, summary, bool(op.get("security")))
+            )
+    total = sum(len(v) for v in areas.values())
+    out = [
+        "# API routes",
+        "",
+        f"All {total} operations of the Project One API, grouped by area. Generated from the",
+        "code with `python -m app.cli api-routes`; do not edit by hand. The interactive",
+        "reference, where you can try each call, is at `/docs` on a running server;",
+        "conventions, errors and sign-in are in the [API guide](guides/04-api-guide.md).",
+        "",
+        '"Sign-in" means the call needs a signed-in user (a bearer token or the session cookie);',
+        "what each role may call is in the permission matrix test.",
+        "",
+    ]
+    for area in sorted(areas, key=str.lower):
+        rows = sorted(areas[area], key=lambda r: (r[1], methods.index(r[0].lower())))
+        out += [
+            f"## {area[:1].upper()}{area[1:]}",
+            "",
+            "| Method | Path | What it does | Sign-in |",
+        ]
+        out.append("| --- | --- | --- | --- |")
+        out += [f"| {m} | `{pth}` | {s} | {'yes' if sec else 'no'} |" for m, pth, s, sec in rows]
+        out.append("")
+    return "\n".join(out)
+
+
+def _api_routes(out: str) -> None:
+    from app.main import app
+
+    Path(out).write_text(api_routes_markdown(app.openapi()), encoding="utf-8")
+    print(f"Wrote {out}")
+
+
 def _corpus_convert(folder: str, out: str) -> int:
     """Convert every PDF, Word, Excel and JSON file in `folder` into canonical corpus JSON in
     `out`, without a database (ADR 0014). Writes `<name>.json` (readable) and an index."""
@@ -269,6 +328,8 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("expire-prices")
     sub.add_parser("dispatch-outbox")
     sub.add_parser("backup")
+    be = sub.add_parser("backup-export", help="copy new backups into a folder")
+    be.add_argument("--out", required=True)
     sub.add_parser("init-storage")
     sub.add_parser("seed-demo")
     dp = sub.add_parser("demo-projects", help="walk two demo projects through the API (dev only)")
@@ -276,6 +337,8 @@ def main(argv: list[str] | None = None) -> int:
     dp.add_argument("--out", default="demo-accounts.json")
     o = sub.add_parser("openapi")
     o.add_argument("--out", default="openapi.json")
+    ar = sub.add_parser("api-routes", help="write every API route as Markdown")
+    ar.add_argument("--out", default="../docs/API_ROUTES.md")
     c = sub.add_parser("corpus", help="document corpus tools (ADR 0014)")
     csub = c.add_subparsers(dest="corpus_cmd", required=True)
     cc = csub.add_parser("convert", help="convert a folder offline, no database needed")
@@ -313,6 +376,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "openapi":
         _openapi(args.out)
         return 0
+    if args.cmd == "api-routes":
+        _api_routes(args.out)
+        return 0
     if args.cmd == "init-storage":
         from app.core.config import get_settings
         from app.core.s3 import ensure_bucket
@@ -326,6 +392,11 @@ def main(argv: list[str] | None = None) -> int:
         from app import ops
 
         print(ops.run_backup())
+        return 0
+    if args.cmd == "backup-export":
+        from app import ops
+
+        print(f"{ops.export_backups(args.out)} new backup(s) copied to {args.out}")
         return 0
 
     async def run() -> None:

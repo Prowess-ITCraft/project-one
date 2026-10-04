@@ -35,12 +35,9 @@
   .sign .stamp { position: absolute; right: -6mm; bottom: 6mm; height: 28mm; width: auto; opacity: 0.92; }
   .sign .line { border-top: 0.75pt solid #222; padding-top: 1.5mm; font-weight: 700; }
   .sign .role { font-size: 8.5pt; color: #444; }
-  .made { display: flex; align-items: center; gap: 2mm; font-size: 8pt; color: #555; white-space: nowrap; }
-  .made img { height: 9mm; width: auto; }
 </style>
 </head>
 <body>
-{% from "_brand.html" import wordmark %}
 <div class="frame"><div class="inner">
   <div class="top">
     <img class="iitpl" src="{{ asset('iitpl-logo.png') }}" alt="IITPL">
@@ -73,10 +70,7 @@
   <div class="foot">
     <div class="verify">
       <img src="{{ qr }}" alt="">
-      <div>Scan to check this certificate, or open<br><b>{{ verify_url }}</b><br>Fingerprint {{ fingerprint }}
-        <div class="made" style="margin-top:2mm">Implemented by
-          {% if company.logo %}<img src="{{ asset(company.logo) }}" alt="">{% endif %}{{ wordmark(company, "10pt") }}</div>
-      </div>
+      <div>Scan to check this certificate, or open<br><b>{{ verify_url }}</b><br>Fingerprint {{ fingerprint }}</div>
     </div>
     <div class="sign">
       {% if stamp %}<img class="stamp" src="{{ stamp }}" alt="IITPL stamp">{% endif %}

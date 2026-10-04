@@ -452,16 +452,6 @@ textarea {
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
-@media (prefers-reduced-motion: no-preference) {
-  .feed li.fresh {
-    animation: arrive 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  @keyframes arrive {
-    from {
-      background: var(--accent-wash);
-    }
-  }
-}
 
 /* a button that reads as a link, for opening a row's details */
 .linklike {
@@ -478,4 +468,52 @@ textarea {
 }
 .linklike:hover {
   text-decoration-thickness: 2px;
+}
+
+/* ---------- my tasks: what needs you, then what waits on others ---------- */
+.tasks-head {
+  margin: 20px 0 0;
+  font-size: 18px;
+}
+.task-filter {
+  max-width: 420px;
+  margin: 8px 0 4px;
+}
+.tasklist .where {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  font-size: 14px;
+}
+.tasklist .where .asset {
+  font-family: var(--font-mono), monospace;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.tasks-later {
+  margin-top: 24px;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+.tasks-later summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.task-title {
+  overflow-wrap: anywhere;
+}
+.task-where {
+  margin: 4px 0 0;
+  font-weight: 600;
+}
+@media (max-width: 560px) {
+  .field-page .task-title {
+    font-size: 22px;
+    line-height: 1.25;
+  }
 }

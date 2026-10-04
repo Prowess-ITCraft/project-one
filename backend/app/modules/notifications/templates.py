@@ -100,7 +100,7 @@ TEMPLATES: dict[str, Template] = {
     )
 }
 
-_env = Environment(autoescape=False, undefined=StrictUndefined, keep_trailing_newline=True)  # noqa: S701  (plain text mail)
+_env = Environment(autoescape=False, undefined=StrictUndefined, keep_trailing_newline=True)  # nosec B701  # noqa: S701  (plain text mail)
 
 
 def render(code: str, context: dict[str, Any]) -> tuple[str, str]:

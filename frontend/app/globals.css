@@ -545,16 +545,6 @@ textarea::placeholder {
   background: linear-gradient(90deg, var(--line), color-mix(in srgb, var(--line) 50%, var(--surface)), var(--line));
   background-size: 200% 100%;
 }
-@media (prefers-reduced-motion: no-preference) {
-  .skel {
-    animation: shimmer 1.4s linear infinite;
-  }
-}
-@keyframes shimmer {
-  to {
-    background-position: -200% 0;
-  }
-}
 .toasts {
   position: fixed;
   right: 16px;

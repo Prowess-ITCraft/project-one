@@ -63,7 +63,7 @@ ADR 0015 (field states), ADR 0019 (SonicWall first, evidence only, severity rule
 
 ## Demo script
 
-1. Run `python -m app.cli demo-projects` and sign in as the Director (Sattish Agadii in the demo data).
+1. Run `python -m app.cli demo-projects` and sign in as the Director (Satish Agadi in the demo data).
 2. Open Dashboard: the finished project is complete, "Plant network refresh" shows blocked work
    and an open critical deviation.
 3. Open the in-progress project, Field work tab, and the task that was sent back: the failed

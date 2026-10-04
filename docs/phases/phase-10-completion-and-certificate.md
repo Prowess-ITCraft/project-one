@@ -37,7 +37,9 @@ Director issue the certificate.
   on the four lenses, configuration per device, deviations and open recommendations. No prices.
   The locked PDF is stored with its SHA-256 and never regenerated.
 - **Certificate**: Director only. Number per financial year (`IITPL-2627-0001`), payload signed
-  with an HMAC, QR code to `/verify/<number>`, stored PDF, revoke with a reason.
+  with an HMAC, QR code to `/verify/<number>`, stored PDF, revoke with a reason. Names IITPL as
+  the implementer, signed by the Director with the IITPL stamp; work grouped by kind, at most 10
+  lines, one page (ADR 0022).
 - **Public check page**: shows whether a certificate is genuine, revoked or unknown. No prices,
   no contacts, no internal notes.
 - **Settings**: certificate wording and the stamp image (PNG or JPEG).

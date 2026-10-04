@@ -68,4 +68,31 @@ async def get_locked_gaps(
     )
 
 
-__all__ = ["ARTIFACT_GAPS", "GapRef", "GapSet", "get_locked_gaps"]
+async def estimate_gaps(
+    session: AsyncSession, principal: Principal, project_id: uuid.UUID
+) -> tuple[GapSet, dict[str, Any]]:
+    """The gaps the rules would raise today, in memory only, from the approved audit or the one
+    still in review. For BOQ estimates; nothing is saved and no gate moves. Returns the gaps and
+    what they were based on (audit revision, approved or not, tier)."""
+    outcomes, facts, basis = await _service.estimate_gaps(session, principal, project_id)
+    gaps = tuple(
+        GapRef(
+            uuid.uuid5(uuid.NAMESPACE_URL, f"estimate:{project_id}:{o.rule.code}"),
+            f"GAP-{i:03d}",
+            o.rule.gap_type,
+            o.rule.component,
+            o.rule.lens,
+            o.rule.title if o.status == "gap" else f"Verify on site: {o.rule.title}",
+            o.priority,
+            "open" if o.status == "gap" else "verify",
+            tuple(o.affected),
+            o.qty,
+            o.rule.recommendation,
+            "rule",
+        )
+        for i, o in enumerate(outcomes, start=1)
+    )
+    return GapSet(uuid.uuid5(uuid.NAMESPACE_URL, f"estimate:{project_id}"), 0, facts, gaps), basis
+
+
+__all__ = ["ARTIFACT_GAPS", "GapRef", "GapSet", "estimate_gaps", "get_locked_gaps"]

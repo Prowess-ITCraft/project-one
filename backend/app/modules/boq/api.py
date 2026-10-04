@@ -184,6 +184,37 @@ async def generate(
     return service.view(b, principal)
 
 
+ESTIMATE_REF = "ESTIMATE, NOT APPROVED"
+
+
+@project_router.get("/estimate")
+async def estimate(
+    session: Session,
+    principal: Editor,
+    project_id: uuid.UUID,
+    fmt: Literal["json", "pdf", "xlsx"] = "json",
+    kind: Literal["quotation", "summary"] = "quotation",
+) -> Any:
+    """A BOQ worked out straight from the PrismSuite report and the questionnaire, before the
+    gates are approved. Saved nowhere; documents carry "ESTIMATE, NOT APPROVED" as their ref."""
+    draft, report, gapset, basis = await service.estimate(session, principal, project_id)
+    if fmt == "json":
+        return service.estimate_view(draft, report, gapset, basis, principal)
+    comp = await service.company(session)
+    name = f"estimate-{kind}.{fmt}"
+    if fmt == "xlsx":
+        data = render.render_xlsx(draft, comp, quote_ref=ESTIMATE_REF, kind=kind)
+        mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    else:
+        doc = render.render_pdf(render.render_html(draft, comp, quote_ref=ESTIMATE_REF, kind=kind))
+        data, mime = doc.pdf, "application/pdf"
+    return Response(
+        content=data,
+        media_type=mime,
+        headers={"Content-Disposition": f'attachment; filename="{name}"'},
+    )
+
+
 @project_router.get("", response_model=BoqOut)
 async def get_project_boq(
     session: Session, principal: Reader, project_id: uuid.UUID

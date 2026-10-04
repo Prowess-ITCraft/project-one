@@ -1,6 +1,7 @@
 .env
 secrets/
-infra/nginx/tls/*.pem
+infra/nginx/tls/*
+!infra/nginx/tls/README.md
 .venv/
 __pycache__/
 *.pyc

@@ -35,7 +35,13 @@ export function totp(secret: string, at = Date.now()): string {
 const usedStep = new Map<string, number>();
 
 export async function signIn(page: Page, role: string): Promise<Account> {
-  const a = who(role);
+  return signInAs(page, who(role));
+}
+
+/** Every demo account with this role, for tests that need a particular person. */
+export const everyone = (role: string): Account[] => accounts.users.filter((u) => u.roles.includes(role));
+
+export async function signInAs(page: Page, a: Account): Promise<Account> {
   await page.goto("/login");
   await page.locator("#email").fill(a.email);
   await page.locator("#password").fill(accounts.password);

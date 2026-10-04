@@ -4,10 +4,11 @@ import { put, type S } from "@/lib/api";
 import { useData, useMe } from "@/lib/hooks";
 import { Field, Notice, Skeleton, useAction } from "@/components/ui";
 import { toList } from "@/components/kit";
+import { EstimateReadiness } from "@/components/project/EstimatePanel";
 
 type Brief = S["BriefOut"] | null;
 
-export function IntakeTab({ projectId }: { projectId: string }) {
+export function IntakeTab({ projectId, onEstimate }: { projectId: string; onEstimate?: () => void }) {
   const { can } = useMe();
   const brief = useData<Brief>(`/projects/${projectId}/brief`);
   const { busy, run } = useAction();
@@ -69,6 +70,7 @@ export function IntakeTab({ projectId }: { projectId: string }) {
 
   if (brief.loading && !brief.data && brief.data !== null) return <Skeleton lines={6} />;
   return (
+    <>
     <form onSubmit={save} style={{ maxWidth: 760 }}>
       <p className="stepnote" style={{ marginBottom: 16 }}>
         What the customer wants and can spend. The company size and budget tier choose which ideal-infrastructure
@@ -127,5 +129,7 @@ export function IntakeTab({ projectId }: { projectId: string }) {
         </button>
       )}
     </form>
+    <EstimateReadiness key={brief.data?.version ?? "none"} projectId={projectId} onOpen={onEstimate} />
+    </>
   );
 }

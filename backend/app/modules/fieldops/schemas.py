@@ -138,8 +138,22 @@ class CheckOut(BaseModel):
     created_at: datetime
 
 
+class ProjectBriefOut(BaseModel):
+    """Which job a task belongs to. Task refs (T01, T02) restart in every project, so an
+    engineer needs this to tell two sites apart."""
+
+    code: str
+    name: str
+    customer: str | None
+
+
+class MyRunOut(RunOut):
+    project: ProjectBriefOut | None = None
+
+
 class RunDetailOut(BaseModel):
     run: RunOut
+    project: ProjectBriefOut | None = None
     events: list[EventOut]
     evidence: list[EvidenceOut]
     checks: list[CheckOut]

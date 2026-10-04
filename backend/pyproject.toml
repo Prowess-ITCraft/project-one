@@ -124,3 +124,6 @@ skip_covered = true
 
 [tool.bandit]
 exclude_dirs = ["tests", "app/modules/*/tests"]
+# Asserts here only narrow types for mypy on invariants the code already guarantees; no input
+# check relies on them. Other accepted findings carry a `# nosec <id>` on the line itself.
+skips = ["B101"]

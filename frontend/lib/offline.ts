@@ -119,7 +119,11 @@ export type FlushResult = { sent: number; waiting: number; failed: string[] };
 /** Send everything in order. Stops at the first network failure (still offline); an action the
  * server refuses is kept with its reason so the engineer can see it and discard it. */
 export function flush(): Promise<FlushResult> {
-  running ??= (async () => {
+  // A send is already going: it only covers what was waiting when it started, so anything
+  // saved since then goes in a second send right after it (otherwise it would sit on the
+  // phone as "waiting for signal" with the signal fine).
+  if (running) return running.then(() => flush());
+  running = (async () => {
     const out: FlushResult = { sent: 0, waiting: 0, failed: [] };
     for (const item of await pending()) {
       if (item.error) {

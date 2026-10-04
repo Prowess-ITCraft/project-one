@@ -75,6 +75,7 @@ The four reporting lenses everywhere: **Productivity, Resilience, Security, Heal
 | 19 | **Data quality**: cleaning (name normalisation, de-duplication, unit and money parsing), validation, outlier flags on prices and quantities, a quality score per file and per collection, and a labelled taxonomy that maps each BOQ line to a gap type | 4+ | Built |
 | 20 | **Training snapshots**: frozen, versioned, reproducible dataset snapshots with a data card, ready for Phase 13 | 4, 13 | Built |
 | 21 | The sample files in `samples/` are always part of the corpus and of every test run | 4 | Built |
+| 22 | BOQ estimate from the report and questionnaire before the approvals, saved nowhere and labelled as an estimate (ADR 0021) | 6, 14 | Built |
 
 ## 5. Non-functional requirements
 

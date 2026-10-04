@@ -23,6 +23,8 @@ class Settings(BaseSettings):
     app_name: str = "Project One"
     api_prefix: str = "/api/v1"
     public_base_url: str = "http://localhost:9597"
+    # The interactive API reference at /docs and the schema it reads. Set false to hide both.
+    api_docs: bool = True
 
     # Database. The owner role runs migrations; the runtime role has no UPDATE/DELETE on audit_log.
     database_url: str = "postgresql+asyncpg://p1_app:p1_app_dev@localhost:9599/project_one"
@@ -80,7 +82,9 @@ class Settings(BaseSettings):
     login_lockout_max_minutes: int = 1440
 
     rate_limit_default_per_minute: int = 300
-    rate_limit_auth_per_minute: int = 10
+    # Per address, on sign-in and MFA only. An office shares one address; guessing a password
+    # is stopped by the per-account lockout (login_max_failures) instead.
+    rate_limit_auth_per_minute: int = 60
     rate_limit_upload_per_minute: int = 20
 
     max_json_body_bytes: int = 1_048_576
@@ -129,8 +133,31 @@ class Settings(BaseSettings):
                 problems.append("JWT signing keys must be at least 32 characters")
             if not self.cookie_secure:
                 problems.append("P1_COOKIE_SECURE must be true in prod")
+            if not self.public_base_url.startswith("https://") or _local(self.public_base_url):
+                problems.append(
+                    "P1_PUBLIC_BASE_URL must be the https:// address people use (it goes into "
+                    "links, emails and certificate QR codes)"
+                )
+            bad = [o for o in self.cors_allow_origins if not o.startswith("https://") or _local(o)]
+            if not self.cors_allow_origins or bad:
+                problems.append("P1_CORS_ALLOW_ORIGINS must list only https:// web addresses")
+            if self.s3_public_endpoint_url and _local(self.s3_public_endpoint_url):
+                problems.append(
+                    "P1_S3_PUBLIC_ENDPOINT_URL points at this machine; leave it empty so files "
+                    "are served through the app"
+                )
+            if self.s3_secret_key.get_secret_value() == "p1minio-dev-secret":
+                problems.append("P1_S3_SECRET_KEY still uses the dev value")
+            if not self.smtp_host:
+                problems.append(
+                    "P1_SMTP_HOST is empty: visit codes, waiver links and notices cannot be sent"
+                )
         if problems:
             raise RuntimeError("Unsafe configuration: " + "; ".join(problems))
+
+
+def _local(url: str) -> bool:
+    return any(h in url for h in ("localhost", "127.0.0.1", "[::1]"))
 
 
 @lru_cache

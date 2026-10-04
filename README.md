@@ -18,8 +18,9 @@ tamper-evident audit log.
 | --- | --- |
 | New and want to run it on your laptop | [Beginner's guide](docs/guides/01-beginners-guide.md) |
 | A developer who will change the code | [Developer guide](docs/guides/02-developer-guide.md) |
-| Running it on a server | [Operations guide](docs/guides/03-operations-guide.md) |
-| Calling the API from another tool | [API guide](docs/guides/04-api-guide.md) |
+| Putting it on a server for real use | [DEPLOYMENT.md](DEPLOYMENT.md), step by step |
+| Running it on a server day to day | [Operations guide](docs/guides/03-operations-guide.md) |
+| Calling the API from another tool | [API guide](docs/guides/04-api-guide.md) and every route in [API_ROUTES.md](docs/API_ROUTES.md) |
 | Keeping the docs complete | [Documentation map](docs/DOCUMENTATION_MAP.md) |
 | Showing the work to colleagues | [Roadmap](docs/ROADMAP.md) and [phase pages](docs/phases/README.md) |
 | Learning the tech stack and how the main processes work | [Tech stack and processes](docs/guides/05-tech-stack-and-processes.md) |

@@ -11,7 +11,7 @@ from app.core.documents import RenderedDocument, qr_data_url, render_pdf, templa
 from app.modules.boq.contracts import get_company_profile
 
 _env = template_env(Path(__file__).parent / "html")
-SCOPE_ON_CERTIFICATE = 14
+SCOPE_ON_CERTIFICATE = 10  # more than this runs into the QR code; the report lists the rest
 
 
 async def report_context(session: AsyncSession, content: dict[str, Any]) -> dict[str, Any]:

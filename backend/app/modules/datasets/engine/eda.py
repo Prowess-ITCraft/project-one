@@ -44,7 +44,7 @@ def column_stats(
             name, typ = col["name"], col["type"]
             c = q(name)
             nulls, distinct = con.execute(
-                f"SELECT COUNT(*) FILTER (WHERE {c} IS NULL), COUNT(DISTINCT {c}) FROM t"
+                f"SELECT COUNT(*) FILTER (WHERE {c} IS NULL), COUNT(DISTINCT {c}) FROM t"  # nosec B608
             ).fetchone() or (0, 0)
             s: dict[str, Any] = {
                 "name": name,
@@ -59,7 +59,7 @@ def column_stats(
             }
             if typ in NUMERIC and total - nulls > 0:
                 row = con.execute(
-                    f"SELECT MIN({c}), MAX({c}), AVG({c}), STDDEV_SAMP({c}), MEDIAN({c}), "
+                    f"SELECT MIN({c}), MAX({c}), AVG({c}), STDDEV_SAMP({c}), MEDIAN({c}), "  # nosec B608
                     f"QUANTILE_CONT({c}, 0.25), QUANTILE_CONT({c}, 0.75) FROM t"
                 ).fetchone()
                 mn, mx, mean, sd, med, q1, q3 = (_f(x) for x in (row or (None,) * 7))
@@ -75,7 +75,8 @@ def column_stats(
                 if q1 is not None and q3 is not None:
                     lo, hi = q1 - iqr_k * (q3 - q1), q3 + iqr_k * (q3 - q1)
                     iqr_n = con.execute(
-                        f"SELECT COUNT(*) FROM t WHERE {c} < ? OR {c} > ?", [lo, hi]
+                        f"SELECT COUNT(*) FROM t WHERE {c} < ? OR {c} > ?",  # nosec B608
+                        [lo, hi],
                     ).fetchone()
                     s["outliers_iqr"] = {
                         "count": iqr_n[0] if iqr_n else 0,
@@ -84,24 +85,24 @@ def column_stats(
                     }
                 if sd and mean is not None and sd > 0:
                     z_n = con.execute(
-                        f"SELECT COUNT(*) FROM t WHERE ABS(({c} - ?) / ?) > ?",
+                        f"SELECT COUNT(*) FROM t WHERE ABS(({c} - ?) / ?) > ?",  # nosec B608
                         [mean, sd, outlier_z],
                     ).fetchone()
                     s["outliers_z"] = {"count": z_n[0] if z_n else 0, "threshold": outlier_z}
                 s["histogram"] = histogram(con, name, mn, mx)
             elif typ in ("date", "timestamp") and total - nulls > 0:
-                row = con.execute(f"SELECT MIN({c}), MAX({c}) FROM t").fetchone()
+                row = con.execute(f"SELECT MIN({c}), MAX({c}) FROM t").fetchone()  # nosec B608
                 s["min"], s["max"] = (str(row[0]), str(row[1])) if row else (None, None)
             elif typ == "string" and total - nulls > 0:
                 row = con.execute(
-                    f"SELECT MIN(LENGTH({c})), AVG(LENGTH({c})), MAX(LENGTH({c})) FROM t"
+                    f"SELECT MIN(LENGTH({c})), AVG(LENGTH({c})), MAX(LENGTH({c})) FROM t"  # nosec B608
                 ).fetchone()
                 s["length"] = {"min": row[0], "mean": _f(row[1]), "max": row[2]} if row else None
             if typ in ("string", "bool", "int") and distinct > 0:
                 s["top"] = [
                     {"value": None if v is None else str(v), "count": n}
                     for v, n in con.execute(
-                        f"SELECT {c}, COUNT(*) n FROM t WHERE {c} IS NOT NULL GROUP BY 1 ORDER BY n DESC, 1 LIMIT {TOP}"
+                        f"SELECT {c}, COUNT(*) n FROM t WHERE {c} IS NOT NULL GROUP BY 1 ORDER BY n DESC, 1 LIMIT {TOP}"  # nosec B608
                     ).fetchall()
                 ]
             out.append(s)
@@ -115,11 +116,11 @@ def histogram(
         return []
     c = q(name)
     if mn == mx:
-        n = con.execute(f"SELECT COUNT({c}) FROM t").fetchone()[0]
+        n = con.execute(f"SELECT COUNT({c}) FROM t").fetchone()[0]  # nosec B608
         return [{"from": mn, "to": mx, "count": n}]
     width = (mx - mn) / bins
     rows = con.execute(
-        f"SELECT LEAST(CAST(FLOOR((CAST({c} AS DOUBLE) - ?) / ?) AS INTEGER), {bins - 1}) b, COUNT(*) "
+        f"SELECT LEAST(CAST(FLOOR((CAST({c} AS DOUBLE) - ?) / ?) AS INTEGER), {bins - 1}) b, COUNT(*) "  # nosec B608
         f"FROM t WHERE {c} IS NOT NULL GROUP BY 1 ORDER BY 1",
         [mn, width],
     ).fetchall()
@@ -136,7 +137,7 @@ def correlations(table: pa.Table) -> dict[str, Any]:
     with frame.connection(t=table) as con:
         for a in cols:
             sel = ", ".join("1.0" if a == b else f"CORR({q(a)}, {q(b)})" for b in cols)
-            row = con.execute(f"SELECT {sel} FROM t").fetchone() or ()
+            row = con.execute(f"SELECT {sel} FROM t").fetchone() or ()  # nosec B608
             matrix.append([_f(x) for x in row])
     return {"columns": cols, "matrix": matrix}
 
@@ -155,7 +156,7 @@ def trend(
         raise ValueError(f"There is no column named '{value_col}'.")
     with frame.connection(t=table) as con:
         rows = con.execute(
-            f"SELECT DATE_TRUNC('{grain}', {q(date_col)}) p, {agg.upper()}({q(value_col)}) v FROM t "
+            f"SELECT DATE_TRUNC('{grain}', {q(date_col)}) p, {agg.upper()}({q(value_col)}) v FROM t "  # nosec B608
             f"WHERE {q(date_col)} IS NOT NULL GROUP BY 1 ORDER BY 1"
         ).fetchall()
     return [{"period": str(p)[:10], "value": _f(v)} for p, v in rows]
@@ -171,7 +172,7 @@ def outlier_rows(
     with frame.connection(t=table) as con:
         if method == "iqr":
             q1, q3 = con.execute(
-                f"SELECT QUANTILE_CONT({c}, 0.25), QUANTILE_CONT({c}, 0.75) FROM t"
+                f"SELECT QUANTILE_CONT({c}, 0.25), QUANTILE_CONT({c}, 0.75) FROM t"  # nosec B608
             ).fetchone() or (None, None)
             if q1 is None:
                 return []
@@ -180,10 +181,12 @@ def outlier_rows(
                 float(q3) + k * (float(q3) - float(q1)),
             )
             res = frame.fetch(
-                con, f"SELECT * FROM t WHERE {c} < ? OR {c} > ? LIMIT {int(limit)}", [lo, hi]
+                con,
+                f"SELECT * FROM t WHERE {c} < ? OR {c} > ? LIMIT {int(limit)}",  # nosec B608
+                [lo, hi],
             )
         else:
-            mean, sd = con.execute(f"SELECT AVG({c}), STDDEV_SAMP({c}) FROM t").fetchone() or (
+            mean, sd = con.execute(f"SELECT AVG({c}), STDDEV_SAMP({c}) FROM t").fetchone() or (  # nosec B608
                 None,
                 None,
             )
@@ -191,7 +194,7 @@ def outlier_rows(
                 return []
             res = frame.fetch(
                 con,
-                f"SELECT * FROM t WHERE ABS(({c} - ?) / ?) > ? LIMIT {int(limit)}",
+                f"SELECT * FROM t WHERE ABS(({c} - ?) / ?) > ? LIMIT {int(limit)}",  # nosec B608
                 [float(mean), float(sd), k],
             )
     return frame.rows(res, limit)

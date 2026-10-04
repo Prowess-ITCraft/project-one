@@ -2,11 +2,12 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Tabs } from "@/components/kit";
+import { Back, Tabs } from "@/components/kit";
 import { IntakeTab } from "@/components/project/IntakeTab";
 import { InfraTab } from "@/components/project/InfraTab";
 import { GapsTab } from "@/components/project/GapsTab";
 import { BoqTab } from "@/components/project/BoqTab";
+import { EstimateReadiness } from "@/components/project/EstimatePanel";
 import { PlanTab } from "@/components/project/PlanTab";
 import { FieldTab } from "@/components/project/FieldTab";
 import { CompletionTab } from "@/components/project/CompletionTab";
@@ -105,7 +106,10 @@ function GatePanel({
     return (
       <div className="section">
         <h2>All stages are approved</h2>
-        <p className="lede">This project has completed every gate.</p>
+        <p className="lede">This project has completed every gate. The completion report and the certificate are on the Completion tab.</p>
+        <a className="btn primary" href="#completion">
+          Open the report and certificate
+        </a>
       </div>
     );
   }
@@ -252,7 +256,7 @@ function GatePanel({
   );
 }
 
-function AuditSection({ projectId, stage }: { projectId: string; stage: string }) {
+function AuditSection({ projectId, stage, onEstimate }: { projectId: string; stage: string; onEstimate: () => void }) {
   const { can } = useMe();
   const imports = useData<S["ImportOut"][]>(can("prismsuite:review") ? `/prismsuite/imports/by-project/${projectId}` : null);
   const { busy, run } = useAction();
@@ -345,6 +349,9 @@ function AuditSection({ projectId, stage }: { projectId: string; stage: string }
           </tbody>
         </table>
       )}
+      {stage === "audit_intake" || stage === "current_infra" || stage === "ideal_infra" || stage === "gap_analysis" ? (
+        <EstimateReadiness key={imports.data?.length ?? 0} projectId={projectId} onOpen={onEstimate} />
+      ) : null}
     </div>
   );
 }
@@ -430,6 +437,7 @@ export default function Project() {
   const artifacts = useData<S["ArtifactOut"][]>(`/projects/${id}/artifacts`);
   const customer = useData<S["CustomerOut"]>(tracker.data ? `/customers/${tracker.data.project.customer_id}` : null);
   const [tab, setTab] = useState<TabId>("overview");
+  const [autoEstimate, setAutoEstimate] = useState(false);
   useEffect(() => {
     const read = () => {
       const h = window.location.hash.slice(1) as TabId;
@@ -441,7 +449,14 @@ export default function Project() {
   }, []);
   const go = (t: TabId) => {
     setTab(t);
+    if (t !== "boq") setAutoEstimate(false);
     window.history.replaceState(null, "", `#${t}`);
+  };
+  const openEstimate = () => {
+    setAutoEstimate(true);
+    setTab("boq");
+    window.history.replaceState(null, "", "#boq");
+    window.scrollTo({ top: 0 });
   };
 
   if (tracker.error) return <Notice tone="bad">{tracker.error}</Notice>;
@@ -464,15 +479,13 @@ export default function Project() {
     <>
       <div className="page-head">
         <div>
-          <div className="crumbs">
-            <Link href="/projects">Projects</Link>
-          </div>
+          <Back href="/projects" label="Projects" />
           <h1>{p.name}</h1>
           <p>
             {customer.data?.display_name ?? ""} <span className="mono muted">{p.code}</span>
           </p>
         </div>
-        <Badge tone={p.status === "active" ? "accent" : p.status === "completed" ? "ok" : "warn"}>{p.status.replace("_", " ")}</Badge>
+        <Badge tone={p.status === "active" ? "accent" : p.status === "completed" ? "ok" : "warn"}>{roleLabel(p.status)}</Badge>
       </div>
 
       <StageRail stages={tracker.data.stages} />
@@ -490,11 +503,11 @@ export default function Project() {
           }}
         />
       )}
-      {tab === "audit" && <AuditSection projectId={id} stage={cur?.stage ?? ""} />}
-      {tab === "brief" && <IntakeTab projectId={id} />}
+      {tab === "audit" && <AuditSection projectId={id} stage={cur?.stage ?? ""} onEstimate={openEstimate} />}
+      {tab === "brief" && <IntakeTab projectId={id} onEstimate={openEstimate} />}
       {tab === "infra" && <InfraTab projectId={id} />}
       {tab === "gaps" && <GapsTab projectId={id} />}
-      {tab === "boq" && <BoqTab projectId={id} />}
+      {tab === "boq" && <BoqTab projectId={id} stage={cur?.stage ?? ""} autoEstimate={autoEstimate} />}
       {tab === "plan" && <PlanTab projectId={id} />}
       {tab === "field" && <FieldTab projectId={id} stage={cur?.stage ?? ""} />}
       {tab === "completion" && <CompletionTab projectId={id} stage={cur?.stage ?? ""} />}

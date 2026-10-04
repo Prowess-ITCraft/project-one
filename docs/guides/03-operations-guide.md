@@ -49,6 +49,7 @@ All settings are environment variables with the `P1_` prefix (or files in `/run/
 | `P1_S3_PUBLIC_ENDPOINT_URL` | Address browsers use for download links |
 | `P1_SENTRY_DSN`, `P1_OTEL_EXPORTER_OTLP_ENDPOINT` | Optional error and trace reporting |
 | `P1_LIBRARY_INBOX_DIR` | Folder the worker watches for old BOQs and reports (compose: `./inbox`) |
+| `P1_API_DOCS` | `true` (default) serves the API reference at `/docs`; `false` hides it and the schema |
 | `P1_CORPUS_ORIGINALS_RETENTION_DAYS` | 0 keeps original files forever. A positive number deletes originals older than that once their JSON is verified. Irreversible (ADR 0014) |
 
 ### Key rotation
@@ -62,20 +63,64 @@ still decrypts; new data uses the new key. Remove the old key only after re-encr
 2. Copy the repository, create `.env` with strong unique values (see the beginner's guide
    for generating them). Set `P1_ENV=prod`, `P1_COOKIE_SECURE=true`, real
    `P1_PUBLIC_BASE_URL`, `P1_CORS_ALLOW_ORIGINS` and `P1_S3_PUBLIC_ENDPOINT_URL`.
-3. TLS: terminate at a front load balancer and forward to port 9597, or add a 443 server
-   block in `infra/nginx/conf.d` with certificates placed in `infra/nginx/tls`.
+3. TLS: pick one of the three ways in section 4a.
 4. Start: the prod command above. The `migrate` job creates the schema and storage buckets.
 5. Create the first admin: `docker compose exec api python -m app.cli create-admin ...`
 6. Load starter data: `docker compose exec api python -m app.cli seed`.
 7. Check `/healthz` and `/readyz`, then sign in and enrol MFA.
 8. Run a backup and a restore drill (next section) before real data arrives.
 
+## 4a. HTTPS certificates
+
+The proxy reads `infra/nginx/tls/live/project-one/fullchain.pem` and `privkey.pem` (mounted at
+`/etc/letsencrypt`, the layout certbot uses). Nothing in that folder is committed. Nginx will not
+start in prod until both files exist, unless you use a load balancer (option C).
+
+`PROD` below stands for `docker compose -f docker-compose.yml -f docker-compose.prod.yml`.
+
+**A. Let's Encrypt (free, renews itself).** The DNS name must already point at the server and
+ports 80 and 443 must be open.
+
+1. Get the first certificate while the proxy is stopped, so certbot can use port 80 itself:
+
+   ```
+   PROD --profile tls run --rm -p 80:80 --entrypoint certbot certbot certonly --standalone \
+     -d p1.itcraft.net.in --cert-name project-one -m <admin email> --agree-tos -n
+   ```
+
+2. Start the stack with the renewer: `PROD --profile tls up -d`. The `certbot` service checks
+   twice a day and renews in the last 30 days through `/.well-known/acme-challenge/` on port 80.
+   The proxy reloads every six hours, so a renewed certificate is live within six hours.
+3. Check: `PROD --profile tls run --rm --entrypoint certbot certbot certificates`.
+
+**B. Your own certificate** (bought, or from the company's certificate authority). Copy the
+full chain (server certificate first, then intermediates) and the unencrypted private key to:
+
+```
+infra/nginx/tls/live/project-one/fullchain.pem
+infra/nginx/tls/live/project-one/privkey.pem
+```
+
+Start without the `tls` profile. To replace it later, copy the new files over the old ones and
+run `PROD exec proxy nginx -s reload`. Put the expiry date in the team calendar; nothing renews
+it for you.
+
+**C. A load balancer terminates TLS.** Set `P1_PROXY_CONF=conf.d` in `.env`. The proxy then
+serves plain HTTP only and needs no certificate; point the load balancer at port 9597. Keep
+9597 closed to everything except the load balancer.
+
+In A and B, check the result with `curl -I https://p1.itcraft.net.in/healthz`: expect `200` and a
+`strict-transport-security` header. `http://` should answer `301`.
+
 ## 5. Backups and restore
 
 - **What**: a nightly `pg_dump` (custom format) to the `p1-backups` bucket, kept 30 days
   (`P1_BACKUP_RETENTION_DAYS`). The files bucket has versioning turned on.
 - **Run now**: `docker compose exec worker python -m app.cli backup`
-- **Restore drill** (do this on a spare machine, never on production first):
+- **Restore drill, scripted**: `backend/.venv/Scripts/python.exe scripts/restore_drill.py`
+  takes a backup, restores it into a throwaway database, compares row counts and prints the
+  timings. It never writes to `project_one`. Last run: 4 Oct 2026, recovery about 6 seconds.
+- **Restore drill by hand** (do this on a spare machine, never on production first):
   1. Start a clean stack.
   2. Download a dump from the backups bucket (MinIO console, folder `pg_dump/`).
   3. `docker compose exec -T postgres pg_restore -U postgres -d project_one --clean
@@ -150,6 +195,6 @@ Scheduled jobs (Celery beat): outbox every 5 s, notification retries every minut
 | `api` restarts in a loop | `docker compose logs api`. Usually a missing or unsafe setting in prod |
 | Uploads fail with 503 | ClamAV not ready yet (first start downloads signatures, up to 3 minutes) |
 | Emails or jobs do not run | `worker` and `beat` healthy? `outbox_messages` pending or dead? |
-| Downloads fail in the browser | `P1_S3_PUBLIC_ENDPOINT_URL` must be reachable by the browser |
+| Downloads fail in the browser | Leave `P1_S3_PUBLIC_ENDPOINT_URL` empty in production: files are then served through the app with signed links. Set it only if browsers can reach the storage address |
 | Sign-in loops on the web app | `P1_COOKIE_SECURE` and HTTPS mismatch, or wrong `P1_CORS_ALLOW_ORIGINS` |
 | Slow requests | Grafana p95, then database statement timeout (15 s) in logs |

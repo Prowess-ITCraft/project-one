@@ -1,7 +1,11 @@
-# Prod mode: only the reverse proxy is published (80 redirects to 443; 9597 is the plain HTTP
-# port for a front load balancer that terminates TLS). The web app joins in Phase 11.
-# Database, cache, storage, monitoring and Celery stay on the internal network.
-# Grafana and Prometheus are reached over the admin VPN with `docker compose exec` or an SSH tunnel.
+# Production. Only the reverse proxy is published: 443 (HTTPS), 80 (certificate challenge and
+# a redirect to HTTPS) and 9597 (plain HTTP for a front load balancer, if one terminates TLS).
+# Database, cache, storage, monitoring and Celery stay on the internal network; Grafana and
+# Prometheus are reached over the admin VPN or an SSH tunnel.
+#
+# Certificates: infra/nginx/tls holds them, laid out as certbot does
+# (live/project-one/fullchain.pem and privkey.pem). docs/runbooks/deploy.md has both ways in:
+# Let's Encrypt with the certbot service below, or your own certificate files.
 #
 # Secrets: set real values in .env (never commit it) or switch each P1_* variable to a Docker
 # secret file; the app reads /run/secrets/<name> as well as environment variables.
@@ -11,24 +15,55 @@ services:
     ports:
       - "80:80"
       - "443:443"
-      - "9597:80"
+      - "9597:8080"
     volumes:
       - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./infra/nginx/conf.d:/etc/nginx/conf.d:ro
-      - ./infra/nginx/tls:/etc/nginx/tls:ro
+      # `prod` serves HTTPS with the certificate below; `conf.d` is plain HTTP for when a front
+      # load balancer terminates TLS (set P1_PROXY_CONF=conf.d in .env).
+      - ./infra/nginx/${P1_PROXY_CONF:-prod}:/etc/nginx/conf.d:ro
+      - ./infra/nginx/snippets:/etc/nginx/snippets:ro
+      - ./infra/nginx/tls:/etc/letsencrypt:ro
+      - certbot-www:/var/www/certbot:ro
+    # Reload every six hours so a renewed certificate is picked up without a restart.
+    command: ["/bin/sh", "-c", "while :; do sleep 6h; nginx -s reload; done & exec nginx -g 'daemon off;'"]
+
+  # Renews the Let's Encrypt certificate twice a day (only acts when it is near expiry).
+  # Not needed when you bring your own certificate files.
+  certbot:
+    profiles: [tls]
+    image: certbot/certbot:v3.0.1@sha256:4d8875e85a2af373262914e15c0a149e1985c5bbd05ac433fe4763f465020fcf
+    restart: unless-stopped
+    volumes:
+      - ./infra/nginx/tls:/etc/letsencrypt
+      - certbot-www:/var/www/certbot
+    entrypoint: ["/bin/sh", "-c", "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $${!}; done"]
+
   api:
     environment:
       P1_ENV: prod
       P1_COOKIE_SECURE: "true"
+      # Empty: files are served through the app on its own address (MinIO stays internal).
+      P1_S3_PUBLIC_ENDPOINT_URL: ${P1_S3_PUBLIC_ENDPOINT_URL:-}
     deploy:
       resources:
         limits: {memory: 2g}
   worker:
     environment:
       P1_ENV: prod
+      P1_S3_PUBLIC_ENDPOINT_URL: ${P1_S3_PUBLIC_ENDPOINT_URL:-}
   beat:
     environment:
       P1_ENV: prod
+      P1_S3_PUBLIC_ENDPOINT_URL: ${P1_S3_PUBLIC_ENDPOINT_URL:-}
   migrate:
     environment:
       P1_ENV: prod
+      P1_S3_PUBLIC_ENDPOINT_URL: ${P1_S3_PUBLIC_ENDPOINT_URL:-}
+
+  # Only with --profile monitoring. Published on this server's own loopback address, so it is
+  # reached through an SSH tunnel (DEPLOYMENT.md, section 10), never from the internet.
+  grafana:
+    ports: ["127.0.0.1:9604:3000"]
+
+volumes:
+  certbot-www:

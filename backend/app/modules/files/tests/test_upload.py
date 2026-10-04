@@ -3,11 +3,16 @@
 from __future__ import annotations
 
 import io
+import uuid
+from datetime import timedelta
 from typing import Any
 
 import httpx
 from PIL import Image
 
+from app.core.config import get_settings
+from app.core.timeutil import utcnow
+from app.modules.files.service import _link_signature
 from app.modules.identity.permissions import Role
 from tests.harness import EicarScanner
 from tests.helpers import make_user, make_workspace, sample_report_path
@@ -32,7 +37,10 @@ async def _post(client: Any, user: Any, name: str, data: bytes, mime: str, **for
     )
 
 
-async def test_docx_upload_is_stored_and_downloadable(client: Any) -> None:
+async def test_docx_upload_is_stored_and_downloadable(client: Any, monkeypatch: Any) -> None:
+    # Storage reachable from browsers (development): the link goes straight to it.
+    s = get_settings()
+    monkeypatch.setattr(s, "s3_public_endpoint_url", s.s3_endpoint_url)
     ws = await make_workspace(client)
     r = await _post(
         client,
@@ -51,6 +59,38 @@ async def test_docx_upload_is_stored_and_downloadable(client: Any) -> None:
     async with httpx.AsyncClient() as plain:  # the presigned URL needs no credentials
         got = await plain.get(d.json()["url"])
     assert got.status_code == 200 and got.content == sample_report_path().read_bytes()
+
+
+async def test_production_download_goes_through_the_api(client: Any, monkeypatch: Any) -> None:
+    """With storage not reachable from browsers (production), the link points at the API, opens
+    without a token, and a changed or expired signature is refused."""
+    monkeypatch.setattr(get_settings(), "s3_public_endpoint_url", None)
+    ws = await make_workspace(client)
+    data = sample_report_path().read_bytes()
+    r = await _post(
+        client,
+        ws.auditor,
+        "audit.docx",
+        data,
+        DOCX_MIME,
+        purpose="audit_report",
+        project_id=ws.project_id,
+    )
+    assert r.status_code == 201, r.text
+    url = (await client.get(f"{API}/{r.json()['id']}/download", headers=ws.auditor.headers)).json()[
+        "url"
+    ]
+    assert url.startswith("/api/v1/public/files/")
+    got = await client.get(url)  # no Authorization header
+    assert got.status_code == 200 and got.content == data
+    assert "attachment" in got.headers["content-disposition"]
+    assert (await client.get(url[:-4] + "0000")).status_code == 404
+    # a correctly signed link whose time has passed
+    fid = uuid.UUID(r.json()["id"])
+    past = int((utcnow() - timedelta(seconds=5)).timestamp())
+    sig = _link_signature(fid, past, get_settings().jwt_keys()[0])
+    ended = await client.get(f"/api/v1/public/files/{fid}?expires={past}&sig={sig}")
+    assert ended.status_code == 404
 
 
 async def test_extension_must_match_content(client: Any) -> None:

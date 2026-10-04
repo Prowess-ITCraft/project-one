@@ -21,7 +21,7 @@ from app.core.events import DomainEvent
 from app.core.timeutil import utcnow
 from app.modules.audit_log.contracts import AuditContext, record
 from app.modules.customers.contracts import STAGE_LABELS, get_project_ref, list_visible_projects
-from app.modules.fieldops.contracts import field_snapshot, get_run_ref
+from app.modules.fieldops.contracts import field_snapshots, get_run_ref
 from app.modules.identity.contracts import P, Principal, audit_context, ensure_different_people
 from app.modules.verification.exports import parse_export, read_key_values
 from app.modules.verification.models import (
@@ -334,14 +334,20 @@ async def inspect_export(
 # ------------------------------------------------------------------ the Director's dashboard
 
 
-async def open_counts(session: AsyncSession, project_id: uuid.UUID) -> dict[str, int]:
+async def open_counts(
+    session: AsyncSession, project_ids: list[uuid.UUID]
+) -> dict[uuid.UUID, dict[str, int]]:
+    """Open deviations by severity for each project, in one query."""
+    out = {pid: dict.fromkeys(SEVERITIES, 0) for pid in project_ids}
+    if not project_ids:
+        return out
     rows = await session.execute(
-        select(Deviation.severity, func.count())
-        .where(Deviation.project_id == project_id, Deviation.status == "open")
-        .group_by(Deviation.severity)
+        select(Deviation.project_id, Deviation.severity, func.count())
+        .where(Deviation.project_id.in_(project_ids), Deviation.status == "open")
+        .group_by(Deviation.project_id, Deviation.severity)
     )
-    out = dict.fromkeys(SEVERITIES, 0)
-    out.update({str(s): int(n) for s, n in rows.all()})
+    for pid, severity, n in rows.tuples():
+        out[pid][str(severity)] = int(n)
     return out
 
 
@@ -362,11 +368,13 @@ async def dashboard(session: AsyncSession, principal: Principal) -> dict[str, An
         "open_minor": 0,
         "behind_plan": 0,
     }
-    for pr in await list_visible_projects(session, principal):
-        snap: dict[str, Any] | None = None
-        if principal.has(P.FIELD_READ):
-            snap = await field_snapshot(session, principal, pr.id)
-        dev = await open_counts(session, pr.id)
+    visible = await list_visible_projects(session, principal)
+    ids = [pr.id for pr in visible]
+    snaps = await field_snapshots(session, principal, ids) if principal.has(P.FIELD_READ) else {}
+    devs = await open_counts(session, ids)
+    for pr in visible:
+        snap = snaps.get(pr.id)
+        dev = devs[pr.id]
         behind = bool(snap and snap["overdue"]) or bool(
             snap
             and snap["planned_end"]

@@ -4,6 +4,7 @@ import { ApiError, date, dateTime, get, money, post, type S } from "@/lib/api";
 import { useData, useMe, useToast } from "@/lib/hooks";
 import { Badge, Empty, Field, Notice, Skeleton, useAction } from "@/components/ui";
 import { Check, Drawer, toList } from "@/components/kit";
+import { EstimatePanel } from "@/components/project/EstimatePanel";
 
 type Boq = S["BoqOut"];
 type Line = S["LineOut"];
@@ -308,7 +309,7 @@ function SettingsPanel({ boq, queue, locked }: { boq: Boq; queue: (ops: Op[]) =>
   );
 }
 
-export function BoqTab({ projectId }: { projectId: string }) {
+export function BoqTab({ projectId, stage, autoEstimate }: { projectId: string; stage: string; autoEstimate?: boolean }) {
   const { can } = useMe();
   const toast = useToast();
   const boqQ = useData<Boq>(can("boq:read") ? `/projects/${projectId}/boq` : null);
@@ -355,19 +356,25 @@ export function BoqTab({ projectId }: { projectId: string }) {
   }
 
   if (!boq) {
+    const atBoq = stage === "boq";
     return (
-      <Empty
-        title="No BOQ yet"
-        action={
-          canEdit ? (
-            <button className="btn primary" disabled={busy} onClick={() => generate(false)}>
-              Draft the BOQ from the gap register
-            </button>
-          ) : undefined
-        }
-      >
-        The BOQ is drafted from the locked gap register. Prices come only from the price book; anything it cannot price is left for you to enter by hand.
-      </Empty>
+      <>
+        <Empty
+          title="No official BOQ yet"
+          action={
+            canEdit && atBoq ? (
+              <button className="btn primary" disabled={busy} onClick={() => generate(false)}>
+                Draft the BOQ from the gap register
+              </button>
+            ) : undefined
+          }
+        >
+          {atBoq
+            ? "The gap analysis is approved. Draft the official BOQ from the locked gap register. Prices come only from the price book; anything it cannot price is left for you to enter by hand."
+            : "The official BOQ is drafted once the gap analysis is approved. Until then, the estimate below shows what it will roughly contain and cost."}
+        </Empty>
+        {!atBoq && <EstimatePanel projectId={projectId} autoStart={autoEstimate} />}
+      </>
     );
   }
 

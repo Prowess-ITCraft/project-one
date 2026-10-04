@@ -4,7 +4,8 @@ import uuid
 from datetime import datetime
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, File, Form, Request, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, Query, Request, UploadFile, status
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,6 +18,7 @@ from app.modules.files import service
 from app.modules.identity.contracts import P, Principal, require
 
 router = APIRouter(prefix="/files", tags=["files"])
+public_router = APIRouter(prefix="/public/files", tags=["public"])
 Session = Annotated[AsyncSession, Depends(get_session)]
 
 
@@ -103,4 +105,30 @@ async def download(
     return DownloadOut(url=service.download_url(f), expires_at=utcnow() + timedelta(seconds=ttl))
 
 
-routers = [router]
+@public_router.get("/{file_id}", summary="Open a file through a signed download link")
+async def open_signed(
+    session: Session,
+    file_id: uuid.UUID,
+    expires: Annotated[int, Query()],
+    sig: Annotated[str, Query(max_length=128)],
+) -> StreamingResponse:
+    """The link from `/files/{id}/download` when storage is not public. The signature stands in
+    for sign-in (an image tag cannot send a token); it names one file and ends in minutes."""
+    from app.core.errors import NotFound
+
+    if not service.link_is_valid(file_id, expires, sig):
+        raise NotFound("This download link has ended or is not valid. Open the file again.")
+    f = await service.get_stored(session, file_id)
+    body = await service.open_body(f)
+    return StreamingResponse(
+        body.iter_chunks(64 * 1024),
+        media_type=f.content_type,
+        headers={
+            "Content-Disposition": f'attachment; filename="{f.original_name}"',
+            "Cache-Control": "private, max-age=300",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
+
+
+routers = [router, public_router]

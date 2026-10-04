@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import uuid
 from datetime import date
 from typing import Any
@@ -40,7 +41,7 @@ from app.modules.customers.contracts import (
 from app.modules.datasets.contracts import boq_history
 from app.modules.files.contracts import get_file
 from app.modules.identity.contracts import P, Principal, audit_context, ensure_different_people
-from app.modules.infra.contracts import get_locked_gaps
+from app.modules.infra.contracts import GapSet, estimate_gaps, get_locked_gaps
 
 ARTIFACT = "boq_version"
 VERSION_ISSUED = "boq.version_issued"
@@ -298,39 +299,7 @@ async def generate(
     if existing is not None:
         _editable(existing)
     gapset = await get_locked_gaps(session, principal, project_id)
-    brief = await get_brief_ref(session, principal, project_id)
-    customer = await get_customer_ref(session, principal, project.customer_id)
-    comp = await company(session)
-    templates = {t.gap_type: t for t in await list_templates(session) if t.active}
-    today = today_ist()
-    draft, report = await build_draft(
-        session,
-        principal,
-        gapset=gapset,
-        brief=brief,
-        customer=customer,
-        templates=templates,
-        company=comp,
-        weights=await weights_for(session, brief.company_size if brief else None),
-        today=today,
-    )
-    scope = ", ".join(dict.fromkeys(s.title for s in draft.sections))[:160] or "your requirements"
-    draft.settings = d.Settings(
-        quote_date=today,
-        validity_days=int(comp.get("default_validity_days", 5)),
-        gst_default=comp.get("gst_default", "18.00"),
-        intro=str(comp.get("intro", "")).replace("{scope}", scope),
-        customer=d.Party(name=customer.legal_name, address_lines=list(customer.address_lines)),
-        signatory_name=comp.get("signatory_name", ""),
-        signatory_designation=comp.get("signatory_designation", ""),
-        budget_ceiling=brief.budget_ceiling if brief else None,
-    )
-    draft.terms = [
-        t.replace("{gst}", str(draft.settings.gst_default).rstrip("0").rstrip(".")).replace(
-            "{validity}", str(draft.settings.validity_days)
-        )
-        for t in comp.get("terms", [])
-    ]
+    draft, report = await _assemble(session, principal, project_id, project.customer_id, gapset)
     if existing is None:
         b = Boq(
             project_id=project_id,
@@ -385,6 +354,67 @@ async def generate(
     await session.commit()
     await session.refresh(b)
     return b
+
+
+async def _assemble(
+    session: AsyncSession,
+    principal: Principal,
+    project_id: uuid.UUID,
+    customer_id: uuid.UUID,
+    gapset: GapSet,
+) -> tuple[d.Draft, dict[str, Any]]:
+    """Gaps to a full draft with letterhead settings and terms. Shared by the official BOQ and
+    the estimate, so both always draft the same way."""
+    brief = await get_brief_ref(session, principal, project_id)
+    customer = await get_customer_ref(session, principal, customer_id)
+    comp = await company(session)
+    templates = {t.gap_type: t for t in await list_templates(session) if t.active}
+    today = today_ist()
+    draft, report = await build_draft(
+        session,
+        principal,
+        gapset=gapset,
+        brief=brief,
+        customer=customer,
+        templates=templates,
+        company=comp,
+        weights=await weights_for(session, brief.company_size if brief else None),
+        today=today,
+    )
+    scope = ", ".join(dict.fromkeys(s.title for s in draft.sections))[:160] or "your requirements"
+    draft.settings = d.Settings(
+        quote_date=today,
+        validity_days=int(comp.get("default_validity_days", 5)),
+        gst_default=comp.get("gst_default", "18.00"),
+        intro=str(comp.get("intro", "")).replace("{scope}", scope),
+        customer=d.Party(name=customer.legal_name, address_lines=list(customer.address_lines)),
+        signatory_name=comp.get("signatory_name", ""),
+        signatory_designation=comp.get("signatory_designation", ""),
+        budget_ceiling=brief.budget_ceiling if brief else None,
+    )
+    draft.terms = [
+        t.replace("{gst}", str(draft.settings.gst_default).rstrip("0").rstrip(".")).replace(
+            "{validity}", str(draft.settings.validity_days)
+        )
+        for t in comp.get("terms", [])
+    ]
+    return draft, report
+
+
+async def estimate(
+    session: AsyncSession, principal: Principal, project_id: uuid.UUID
+) -> tuple[d.Draft, dict[str, Any], GapSet, dict[str, Any]]:
+    """A BOQ worked out from the report and the questionnaire, before any gate is approved.
+    Nothing is saved, nothing is published and no gate moves: it is an estimate for the sales
+    team. The official BOQ is still generated from the locked gap register."""
+    principal.require(P.BOQ_EDIT)
+    project = await get_project_ref(session, principal, project_id)
+    gapset, basis = await estimate_gaps(session, principal, project_id)
+    # "Verify on site" items are questions, not things to quote: in the official flow someone
+    # settles them before the register is locked. They are listed, not priced.
+    to_quote = dataclasses.replace(gapset, gaps=tuple(g for g in gapset.gaps if g.status == "open"))
+    draft, report = await _assemble(session, principal, project_id, project.customer_id, to_quote)
+    return draft, report, gapset, basis
 
 
 def _accepted_item_ids(draft: d.Draft) -> list[str]:
@@ -784,22 +814,7 @@ async def compare_versions(
 def version_view(v: BoqVersion, principal: Principal) -> dict[str, Any]:
     draft = d.Draft.model_validate(v.content)
     comp = d.compute(draft, today_ist())
-    numbered = {n.line.id: n for n in d.numbered(draft)}
-    lines = []
-    for r in comp.lines:
-        ln = next(x for x in draft.lines if x.id == r.id).model_dump(mode="json")
-        if not principal.has(P.PRICE_READ):
-            ln["cost"] = None
-        lines.append(
-            {
-                **ln,
-                "ref": r.ref,
-                "amount": str(r.amount) if r.amount is not None else None,
-                "gst": str(r.gst) if r.gst is not None else None,
-                "letter": numbered[r.id].letter,
-                "group_id": numbered[r.id].group_id,
-            }
-        )
+    lines = _priced_lines(draft, comp, principal)
     return {
         "id": str(v.id),
         "boq_id": str(v.boq_id),
@@ -820,6 +835,51 @@ def version_view(v: BoqVersion, principal: Principal) -> dict[str, Any]:
         "lines": lines,
         "terms": draft.terms,
     }
+
+
+def estimate_view(
+    draft: d.Draft,
+    report: dict[str, Any],
+    gapset: GapSet,
+    basis: dict[str, Any],
+    principal: Principal,
+) -> dict[str, Any]:
+    comp = d.compute(draft, today_ist())
+    return {
+        "basis": basis,
+        "gaps": [
+            {"code": g.code, "title": g.title, "priority": g.priority, "status": g.status}
+            for g in gapset.gaps
+        ],
+        "groups": [g.model_dump(mode="json") for g in draft.groups],
+        "sections": [s.model_dump(mode="json") for s in draft.sections],
+        "lines": _priced_lines(draft, comp, principal),
+        "totals": comp.totals.model_dump(mode="json"),
+        "blockers": comp.blockers,
+        "warnings": comp.warnings,
+        "unmatched": report.get("unmatched", []),
+        "unpriced": report.get("unpriced", []),
+    }
+
+
+def _priced_lines(draft: d.Draft, comp: d.Computed, principal: Principal) -> list[dict[str, Any]]:
+    numbered = {n.line.id: n for n in d.numbered(draft)}
+    lines = []
+    for r in comp.lines:
+        ln = next(x for x in draft.lines if x.id == r.id).model_dump(mode="json")
+        if not principal.has(P.PRICE_READ):
+            ln["cost"] = None
+        lines.append(
+            {
+                **ln,
+                "ref": r.ref,
+                "amount": str(r.amount) if r.amount is not None else None,
+                "gst": str(r.gst) if r.gst is not None else None,
+                "letter": numbered[r.id].letter,
+                "group_id": numbered[r.id].group_id,
+            }
+        )
+    return lines
 
 
 async def accept(

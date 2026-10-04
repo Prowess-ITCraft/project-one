@@ -1,5 +1,37 @@
 "use client";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
+import { ArrowLeft } from "@phosphor-icons/react";
+
+/** Pages opened inside the app since it loaded. The shell counts them, so Back knows whether the
+ * previous page is ours (go back) or not (a shared link or a new tab: go to the section). */
+let pagesSeen = 0;
+let lastPath = "";
+export function notePage(path: string) {
+  if (path === lastPath) return; // the same page reported twice (React runs effects twice in dev)
+  lastPath = path;
+  pagesSeen += 1;
+}
+
+/** "Back" plus the section it belongs to, at the top of every inner page. */
+export function Back({ href, label }: { href: string; label: string }) {
+  const router = useRouter();
+  return (
+    <nav className="backbar" aria-label="Back">
+      <button
+        type="button"
+        className="btn small back"
+        onClick={() => (pagesSeen > 1 ? router.back() : router.push(href))}
+      >
+        <ArrowLeft size={16} weight="bold" aria-hidden="true" /> Back
+      </button>
+      <span className="muted small">
+        in <Link href={href}>{label}</Link>
+      </span>
+    </nav>
+  );
+}
 
 /** Horizontal tabs. Keeps its state in the URL hash so a tab can be linked and survives reload. */
 export function Tabs<T extends string>({

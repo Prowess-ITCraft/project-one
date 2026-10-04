@@ -149,6 +149,9 @@ Open http://localhost:9597 and sign in with the admin you created. Then:
     and close** or **Send back** with what must be fixed. The Director sees every change live on the Field work tab.
 18. **Library**: drop the two BOQ PDFs from `samples`. **Files** shows what was read and the one repaired line to
     confirm; **Corpus** shows each document converted to compact data; **Data quality** shows labels and price bands.
+    **Before the approvals:** once the report is uploaded and the Questionnaire is saved, **Draft BOQ
+    estimate** (on those tabs or the BOQ tab) shows what the BOQ will roughly contain and cost, with PDF and
+    Excel. It is marked Not approved and saved nowhere; the official BOQ still comes after the gates.
 19. When field work is finished, the project manager opens the **Completion** tab: lock the field work summary,
     import the after-work PrismSuite rescan, then preview and lock the completion report. The tab lists the eight
     conditions and says exactly what is still missing for each.
@@ -158,7 +161,7 @@ Open http://localhost:9597 and sign in with the admin you created. Then:
 ### The demo data
 
 `python -m app.cli demo-projects` builds two projects through the API, one finished with a certificate and one
-part way through field work, using the ITCraft / IITPL team as the staff accounts (Sattish Agadii as Director,
+part way through field work, using the ITCraft / IITPL team as the staff accounts (Satish Agadi as Director,
 Akash Agadii as Sales head, Ashwini Sawant as Project manager, Yash Raikar and Sakshi Rajbhar as field engineers,
 and so on). It writes the shared password and the authenticator secrets to `demo-accounts.json`. Because the
 accounts use real work addresses, it refuses to run unless outgoing mail goes to Mailpit.

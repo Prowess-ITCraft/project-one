@@ -34,6 +34,8 @@ Maintained by Aditya Kumar.
 | Certificate | Director signs, IITPL stamp, rescan required first | 0019 |
 | Severity policy | Critical blocks the certificate and cannot be accepted | 0019 |
 | Learned ranker | Shadow mode only, at least 20 accepted recommendations to train | 0020 |
+| BOQ estimate | Any time after the report and questionnaire, saved nowhere, labelled | 0021 |
+| Certificate wording | IITPL implemented the work; no "Implemented by"; Director and stamp only | 0022 |
 
 ## Machine quirks
 
@@ -78,6 +80,25 @@ Maintained by Aditya Kumar.
 
 ## Changelog
 
+- 2026-10-04 (night): Sign-in refused after browsing: the strict nginx and API sign-in limits
+  also counted `/auth/me` and token refresh. Now only sign-in and MFA, 60 a minute per address.
+  Accounts panel, Back on inner pages, Help guide, recovery codes at sign-in, sign-in redesign
+  with Phosphor icons, all animation removed (ADR 0023). Production: DEPLOYMENT.md, a
+  dry run of the full prod stack over HTTPS (20 checks pass), files through the app with
+  signed links (MinIO was unreachable in prod, so downloads would have failed), stricter
+  prod settings, `new_env.py`, `backup-export`, docs/API_ROUTES.md. Phone test of a whole
+  field task found four bugs, all fixed: a save made while another was sending stayed on the
+  phone as "waiting for signal"; the visit code could be asked for before the arrival photo;
+  a double tap on a finished step gave an error; the photo button flashed back after sending.
+  Incident runbook. Coverage 85 percent.
+- 2026-10-04 (evening): Phase 14 pass. Backups were failing (pg_dump 15 against PostgreSQL 16),
+  fixed and proven by a restore drill. Nginx limits answer 429 and fit an office behind one
+  address. Load test numbers recorded. Bandit clean, images pinned. My tasks shows customer and
+  project per task. BOQ estimate before approvals (ADR 0021). HTTPS three ways: Let's Encrypt,
+  your own certificate, or behind a load balancer (operations guide 4a). Certificate names
+  IITPL only, groups the work, fits one page (ADR 0022). Demo staff from the team list, with
+  Satish Agadi as Director. Director dashboard batched (four queries for any number of
+  projects). Dockerfile base images pinned by digest.
 - 2026-10-04 (later): Phase 13, learning from accepted BOQs, in shadow mode (ADR 0020).
   BOQ version compare; the web app installs on phones. GitHub Actions and Dependabot removed.
 - 2026-10-04: Verification (phase 9) and completion report and certificate (phase 10) built,

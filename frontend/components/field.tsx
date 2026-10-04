@@ -42,6 +42,14 @@ export const STATE_SHORT: Record<string, string> = {
   blocked: "Blocked",
 };
 
+/** Task titles from the plan often end with the device name (": HR-2_Santosh"). The device is
+ * shown on its own line, so drop it from the title instead of printing it twice. */
+export function shortTitle(title: string, asset: string | null | undefined): string {
+  if (!asset) return title;
+  const suffix = `: ${asset}`;
+  return title.endsWith(suffix) ? title.slice(0, -suffix.length) : title;
+}
+
 export function stateTone(s: string): "ok" | "warn" | "bad" | "accent" | undefined {
   if (s === "closed") return "ok";
   if (s === "blocked") return "bad";

@@ -19,6 +19,7 @@ import base64
 import hashlib
 import hmac
 import json
+import re
 import secrets
 import uuid
 from datetime import timedelta
@@ -66,9 +67,31 @@ from app.modules.verification.contracts import project_deviations, severity_poli
 
 ACK_DAYS = 14
 DEFAULT_WORDING = (
-    "This certifies that the IT infrastructure work listed below was carried out by ITCraft, "
-    "checked against the agreed target configuration, verified and accepted by the customer."
+    "This certifies that International Infocom Technologies Pvt Ltd (IITPL) has implemented all "
+    "of the IT infrastructure work listed below, in full and to the agreed target configuration. "
+    "Every item was checked against that configuration, verified, and accepted by the customer."
 )
+_UNIT = re.compile(r":\s*unit \d+ of \d+$")
+
+
+def certificate_scope(delivered: list[dict[str, Any]]) -> list[str]:
+    """The certificate's list of work: one line per kind of work, with a device count when the
+    same work was done on several devices. The completion report keeps the task by task list."""
+    groups: dict[str, list[str | None]] = {}
+    for d in delivered:
+        title, device = str(d["title"]), d.get("device")
+        if device and title.endswith(f": {device}"):
+            title = title[: -len(f": {device}")]
+        title = _UNIT.sub("", title).strip()
+        groups.setdefault(title, []).append(device)
+    out = []
+    for title, devices in groups.items():
+        if len(devices) > 1:
+            out.append(f"{title}, {len(devices)} devices")
+        else:
+            out.append(f"{title} ({devices[0]})" if devices[0] else title)
+    return out
+
 
 # ------------------------------------------------------------------ settings
 
@@ -716,10 +739,7 @@ async def issue_certificate(
         "project_code": project.code,
         "quote_ref": c.get("quote_ref"),
         "po_number": c.get("po_number"),
-        "scope": [
-            f"{d['ref']} {d['title']}" + (f" ({d['device']})" if d.get("device") else "")
-            for d in c["delivered"]
-        ],
+        "scope": certificate_scope(c["delivered"]),
         "exclusions": [f"{x['what']}: {x['kind']}" for x in c["exclusions"]],
         "work_started": c.get("work_started"),
         "work_finished": c.get("work_finished"),

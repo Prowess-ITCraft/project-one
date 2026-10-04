@@ -17,6 +17,7 @@ demo script. Dates are planning targets, see the [roadmap](../ROADMAP.md).
 | 10 Completion report and certificate | [phase-10-completion-and-certificate.md](phase-10-completion-and-certificate.md) | Built |
 | 11 and 12 Web app | [phase-11-12-web-app-minimal.md](phase-11-12-web-app-minimal.md) | 11 built, 12 nearly done |
 | 13 Learning from accepted BOQs | [phase-13-learning.md](phase-13-learning.md) | Built, waiting for data |
-| 14 and 15 | not started | Planned |
+| 14 Hardening and a usability pass | [phase-14-hardening.md](phase-14-hardening.md) | Mostly done |
+| 15 | not started | Planned |
 
 Before adding a page, read the [documentation map](../DOCUMENTATION_MAP.md).

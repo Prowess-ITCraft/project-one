@@ -1,10 +1,10 @@
 # syntax=docker/dockerfile:1.7
-FROM node:22.13-alpine AS deps
+FROM node:22.13-alpine@sha256:e2b39f7b64281324929257d0f8004fb6cb4bf0fdfb9aa8cedb235a766aec31da AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 
-FROM node:22.13-alpine AS build
+FROM node:22.13-alpine@sha256:e2b39f7b64281324929257d0f8004fb6cb4bf0fdfb9aa8cedb235a766aec31da AS build
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -13,7 +13,7 @@ ARG API_ORIGIN=http://api:9596
 ENV API_ORIGIN=$API_ORIGIN
 RUN npm run build
 
-FROM node:22.13-alpine AS runtime
+FROM node:22.13-alpine@sha256:e2b39f7b64281324929257d0f8004fb6cb4bf0fdfb9aa8cedb235a766aec31da AS runtime
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=9595 HOSTNAME=0.0.0.0
 WORKDIR /app
 RUN addgroup -S -g 10001 p1 && adduser -S -u 10001 -G p1 p1

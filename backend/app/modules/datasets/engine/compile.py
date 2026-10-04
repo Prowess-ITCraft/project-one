@@ -126,12 +126,12 @@ def run_pipeline(
             except ValueError as exc:
                 raise StepError(i, str(exc)) from exc
             cur = nxt
-            n = con.execute(f"SELECT COUNT(*) FROM {cur}").fetchone()
+            n = con.execute(f"SELECT COUNT(*) FROM {cur}").fetchone()  # nosec B608
             if n and n[0] > frame.MAX_ROWS:
                 raise StepError(i, f"This step produced more than {frame.MAX_ROWS:,} rows.")
             if len(_columns(con, cur)) > frame.MAX_COLUMNS:
                 raise StepError(i, f"This step produced more than {frame.MAX_COLUMNS} columns.")
-        return frame.fetch(con, f"SELECT * FROM {cur}")
+        return frame.fetch(con, f"SELECT * FROM {cur}")  # nosec B608
 
 
 def _friendly(msg: str) -> str:
@@ -184,46 +184,46 @@ def _apply(
             frag, p = _condition_sql(c, cols)
             parts.append(frag)
             params += p
-        sql = f"SELECT * FROM {cur} WHERE {(' AND ' if s.combine == 'and' else ' OR ').join(parts)}"
+        sql = f"SELECT * FROM {cur} WHERE {(' AND ' if s.combine == 'and' else ' OR ').join(parts)}"  # nosec B608
     elif isinstance(s, Sort):
         _need(cols, *[k.column for k in s.by])
-        sql = f"SELECT * FROM {cur} ORDER BY " + ", ".join(
+        sql = f"SELECT * FROM {cur} ORDER BY " + ", ".join(  # nosec B608
             f"{q(k.column)} {'DESC' if k.desc else 'ASC'} NULLS LAST" for k in s.by
         )
     elif isinstance(s, Select):
         _need(cols, *s.columns)
-        sql = f"SELECT {', '.join(q(c) for c in s.columns)} FROM {cur}"
+        sql = f"SELECT {', '.join(q(c) for c in s.columns)} FROM {cur}"  # nosec B608
     elif isinstance(s, Drop):
         _need(cols, *s.columns)
         keep = [c for c in names if c not in set(s.columns)]
         if not keep:
             raise ValueError("That would remove every column.")
-        sql = f"SELECT {', '.join(q(c) for c in keep)} FROM {cur}"
+        sql = f"SELECT {', '.join(q(c) for c in keep)} FROM {cur}"  # nosec B608
     elif isinstance(s, Rename):
         _need(cols, *s.mapping)
         new = [s.mapping.get(c, c) for c in names]
         if len(set(new)) != len(new):
             raise ValueError("Two columns would end up with the same name.")
-        sql = f"SELECT {', '.join(f'{q(c)} AS {q(s.mapping.get(c, c))}' for c in names)} FROM {cur}"
+        sql = f"SELECT {', '.join(f'{q(c)} AS {q(s.mapping.get(c, c))}' for c in names)} FROM {cur}"  # nosec B608
     elif isinstance(s, Cast):
         _need(cols, s.column)
         exprs = [
             f"TRY_CAST({q(c)} AS {sql_type(s.to)}) AS {q(c)}" if c == s.column else q(c)
             for c in names
         ]
-        sql = f"SELECT {', '.join(exprs)} FROM {cur}"
+        sql = f"SELECT {', '.join(exprs)} FROM {cur}"  # nosec B608
     elif isinstance(s, Derive):
         if s.name in cols:
             raise ValueError(f"A column named '{s.name}' already exists.")
         e = expr.compile_expr(s.expr, set(names))
-        sql = f"SELECT *, {e} AS {q(s.name)} FROM {cur}"
+        sql = f"SELECT *, {e} AS {q(s.name)} FROM {cur}"  # nosec B608
     elif isinstance(s, Group):
         _need(cols, *s.by, *[a.column for a in s.aggs])
         aliases = [a.alias for a in s.aggs]
         if len(set(aliases + s.by)) != len(aliases) + len(s.by):
             raise ValueError("Output column names must be different.")
         sel = [q(b) for b in s.by] + [f"{_agg_sql(a.fn, a.column)} AS {q(a.alias)}" for a in s.aggs]
-        sql = f"SELECT {', '.join(sel)} FROM {cur}" + (
+        sql = f"SELECT {', '.join(sel)} FROM {cur}" + (  # nosec B608
             f" GROUP BY {', '.join(q(b) for b in s.by)}" if s.by else ""
         )
     elif isinstance(s, Join):
@@ -241,13 +241,13 @@ def _apply(
             f"r.{q(c)} AS {q(c + ('_other' if c in clash else ''))}" for c in right
         ]
         cond = " AND ".join(f"l.{q(a)} = r.{q(b)}" for a, b in s.on)
-        sql = f"SELECT {', '.join(sel)} FROM {cur} l {'LEFT' if s.how == 'left' else 'INNER'} JOIN {other} r ON {cond}"
+        sql = f"SELECT {', '.join(sel)} FROM {cur} l {'LEFT' if s.how == 'left' else 'INNER'} JOIN {other} r ON {cond}"  # nosec B608
     elif isinstance(s, Pivot):
         _need(cols, s.index, s.column, s.value)
         distinct = [
             r[0]
             for r in con.execute(
-                f"SELECT DISTINCT {q(s.column)} FROM {cur} ORDER BY 1 LIMIT 51"
+                f"SELECT DISTINCT {q(s.column)} FROM {cur} ORDER BY 1 LIMIT 51"  # nosec B608
             ).fetchall()
         ]
         if len(distinct) > 50:
@@ -258,12 +258,12 @@ def _apply(
             for v in distinct
         ]
         params = list(distinct)
-        sql = f"SELECT {', '.join(sel)} FROM {cur} GROUP BY {q(s.index)} ORDER BY 1"
+        sql = f"SELECT {', '.join(sel)} FROM {cur} GROUP BY {q(s.index)} ORDER BY 1"  # nosec B608
     elif isinstance(s, Unpivot):
         _need(cols, *s.columns)
         ids = [c for c in names if c not in set(s.columns)]
         parts = [
-            f"SELECT {', '.join(q(c) for c in ids + [])}{', ' if ids else ''}'{c.replace(chr(39), chr(39) * 2)}' AS {q(s.name_col)}, CAST({q(c)} AS VARCHAR) AS {q(s.value_col)} FROM {cur}"
+            f"SELECT {', '.join(q(c) for c in ids + [])}{', ' if ids else ''}'{c.replace(chr(39), chr(39) * 2)}' AS {q(s.name_col)}, CAST({q(c)} AS VARCHAR) AS {q(s.value_col)} FROM {cur}"  # nosec B608
             for c in s.columns
         ]
         sql = " UNION ALL ".join(parts)
@@ -271,17 +271,17 @@ def _apply(
         if (s.n is None) == (s.fraction is None):
             raise ValueError("Give either a row count or a fraction.")
         if s.n is not None:
-            sql = f"SELECT * FROM {cur} USING SAMPLE reservoir({s.n} ROWS) REPEATABLE ({s.seed})"
+            sql = f"SELECT * FROM {cur} USING SAMPLE reservoir({s.n} ROWS) REPEATABLE ({s.seed})"  # nosec B608
         else:
-            sql = f"SELECT * FROM {cur} USING SAMPLE {(s.fraction or 0) * 100} PERCENT (bernoulli, {s.seed})"
+            sql = f"SELECT * FROM {cur} USING SAMPLE {(s.fraction or 0) * 100} PERCENT (bernoulli, {s.seed})"  # nosec B608
     elif isinstance(s, Limit):
-        sql = f"SELECT * FROM {cur} LIMIT {int(s.n)}"
+        sql = f"SELECT * FROM {cur} LIMIT {int(s.n)}"  # nosec B608
     elif isinstance(s, Dedupe):
         if s.subset:
             _need(cols, *s.subset)
-            sql = f"SELECT * FROM {cur} QUALIFY ROW_NUMBER() OVER (PARTITION BY {', '.join(q(c) for c in s.subset)}) = 1"
+            sql = f"SELECT * FROM {cur} QUALIFY ROW_NUMBER() OVER (PARTITION BY {', '.join(q(c) for c in s.subset)}) = 1"  # nosec B608
         else:
-            sql = f"SELECT DISTINCT * FROM {cur}"
+            sql = f"SELECT DISTINCT * FROM {cur}"  # nosec B608
     elif isinstance(s, FillMissing):
         _need(cols, s.column)
         col = q(s.column)
@@ -292,18 +292,18 @@ def _apply(
         elif s.strategy == "zero":
             fill = "0"
         elif s.strategy in ("mean", "median"):
-            fill = f"(SELECT {'AVG' if s.strategy == 'mean' else 'MEDIAN'}({col}) FROM {cur})"
+            fill = f"(SELECT {'AVG' if s.strategy == 'mean' else 'MEDIAN'}({col}) FROM {cur})"  # nosec B608
         else:
-            fill = f"(SELECT MODE({col}) FROM {cur})"
-        sql = f"SELECT {', '.join(f'COALESCE({q(n)}, {fill}) AS {q(n)}' if n == s.column else q(n) for n in names)} FROM {cur}"
+            fill = f"(SELECT MODE({col}) FROM {cur})"  # nosec B608
+        sql = f"SELECT {', '.join(f'COALESCE({q(n)}, {fill}) AS {q(n)}' if n == s.column else q(n) for n in names)} FROM {cur}"  # nosec B608
     elif isinstance(s, Trim):
         _need(cols, *s.columns)
-        sql = f"SELECT {', '.join(f'TRIM({q(n)}) AS {q(n)}' if n in s.columns else q(n) for n in names)} FROM {cur}"
+        sql = f"SELECT {', '.join(f'TRIM({q(n)}) AS {q(n)}' if n in s.columns else q(n) for n in names)} FROM {cur}"  # nosec B608
     elif isinstance(s, ParseInr):
         _need(cols, s.column)
         col = q(s.column)
         conv = f"TRY_CAST(REGEXP_REPLACE(CAST({col} AS VARCHAR), '[^0-9.\\-]', '', 'g') AS DECIMAL(14,2))"
-        sql = f"SELECT {', '.join(f'{conv} AS {q(n)}' if n == s.column else q(n) for n in names)} FROM {cur}"
+        sql = f"SELECT {', '.join(f'{conv} AS {q(n)}' if n == s.column else q(n) for n in names)} FROM {cur}"  # nosec B608
     elif isinstance(s, NormaliseUnits):
         _need(cols, s.column)
         txt = f"LOWER(CAST({q(s.column)} AS VARCHAR))"
@@ -315,11 +315,11 @@ def _apply(
             unit = f"REGEXP_EXTRACT({txt}, '([0-9]+(?:\\.[0-9]+)?)\\s*(kbps|mbps|gbps)', 2)"
             factor = f"CASE {unit} WHEN 'kbps' THEN 0.001 WHEN 'mbps' THEN 1.0 WHEN 'gbps' THEN 1000.0 END"
             num = f"TRY_CAST(REGEXP_EXTRACT({txt}, '([0-9]+(?:\\.[0-9]+)?)\\s*(kbps|mbps|gbps)', 1) AS DOUBLE)"
-        sql = f"SELECT {', '.join(f'({num} * ({factor})) AS {q(n)}' if n == s.column else q(n) for n in names)} FROM {cur}"
+        sql = f"SELECT {', '.join(f'({num} * ({factor})) AS {q(n)}' if n == s.column else q(n) for n in names)} FROM {cur}"  # nosec B608
     elif isinstance(s, CanonicalNames | FuzzyDedupe):
         _need(cols, s.column)
         counts = con.execute(
-            f"SELECT CAST({q(s.column)} AS VARCHAR) v, COUNT(*) FROM {cur} WHERE {q(s.column)} IS NOT NULL GROUP BY 1"
+            f"SELECT CAST({q(s.column)} AS VARCHAR) v, COUNT(*) FROM {cur} WHERE {q(s.column)} IS NOT NULL GROUP BY 1"  # nosec B608
         ).fetchall()
         seed = synonyms.get(s.domain, {}) if isinstance(s, CanonicalNames) else {}
         mapping = _cluster([(v, int(n)) for v, n in counts], s.threshold, seed)
@@ -331,8 +331,8 @@ def _apply(
             else f"t.{q(n)}"
             for n in names
         ]
-        body = f"SELECT {', '.join(sel)} FROM {cur} t LEFT JOIN map_{i} m ON CAST(t.{q(s.column)} AS VARCHAR) = m.k"
-        sql = f"SELECT DISTINCT * FROM ({body})" if isinstance(s, FuzzyDedupe) else body
+        body = f"SELECT {', '.join(sel)} FROM {cur} t LEFT JOIN map_{i} m ON CAST(t.{q(s.column)} AS VARCHAR) = m.k"  # nosec B608
+        sql = f"SELECT DISTINCT * FROM ({body})" if isinstance(s, FuzzyDedupe) else body  # nosec B608
     else:  # pragma: no cover - the union is closed
         raise ValueError("Unknown step.")
 

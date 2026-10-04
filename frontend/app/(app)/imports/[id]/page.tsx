@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import { Back } from "@/components/kit";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { dateTime, post, type S } from "@/lib/api";
@@ -159,9 +159,7 @@ export default function ImportReview() {
     <>
       <div className="page-head">
         <div>
-          <div className="crumbs">
-            <Link href={`/projects/${d.project_id}`}>Back to project</Link>
-          </div>
+          <Back href={`/projects/${d.project_id}`} label="the project" />
           <h1>{snap.header?.customer_name ?? "Audit report"}</h1>
           <p>
             Revision {d.revision}, read by {d.parser_name}
