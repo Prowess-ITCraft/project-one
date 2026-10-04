@@ -23,7 +23,7 @@ asyncpg==0.31.0
     # via project-one
 billiard==4.3.0
     # via celery
-boto3==1.43.105
+boto3==1.43.106
     # via project-one
 botocore==1.43.105
     # via
