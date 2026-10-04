@@ -56,11 +56,11 @@ SONICWALL: list[dict[str, Any]] = [
 ]
 
 DEFAULT_POLICY: dict[str, Any] = {
-    # Open deviations of these severities stop the completion certificate (brief section 3).
+    # Open deviations of these severities stop the completion certificate (PRD stage 8).
     "certificate_blocking": ["critical"],
     # Deviations of these severities may not be accepted by a verifier; fix or waive them.
     "not_acceptable": ["critical"],
-    "note": "Default policy. The owner will add rules beyond critical, major and minor (ADR 0019).",
+    "note": "Default policy. Rules beyond critical, major and minor are still to come (ADR 0019).",
 }
 
 

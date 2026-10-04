@@ -1,4 +1,4 @@
-"""field task states follow the v2.1 brief, engine checks (ADR 0015)
+"""field task states per ADR 0015, engine checks
 
 Revision ID: 0010
 Revises: 0009

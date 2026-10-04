@@ -27,14 +27,14 @@ samples/       the reference inputs; samples/corpus/ holds their canonical JSON
 | `files` | upload pipeline: sniff, ClamAV, random keys, presigned URLs | built |
 | `prismsuite` | versioned parsers (docx v1, json v1), snapshot review and approval | built |
 | `catalogue` | vendors, items, market data, price book with validity | built |
-| `datasets` | library inbox, importers, **document corpus**, cleaning, quality, versions, EDA, promotion | built; corpus in Batch 1 |
+| `datasets` | library inbox, importers, **document corpus**, cleaning, quality, versions, EDA, promotion | built |
 | `infra` | current and ideal model, rule DSL, gap engine | built |
 | `boq` | templates, quantity rules, recommender, editor, versions, quote refs, rendering | built |
 | `planning` | task and config templates, plan, dependencies, scheduler, baselines, leave, downtime | built |
-| `notifications` | queue, providers (email; SMS and WhatsApp adapters), preferences, retries | Batch 1 |
-| `fieldops` | task run state machine, evidence, OTP, offline idempotency, live events | Batch 1 |
-| `verification` | config comparison drivers, deviations, verifier review | Phase 9 (interface in Batch 1) |
-| `reporting` | completion report, certificate, QR verification | Phase 10 |
+| `notifications` | queue, providers (email; SMS and WhatsApp adapters), preferences, retries | built |
+| `fieldops` | task run state machine, evidence, OTP, offline idempotency, live events | built |
+| `verification` | export parsers, brand key mappings, deviation register, severity policy, Director dashboard | built |
+| `reporting` | release conditions, waivers, completion report, certificate, QR verification | built |
 | `ml` | training on frozen snapshots, learned ranker, shadow mode | Phase 13 |
 
 Every module has `api.py`, `schemas.py`, `models.py`, `service.py` (the only place rules live),
@@ -63,12 +63,14 @@ Main contract edges: `boq -> infra, catalogue, customers, datasets(history)`;
 | Files | stored_files, rejected_uploads |
 | PrismSuite | audit_imports, audit_corrections |
 | Catalogue | vendors, catalogue_categories, catalogue_items, catalogue_market_data, price_entries |
-| Datasets and library | datasets, dataset_versions (immutable), dataset_shares, dataset_quarantine, dataset_synonyms, dataset_promotions, library_files, corpus_documents (Batch 1) |
+| Datasets and library | datasets, dataset_versions (immutable), dataset_shares, dataset_quarantine, dataset_synonyms, dataset_promotions, library_files, corpus_documents |
 | Infra and gaps | infra_rules, infra_rule_changes, infra_states, gap_registers, gaps |
 | BOQ | boq_templates, reco_weights, company_settings, boqs, boq_versions, boq_edits |
 | Planning | plan_task_templates, plan_config_templates, plans, plan_tasks, plan_config_baselines, engineer_leaves, downtime_windows |
 | Notifications | notifications, notification_prefs |
 | Field ops | task_runs, run_events (append only), run_evidence (append only), otp_challenges |
+| Verification | brand_field_maps, deviations, verification_settings |
+| Reporting | waivers, completion_reports, certificates, report_settings |
 | Platform | outbox, idempotency keys, sequences, feature flags |
 
 Money is `NUMERIC(14,2)`. Editable rows carry a `version` column for optimistic locking.
@@ -125,15 +127,17 @@ Modules publish `DomainEvent`s through `core/outbox.py` inside their transaction
 task `dispatch_outbox` delivers them to subscribers registered with `@subscribe`. Handlers are
 idempotent. Every process loads its subscribers at start-up and `publish` refuses otherwise
 (ADR 0018). Examples: `datasets.library_file_added` (process the file),
-`prismsuite.snapshot_approved`, `catalogue.price_expired`, `fieldops.transition` (notify customer
-and Director, Batch 1).
+`prismsuite.snapshot_approved`, `catalogue.price_expired`, `fieldops.transition` (notify the
+customer and the Director), and the configuration check results that keep the deviation register
+in step.
 
 ## 6. Documents (PDF)
 
 One shared renderer in `core/documents.py`: Jinja2 template plus print CSS, rendered by
 WeasyPrint with a restricted URL fetcher (no network, only bundled assets), fonts loaded with
 `@font-face` from the image, checksum recorded. Used by the quotation and summary BOQ (Phase 6),
-plan and schedule (Phase 7), checklist export (Phase 8), and later reports and the certificate.
+plan and schedule (Phase 7), checklist export (Phase 8), the completion report and the
+certificate (Phase 10).
 No other PDF generator is allowed without an ADR.
 
 ## 7. Ports and environments
@@ -181,8 +185,8 @@ salted hashes and wiped from the message log after an hour.
 | [0012](decisions/0012-scope-reconciliation.md) | Scope reconciliation |
 | [0013](decisions/0013-boq-defaults.md) | BOQ defaults |
 | [0014](decisions/0014-document-corpus.md) | Document corpus: convert once to canonical JSON |
-| [0015](decisions/0015-field-task-state-machine.md) | Field task state machine follows the v2.1 brief |
+| [0015](decisions/0015-field-task-state-machine.md) | Field task state machine |
 | [0016](decisions/0016-shared-pdf-renderer.md) | One shared WeasyPrint renderer |
-| [0017](decisions/0017-batch-1-defaults.md) | Batch 1 defaults (planning and field ops) |
+| [0017](decisions/0017-boq-planning-field-defaults.md) | Defaults for BOQ, planning and field work |
 | [0018](decisions/0018-outbox-subscribers-load-first.md) | Event subscribers load before anything publishes |
-| [0019](decisions/0019-batch-2-answers.md) | Batch 2 answers from the owner |
+| [0019](decisions/0019-verification-and-certificate-answers.md) | Verification and certificate decisions |

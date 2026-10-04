@@ -24,7 +24,7 @@ tamper-evident audit log.
 | Showing the work to colleagues | [Roadmap](docs/ROADMAP.md) and [phase pages](docs/phases/README.md) |
 | Learning the tech stack and how the main processes work | [Tech stack and processes](docs/guides/05-tech-stack-and-processes.md) |
 | Wondering why something was done this way | [Decision records](docs/decisions) |
-| Picking the work up again | [MEMORY.md](docs/MEMORY.md), then [TASKS.md](docs/TASKS.md) |
+| Picking the work up again | [NOTES.md](docs/NOTES.md), then [TASKS.md](docs/TASKS.md) |
 | How the data library and corpus work | [Data guide](docs/guides/06-data-guide.md) |
 
 ## Quick start (Windows, about 15 minutes)
@@ -50,7 +50,7 @@ scripts/    Helper commands for Windows (dev.ps1)
 
 ## Status
 
-Phases 1 to 8 are built (Batch 1, phases 6 to 8, finished on 3 October 2026), with 299 backend tests passing at
-86 percent coverage. The web app covers every stage up to field work, including the field engineer's phone flow
-and the verifier's review queue. Next: phases 9 to 11 (verification engine, completion report and certificate,
-frontend foundation). Exact state: [TASKS.md](docs/TASKS.md); plan to December: [roadmap](docs/ROADMAP.md).
+Phases 1 to 10 are built, with 320 backend tests passing at 84 percent coverage (4 October 2026). The web app
+covers every stage from audit intake to the signed certificate, including the field engineer's phone flow, the
+verifier's review queue and the Director's dashboard. Next: the rest of phase 12, then learning from the library,
+hardening and go-live. Exact state: [TASKS.md](docs/TASKS.md); plan to December: [roadmap](docs/ROADMAP.md).

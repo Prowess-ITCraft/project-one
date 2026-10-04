@@ -1,15 +1,15 @@
 # Rules
 
-Every change follows these. Changing a rule needs the owner's approval and an ADR.
+Every change follows these. Changing a rule needs Aditya's sign-off and an ADR.
 
 ## 1. Non-negotiables
 
-1. `docs/` is the source of truth. Read `MEMORY.md` and `TASKS.md` at the start of a session;
-   update them at the end. A change in behaviour without the matching doc update is not done.
+1. `docs/` is the source of truth. `NOTES.md` and `TASKS.md` are where you pick the work up;
+   a change in behaviour without the matching doc update is not done.
 2. Never guess business rules that affect money, certification or security. Ask, or record a
-   safe default as an ADR and flag it in the batch report.
+   safe default as an ADR and put it on the open list in `TASKS.md`.
 3. No placeholder code or `TODO: implement` in delivered work. Stubs only behind a named
-   interface that a later phase fills, listed in `MEMORY.md`.
+   interface that a later phase fills, listed in `NOTES.md`.
 4. The person who does a piece of work never verifies or approves it (`ensure_different_people`).
 5. Field engineers never receive prices, in any response, export or notification.
 6. Every PDF is made by WeasyPrint through `core/documents.py`. No other generator without an ADR.
@@ -84,4 +84,4 @@ Every change follows these. Changing a rule needs the owner's approval and an AD
 
 A task is done when: the code and migration are in, tests pass and cover the new rules, the
 permission matrix passes, `docker compose up` is healthy, the OpenAPI types are regenerated if
-the API changed, `TASKS.md` and `MEMORY.md` are updated, and any decision is an ADR.
+the API changed, `TASKS.md` and `NOTES.md` are updated, and any decision is an ADR.

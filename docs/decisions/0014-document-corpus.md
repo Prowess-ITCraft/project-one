@@ -7,7 +7,7 @@ Date: 2026-10-03
 
 Old BOQs and PrismSuite reports arrive as PDF and Word files, and many more will arrive over
 time. They are the largest future training set (BOQ line prediction, ranking, price drift).
-The owner asked that the heavy originals not weigh down the tool or the deployment, that every
+We don't want the heavy originals weighing down the tool or the deployment. The ask was that every
 file be converted to a lighter format such as JSON or XML, and that this data be collected
 continuously, cleaned and analysed properly because models will train on it.
 
@@ -36,7 +36,7 @@ parser or a new feature later would need the heavy original again.
    distribution, price bands per label (median and quartiles), robust outliers (median absolute
    deviation) on price and quantity, flagged but never removed.
 6. **Originals are kept by default.** Purging them is irreversible and the decision belongs to
-   the owner. `P1_CORPUS_ORIGINALS_RETENTION_DAYS` (0 means keep forever) lets an operator purge
+   Aditya. `P1_CORPUS_ORIGINALS_RETENTION_DAYS` (0 means keep forever) lets an operator purge
    originals older than N days once their JSON checksum is verified.
 7. `samples/` is converted with the same code (`cli corpus convert`, no database needed) and the
    result is committed in `samples/corpus/` so tests and new developers see the exact output.

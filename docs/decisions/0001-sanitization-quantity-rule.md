@@ -5,7 +5,7 @@ Date: 2026-09-30
 
 ## Context
 
-The brief maps sanitization to 'per endpoint', but the audit finding reads '6 systems with two antivirus agents'. The sample Shobhaglobs BOQ shows sanitization 31 next to end point security 31, so sanitization follows the endpoint count.
+The spec maps sanitization to 'per endpoint', but the audit finding reads '6 systems with two antivirus agents'. The sample Shobhaglobs BOQ shows sanitization 31 next to end point security 31, so sanitization follows the endpoint count.
 
 ## Decision
 

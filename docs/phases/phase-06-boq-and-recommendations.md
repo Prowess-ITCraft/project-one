@@ -1,6 +1,6 @@
 # Phase 6: BOQ and recommendation engine
 
-Window: 26 Oct to 6 Nov 2026 (mock plan). Status: built.
+Window: 26 Oct to 6 Nov 2026 (planned). Status: built.
 
 ## Goal
 

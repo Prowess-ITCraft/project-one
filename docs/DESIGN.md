@@ -1,17 +1,17 @@
 # Design
 
-The UI design system and the document (PDF) design system. Frontend work follows the
-frontend-design and design-taste-frontend skill process: plan here first, review against the
-brief, revise anything that reads as a generic default, then build.
+The UI design system and the document (PDF) design system. For a new screen: sketch it here
+first, check it against the product read below, change anything that looks like a stock
+template, then build.
 
 ## 1. Product read
 
 An internal operations tool for Indian IT services staff (sales, architects, engineers,
 directors), plus a phone flow for field engineers. Not a marketing page. Calm and minimal, dense
-where it helps (BOQ editor, library), very simple on a phone. Dials: variance 3, motion 2,
-density 5.
+where it helps (BOQ editor, library), very simple on a phone. Little variety between screens,
+very little motion, medium density.
 
-Stack limits (owner's rule): Next.js and React only, plain CSS with tokens, no icon or
+Stack limits: Next.js and React only, plain CSS with tokens, no icon or
 component libraries, no Tailwind, no chart library (charts are small hand-written SVG).
 
 ## 2. Tokens (brand pass, 3 Oct 2026)
@@ -105,7 +105,7 @@ Field engineer, phone (360 px)              Task (phone)
 - **Project, Plan and Field work tabs**: plan generation, downtime, schedule, lock and the plan
   document; field work start, a count per state on the trace, blocked and late lists, a live feed.
 
-## 5c. Sign-in and shell pass (owner: "very basic, make it appealing, not heavy")
+## 5c. Sign-in and shell (basic, pleasant, not heavy)
 
 Sign-in palette: shield navy #0F2A45 (the logo blue, deepened), panel text #EAF1F8 (12.8:1),
 panel secondary #A8BDD3 (7.6:1), circuit green #4FCE5D on navy (7.2:1, so here the logo green
@@ -136,16 +136,15 @@ Phone: the panel folds into a short navy band above the form, without the stage 
   the field, the authenticator set-up shows a scannable QR code.
 - Shell: sidebar on a second neutral layer (#EAEFF5), the current page as a raised white chip,
   44 px tap targets on phones, primary buttons with a soft tinted shadow and a 1 px press.
-- Review: navy plus a bright green panel risks the "dark with acid green" default. Kept because
-  both colours are the client's own logo and the green marks progress only; every action stays
+- Navy with a bright green can look like every other dark landing page. We kept it because both
+  colours come from the ITCraft logo and the green only marks progress; every action stays
   ITCraft blue and the form side stays light.
 
-## 5b. Review against the brief
+## 5b. Design review notes
 
-- Cobalt #2A4FD6 read as the common SaaS default. Replaced with ITCraft's own blue, so the
-  colour now belongs to the client rather than the category.
-- The first idea for field progress was a row of number tiles. That is the hero-metric
-  template; replaced by counts placed on the same trace as the task timeline.
+- The first accent, cobalt #2A4FD6, looked like any SaaS product. Switched to ITCraft's own blue.
+- Field progress started as a row of big number tiles. It said little, so the counts now sit on
+  the same trace as the task timeline.
 - No icon library is allowed, so the only drawn marks are the company logos and the trace
   stations (inline SVG and CSS). No glyphs stand in for icons.
 - Engineers work in sunlight: the field screens use the ink colour at full strength, 16 px body
@@ -183,4 +182,7 @@ All documents are HTML and print CSS rendered by WeasyPrint (`core/documents.py`
   downtime flag), dependency notes, configuration baselines per device.
 - **Checklist export**: one task per page, timeline of states with time and place, steps with
   times, evidence list with thumbnails, OTP confirmations (masked contact), verifier decision.
-- Completion report and certificate follow in Phase 10 with the same tokens.
+- **Completion report**: scope delivered, exclusions (waivers), before and after scores on the
+  four lenses, configuration per device, deviations, open recommendations. No prices.
+- **Certificate**: one landscape page, IITPL mark and stamp, Director's signature, certificate
+  number and a QR code to the public check page.

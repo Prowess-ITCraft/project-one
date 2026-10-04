@@ -1,4 +1,4 @@
-# ADR 0015: Field task state machine follows the v2.1 brief
+# ADR 0015: Field task state machine
 
 Status: accepted
 Date: 2026-10-03
@@ -6,14 +6,15 @@ Date: 2026-10-03
 ## Context
 
 Work started on 1 October used a delivery-style flow (assigned, accepted, on the way, checked
-in, working, submitted, handed over, verified, rework, blocked). Brief v2.1 fixes the states:
+in, working, submitted, handed over, verified, rework, blocked). The 3 October spec update fixes
+the states:
 
 `assigned -> accepted -> checked_in -> prechecks_done -> configured -> evidence_uploaded ->
 engine_check -> verifier_review -> closed`
 
 with an engine mismatch or verifier rejection returning the task to `configured`, and customer
-OTP at check-in and at handover. The earlier code was never registered or released, so the brief
-wins.
+OTP at check-in and at handover. The earlier code was never registered or released, so we
+switched over.
 
 ## Decision
 

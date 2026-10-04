@@ -35,7 +35,7 @@ end to end. Read the [developer guide](02-developer-guide.md) for how to change 
 | API types | `openapi-typescript` generated from the backend schema | Types are never written by hand |
 | Fonts | Geist and Geist Mono through `next/font` | Self-hosted at build time |
 
-Only Next.js and React are runtime dependencies. See `docs/design/frontend-design-plan.md`.
+Only Next.js and React are runtime dependencies. See `docs/DESIGN.md`.
 
 ### Platform
 

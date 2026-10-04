@@ -1,6 +1,6 @@
 # Phase 3: PrismSuite ingestion, catalogue and price book
 
-Window: 5 to 9 Oct 2026 (mock plan). Status: built.
+Window: 5 to 9 Oct 2026 (planned). Status: built.
 
 ## Goal
 
@@ -71,7 +71,7 @@ and hold the products, services and prices that later become a BOQ.
 
 | Criterion | State |
 | --- | --- |
-| Parser extracts every count and score in the brief from the sample | Done, checked by automated tests |
+| Parser extracts every count and score in the spec from the sample | Done, checked by automated tests |
 | Fuzz tests do not crash the parser | Done: random bytes, random byte flips and truncation of the sample |
 | Expired prices flagged by a scheduled job | Done and tested with simulated dates |
 | Upload pipeline with ClamAV, sniffing and MinIO | Done (Phase 2 files module) |

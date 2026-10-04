@@ -1,6 +1,6 @@
 # Phase 8: Field operations
 
-Window: 9 to 18 Nov 2026 (mock plan). Status: built (3 Oct 2026).
+Window: 9 to 18 Nov 2026 (planned). Status: built (3 Oct 2026).
 
 ## Goal
 

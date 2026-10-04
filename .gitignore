@@ -25,6 +25,13 @@ demo-accounts.json
 .demo/
 
 # Playwright output
-e2e/.results/
-e2e/.report/
-e2e/screens/
+frontend/e2e/.results/
+frontend/e2e/.report/
+frontend/e2e/screens/
+
+# Local tooling, never committed
+.claude/
+.impeccable/
+.notes/
+PRODUCT.md
+.import_linter_cache/

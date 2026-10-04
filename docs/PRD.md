@@ -4,8 +4,8 @@ Project One turns a **PrismSuite IT audit** into a **verified, certified impleme
 ITCraft / IITPL (Prowess IT Craft Pvt Ltd). It replaces spreadsheets, hand-built quotations and
 phone-call field updates with one gated flow that ends in a "Certified by IITPL" certificate.
 
-Sources of scope: `BUILD_PROMPT.md` (v2.1), the Product Flow and Proposed Scope draft of
-30 September 2026, and the owner's instructions recorded in `MEMORY.md`.
+Owner: Aditya Kumar. Scope comes from the Product Flow and Proposed Scope draft of
+30 September 2026 and the decisions recorded in `decisions/`.
 
 ## 1. Boundary
 
@@ -60,21 +60,21 @@ The four reporting lenses everywhere: **Productivity, Resilience, Security, Heal
 | 04 | Gap register with ID, priority, lens, affected assets, recommendation | 5 | Built |
 | 05 | BOQ from approved gaps: templates, quantity rules, options, priority groups, price book | 6 | Built |
 | 06 | Version every BOQ, block on expired prices, lock the accepted version with a PO | 6 | Built |
-| 07 | Quotation and summary BOQ in the exact ITCraft format, PDF (WeasyPrint) and Excel | 6 | Built; shared renderer in Batch 1 |
+| 07 | Quotation and summary BOQ in the exact ITCraft format, PDF (WeasyPrint) and Excel | 6 | Built |
 | 08 | Recommendations with reasons and runner-ups, same contract for rules and learned ranker | 6, 13 | Rules built |
-| 09 | Tasks, dependencies and schedule from the accepted BOQ, around leave and downtime windows | 7 | Built; plan PDF in Batch 1 |
+| 09 | Tasks, dependencies and schedule from the accepted BOQ, around leave and downtime windows | 7 | Built, with plan PDF |
 | 10 | Target configuration baseline per device | 7 | Built |
-| 11 | Gated task state machine, mandatory evidence, customer OTP at check-in and handover | 8 | In progress |
-| 12 | Customer and Director notified at every task transition | 8 | In progress |
-| 13 | Compare actual to target configuration, raise deviations with severity | 9 | Interface in Batch 1, engine in 9 |
-| 14 | Director live dashboard | 9, 12 | Planned |
-| 15 | Block report and certificate until every release condition is met; waivers | 10 | Planned |
-| 16 | Completion report and certificate with unique ID and QR verification | 10 | Planned |
+| 11 | Gated task state machine, mandatory evidence, customer OTP at check-in and handover | 8 | Built |
+| 12 | Customer and Director notified at every task transition | 8 | Built |
+| 13 | Compare actual to target configuration, raise deviations with severity | 9 | Built (SonicWall exports first) |
+| 14 | Director live dashboard | 9, 12 | Built |
+| 15 | Block report and certificate until every release condition is met; waivers | 10 | Built |
+| 16 | Completion report and certificate with unique ID and QR verification | 10 | Built; real IITPL stamp still to come |
 | 17 | **Library**: old BOQs and PrismSuite reports dropped in are read automatically and become datasets | 4 | Built |
-| 18 | **Document corpus**: every incoming PDF, DOCX or XLSX is converted once into a compact canonical JSON record (structure plus plain text, gzipped). The app, analysis and ML read the JSON, never the heavy original | 4+ | Batch 1 |
-| 19 | **Data quality**: cleaning (name normalisation, de-duplication, unit and money parsing), validation, outlier flags on prices and quantities, a quality score per file and per collection, and a labelled taxonomy that maps each BOQ line to a gap type | 4+ | Batch 1 |
-| 20 | **Training snapshots**: frozen, versioned, reproducible dataset snapshots with a data card, ready for Phase 13 | 4, 13 | Freeze flag built; card in Batch 1 |
-| 21 | The sample files in `samples/` are always part of the corpus and of every test run | 4 | Batch 1 |
+| 18 | **Document corpus**: every incoming PDF, DOCX or XLSX is converted once into a compact canonical JSON record (structure plus plain text, gzipped). The app, analysis and ML read the JSON, never the heavy original | 4+ | Built |
+| 19 | **Data quality**: cleaning (name normalisation, de-duplication, unit and money parsing), validation, outlier flags on prices and quantities, a quality score per file and per collection, and a labelled taxonomy that maps each BOQ line to a gap type | 4+ | Built |
+| 20 | **Training snapshots**: frozen, versioned, reproducible dataset snapshots with a data card, ready for Phase 13 | 4, 13 | Built |
+| 21 | The sample files in `samples/` are always part of the corpus and of every test run | 4 | Built |
 
 ## 5. Non-functional requirements
 
@@ -96,7 +96,7 @@ The four reporting lenses everywhere: **Productivity, Resilience, Security, Heal
 templates, config templates, checklist templates), the library and document corpus, the web app,
 email notifications (SMS and WhatsApp behind adapters).
 
-**Changed from the first brief (ADR 0012):** audit imports have a kind (baseline or rescan); an
+**Changed from the first draft (ADR 0012):** audit imports have a kind (baseline or rescan); an
 intake questionnaire drives the tier and recommender; acceptance needs a customer PO; a gate can
 return to an earlier stage with a reason; waivers are Not applicable or Deferred by customer.
 
@@ -106,6 +106,6 @@ pivot and chart workspace (the engine stays API-only).
 
 ## 7. Open questions
 
-Answered with "assume the best answers possible". Every default is an ADR in `decisions/` and
-listed in `MEMORY.md`. Questions that affect money, certification or security are re-raised in
-each batch report.
+Where nobody had decided yet, we picked the safest default and wrote it down as an ADR in
+`decisions/` (summary table in `NOTES.md`). Anything touching money, certification or security
+stays on the open list in `TASKS.md` until someone signs it off.

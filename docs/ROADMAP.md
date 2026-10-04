@@ -1,8 +1,8 @@
 # Project One roadmap: October to December 2026
 
-This is a **mock plan** for showing colleagues how the 15 phases are paced through to a
-31 December go-live. Dates are planning targets, not commitments. Status reflects the real
-state of the code on 30 September 2026.
+How the 15 phases are paced through to a 31 December go-live. Dates are planning targets,
+not commitments. Status is the real state of the code on 4 October 2026; several phases landed
+well ahead of their window.
 
 Project One turns a PrismSuite IT audit into a verified, certified implementation for
 ITCraft / IITPL: audit intake, gap analysis, BOQ and quotation, implementation plan, gated
@@ -10,14 +10,13 @@ field work, verification, and a "Certified by IITPL" certificate.
 
 ## At a glance
 
-| Batch | Phases | Window | Theme | Status |
+| Milestone | Phases | Window | Theme | Status |
 | --- | --- | --- | --- | --- |
-| A | 1, 2, 3 | 28 Sep to 9 Oct | Foundation, people and access, audit intake and price book | Built and tested |
-| D (early slice) | 11, 12 | pulled forward, 1 Oct | Minimal web app for the screens that exist | Intake, questionnaire, infrastructure, gaps and BOQ built |
-| B | 4, 5, 6 | 12 Oct to 6 Nov | Datasets, infrastructure gaps, BOQ and recommendations | Built and tested (201 tests) |
-| C | 7, 8, 9 | 2 Nov to 24 Nov | Planning, field operations, verification, Director dashboard | 7 and 8 built 3 Oct; 9 next |
-| D | 10, 11, 12 | 23 Nov to 16 Dec | Completion certificate, then the whole web app | Planned |
-| E | 13, 14, 15 | 14 Dec to 31 Dec | Machine learning, hardening, go-live | Planned |
+| M1 | 1, 2, 3 | 28 Sep to 9 Oct | Foundation, people and access, audit intake and price book | Built |
+| M2 | 4, 5, 6 | 12 Oct to 6 Nov | Datasets, infrastructure gaps, BOQ and recommendations | Built |
+| M3 | 7, 8, 9 | 2 Nov to 24 Nov | Planning, field operations, verification, Director dashboard | Built |
+| M4 | 10, 11, 12 | 23 Nov to 16 Dec | Completion certificate, then the whole web app | 10 and 11 built, 12 nearly done |
+| M5 | 13, 14, 15 | 14 Dec to 31 Dec | Learning from the library, hardening, go-live | Next |
 
 ## Timeline
 
@@ -65,23 +64,23 @@ P15                                                     #######
 
 | Date | Milestone | Demo |
 | --- | --- | --- |
-| 9 Oct | M1: Batch A | Upload the sample audit, review, approve; open the price book; show the audit trail. |
-| 6 Nov | M2: Batch B | Approved audit to gap register to BOQ to quotation PDF identical in layout to ITCraft's. |
-| 24 Nov | M3: Batch C | A task walks from assigned to closed with OTP, evidence and verification. |
-| 16 Dec | M4: Batch D | Full web app, certificate issued and verified by QR. |
+| 9 Oct | M1 | Upload the sample audit, review, approve; open the price book; show the audit trail. |
+| 6 Nov | M2 | Approved audit to gap register to BOQ to quotation PDF identical in layout to ITCraft's. |
+| 24 Nov | M3 | A task walks from assigned to closed with OTP, evidence and verification. |
+| 16 Dec | M4 | Full web app, certificate issued and verified by QR. |
 | 31 Dec | M5: Go-live | Production running, backups proven, team trained. |
 
 ## Risks to watch
 
 - Sample data is thin: one PrismSuite report and two BOQs. Parser and ML quality depend on
   more samples (Phase 13 needs many manual BOQs).
-- Questions about money, certification and security rules need an owner's answer before each
-  batch; the plan assumes quick answers.
-- Year-end holidays leave about a week of slack in Batch E. Phase 15 is the flexible one.
+- Questions about money, certification and security rules need an answer before the phase
+  that uses them; the plan assumes quick answers. Open now: severity rules, the IITPL stamp.
+- Year-end holidays leave about a week of slack in M5. Phase 15 is the flexible one.
 
 ## Where to read more
 
 - What each finished phase delivered: [docs/phases](phases/README.md)
 - Every document and when to update it: [DOCUMENTATION_MAP.md](DOCUMENTATION_MAP.md)
 - Why decisions were made: [docs/decisions](decisions)
-- Resume point for engineers: [PROGRESS.md](PROGRESS.md)
+- Where the work stands: [TASKS.md](TASKS.md)

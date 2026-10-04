@@ -67,7 +67,7 @@ async def _seed_demo() -> None:
         )
     registry.load_models()
     roles = [
-        Role.ADMIN,  # the owner asked for an Admin demo login; Admin needs MFA at first sign-in
+        Role.ADMIN,  # Admin needs MFA, so the first sign-in sets up an authenticator
         Role.AUDIT_ENGINEER,
         Role.SOLUTION_ARCHITECT,
         Role.TECHNICAL_LEAD,
@@ -81,9 +81,9 @@ async def _seed_demo() -> None:
         if user is None:
             user = User(
                 email=DEMO_EMAIL,
-                full_name="Adi Demo",
+                full_name="Aditya Kumar",
                 initials="AD",
-                designation="Demo user",
+                designation="Demo login",
                 password_hash=hash_password(DEMO_PASSWORD),
                 is_active=True,
             )

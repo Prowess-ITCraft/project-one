@@ -1,24 +1,23 @@
 # Documentation map
 
-Every document, what it is for, and what must change when a phase ships. The rule: **a phase
-is not done until this list has been walked.**
+Every document, who it is for, and when it needs touching. A phase is not done until this list
+has been walked.
 
-## The six core documents (the project's brain, BUILD_PROMPT section 1)
+## Core documents
 
 | Document | Holds | Update when |
 | --- | --- | --- |
-| `PRD.md` | Purpose, roles, the 8 stages, FRs with phase and state, NFRs, scope | Scope or a requirement changes |
+| `PRD.md` | Purpose, roles, the 8 stages, requirements with phase and state, scope | Scope or a requirement changes |
 | `ARCHITECTURE.md` | Modules, dependency rules, data model, corpus pipeline, events, ports, security, ADR list | A module, contract, table group or service changes |
-| `RULES.md` | Non-negotiables, data rules, hardening, standards, testing, definition of done | A rule changes (owner approval) |
+| `RULES.md` | Non-negotiables, data rules, hardening, standards, testing, definition of done | A rule changes (needs sign-off) |
 | `DESIGN.md` | UI tokens, type, layout, components, copy, PDF document design | UI or document design changes |
-| `TASKS.md` | Phase status, checklists, gaps, next batch | Every task starts, finishes or is blocked |
-| `MEMORY.md` | Owner's answers, defaults, environment, stubs, limitations, changelog | End of every session and phase |
+| `TASKS.md` | Phase status, open items, open questions | A task starts, finishes or is blocked |
+| `NOTES.md` | Ground rules, defaults, machine quirks, stubs, limitations, changelog | A default, stub or limitation changes; each phase |
 
 ## Supporting documents
 
 | Document | Audience | Update when |
 | --- | --- | --- |
-| `BUILD_PROMPT.md` | Agent and leads | The owner issues a new brief |
 | `README.md` (root) | Everyone | Status or entry points change |
 | `ROADMAP.md` | Colleagues, managers | Phase status or dates change |
 | `phases/phase-NN-*.md` and `phases/README.md` | Colleagues | Each phase |
@@ -32,16 +31,14 @@ is not done until this list has been walked.**
 | `runbooks/` | Operators | Deploy, backup, restore, rollback change |
 | `.env.example` | Operators | New setting |
 
-`PROGRESS.md`, `SCOPE.md` and `design/frontend-design-plan.md` are pointers kept for old links.
-
 ## Phase checklist
 
 1. Add `phases/phase-NN-*.md`: goal, features, acceptance, decisions, limitations, demo script.
-2. Update `TASKS.md`, `MEMORY.md` (changelog), `phases/README.md` and `ROADMAP.md`.
-3. Update `PRD.md` FR states and `ARCHITECTURE.md` if modules or tables changed.
+2. Update `TASKS.md`, the `NOTES.md` changelog, `phases/README.md` and `ROADMAP.md`.
+3. Update `PRD.md` requirement states and `ARCHITECTURE.md` if modules or tables changed.
 4. Update the guides the phase touches. New endpoints always touch the API guide; new screens
    always touch the beginner's guide.
-5. ADRs for decisions made without an answer from the owner.
+5. An ADR for every decision made without a firm answer.
 6. Regenerate `frontend/lib/schema.d.ts` if the API changed.
-7. Numbers in docs (tests, endpoints, coverage) come from a real run, not memory.
-8. Plain writing: no em dashes in docs, UI copy or generated reports.
+7. Numbers in docs (tests, endpoints, coverage) come from a real run.
+8. No em dashes in docs, UI copy or generated reports.

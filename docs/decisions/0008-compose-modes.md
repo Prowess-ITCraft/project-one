@@ -5,7 +5,7 @@ Date: 2026-09-30
 
 ## Context
 
-The brief asks for dev and prod modes with optional services.
+We need dev and prod modes with optional services.
 
 ## Decision
 

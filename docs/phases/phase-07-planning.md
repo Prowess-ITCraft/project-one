@@ -1,6 +1,6 @@
 # Phase 7: Planning, scheduling and configuration baselines
 
-Window: 2 to 10 Nov 2026 (mock plan). Status: built (code on 1 Oct, plan PDF on 3 Oct).
+Window: 2 to 10 Nov 2026 (planned). Status: built (code on 1 Oct, plan PDF on 3 Oct).
 
 ## Goal
 

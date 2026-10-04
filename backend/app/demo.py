@@ -1,7 +1,7 @@
 """Demo data: two real projects walked through the API exactly as people would, for looking
 around the screens and for the browser smoke tests. Development only; refuses to run in prod.
 
-    python -m app.cli demo --samples /data/samples --out /out/demo-accounts.json
+    python -m app.cli demo-projects --samples /data/samples --out /out/demo-accounts.json
 
 - "Head office IT hardening" goes through every gate to a signed certificate: audit, current
   and ideal state, gaps (customer acknowledged), BOQ with a purchase order, plan, field work
@@ -10,9 +10,9 @@ around the screens and for the browser smoke tests. Development only; refuses to
   verifier, one sent back by a failed check with a critical deviation open, one blocked,
   and a waiver waiting for the Director.
 
-Staff accounts get realistic names and one shared demo password; the Director and Admin need
-MFA, so their TOTP secrets go into the accounts file (add them to an authenticator app, or let
-the smoke tests compute the codes). Nothing here is presented as real customer data.
+Staff accounts are the ITCraft / IITPL team with one shared demo password. The Director and
+Admin need MFA, so their TOTP secrets go into the accounts file (add them to an authenticator
+app, or let the smoke tests compute the codes). Nothing here is presented as real customer data.
 """
 
 from __future__ import annotations
@@ -39,19 +39,44 @@ from app.core.redis import get_redis
 from app.core.timeutil import IST, today_ist, utcnow
 
 API = "/api/v1"
-DOMAIN = "itcraft.net.in"
-
+# The ITCraft / IITPL team. Their real work addresses are used, so `run` refuses to start
+# unless mail goes to the local Mailpit catcher (nothing reaches a real inbox).
 STAFF = [
-    ("rajesh.iyer", "Rajesh Iyer", "RI", "Director", ["director"]),
-    ("priya.nair", "Priya Nair", "PN", "Sales manager", ["sales_manager"]),
-    ("arvind.rao", "Arvind Rao", "AR", "Sales head", ["sales_head"]),
-    ("shruti", "Shruti Satam", "SS", "Audit engineer", ["audit_engineer"]),
-    ("nikhil.joshi", "Nikhil Joshi", "NJ", "Solution architect", ["solution_architect"]),
-    ("aditya", "Aditya Kumar", "AK", "Technical lead", ["technical_lead"]),
-    ("farah.khan", "Farah Khan", "FK", "Project manager", ["project_manager"]),
-    ("ravi.kulkarni", "Ravi Kulkarni", "RK", "Field engineer", ["field_engineer"]),
-    ("sneha.patil", "Sneha Patil", "SP", "Field engineer", ["field_engineer"]),
+    ("sattish", "sattishagadii@iitpl.co.in", "Sattish Agadii", "SA", "Director", ["director"]),
+    ("charmi", "charmi@itcraft.net.in", "Charmi Shah", "CS", "Sales manager", ["sales_manager"]),
+    ("akash", "akash@itcraft.net.in", "Akash Agadii", "AA", "Sales head", ["sales_head"]),
+    ("shruti", "shruti@itcraft.net.in", "Shruti Satam", "SS", "Audit engineer", ["audit_engineer"]),
+    (
+        "sheshadri",
+        "sheshadri@itcraft.net.in",
+        "Sheshadri Chintakindi",
+        "SC",
+        "Solution architect",
+        ["solution_architect"],
+    ),
+    ("aditya", "aditya@itcraft.net.in", "Aditya Kumar", "AK", "Technical lead", ["technical_lead"]),
+    (
+        "ashwini",
+        "ashwini@itcraft.net.in",
+        "Ashwini Sawant",
+        "AS",
+        "Project manager",
+        ["project_manager"],
+    ),
+    ("yash", "yash@itcraft.net.in", "Yash Raikar", "YR", "Field engineer", ["field_engineer"]),
+    (
+        "sakshi",
+        "sakshi@itcraft.net.in",
+        "Sakshi Rajbhar",
+        "SR",
+        "Field engineer",
+        ["field_engineer"],
+    ),
+    ("ajit", "ajit@itcraft.net.in", "Ajit Dubey", "AD", "Field engineer", ["field_engineer"]),
+    ("bhakti", "bhakti@itcraft.net.in", "Bhakti Pawar", "BP", "Audit engineer", ["audit_engineer"]),
+    ("neeta", "neeta@itcraft.net.in", "Neeta Darge", "ND", "Sales manager", ["sales_manager"]),
 ]
+LOCAL_MAIL = {"", "mailpit", "localhost", "127.0.0.1"}
 PRICES = {
     "SVC-SANITIZE": "500.00",
     "LIC-ACRONIS-XDR": "1562.00",
@@ -194,12 +219,11 @@ class Demo:
         from app.modules.identity.schemas import UserCreateIn
 
         async with get_sessionmaker()() as s:
-            taken = await s.scalar(select(User.id).where(User.email == f"{STAFF[0][0]}@{DOMAIN}"))
+            taken = await s.scalar(select(User.id).where(User.email == STAFF[0][1]))
         if taken:
             await self._resume_staff()
             return
-        for key, name, initials, designation, roles in STAFF:
-            email = f"{key}@{DOMAIN}"
+        for key, email, name, initials, designation, roles in STAFF:
             secret = None
             async with get_sessionmaker()() as s:
                 u = await service.create_user(
@@ -233,8 +257,7 @@ class Demo:
             raise DemoError("Demo staff exist but the accounts file is missing. Nothing changed.")
         self.password = self.previous["password"]
         known = {u["email"]: u for u in self.previous["users"]}
-        for key, name, _i, _d, roles in STAFF:
-            email = f"{key}@{DOMAIN}"
+        for key, email, name, _i, _d, roles in STAFF:
             async with get_sessionmaker()() as s:
                 uid = await s.scalar(select(User.id).where(User.email == email))
             self.people[key] = Person(
@@ -274,7 +297,7 @@ class Demo:
             async with get_sessionmaker()() as s:
                 await fn(s)
         today = today_ist()
-        sales = self.people["priya.nair"]
+        sales = self.people["charmi"]
         for code, selling in PRICES.items():
             items = (await self.call("GET", "/catalogue/items", sales, params={"q": code}))["items"]
             if not items:
@@ -296,7 +319,7 @@ class Demo:
         self.say("Catalogue prices, rules and templates ready")
 
     async def customer(self) -> dict[str, Any]:
-        sales = self.people["priya.nair"]
+        sales = self.people["charmi"]
         found = await self.call("GET", "/customers", sales, params={"q": "Shakti"})
         items = found["items"] if isinstance(found, dict) else found
         cust = (
@@ -350,13 +373,13 @@ class Demo:
         )
         if sub.get("requires_customer_ack"):
             contacts = await self.call(
-                "GET", f"/customers/{self.cust['id']}/contacts", self.people["priya.nair"]
+                "GET", f"/customers/{self.cust['id']}/contacts", self.people["charmi"]
             )
             meera = next(c for c in contacts if c["full_name"] == "Meera Shah")
             link = await self.call(
                 "POST",
                 f"/projects/{pid}/submissions/{sub['id']}/customer-ack",
-                self.people["priya.nair"],
+                self.people["charmi"],
                 json_body={"contact_id": meera["id"]},
             )
             token = link["url"].rsplit("/", 1)[-1]
@@ -380,12 +403,12 @@ class Demo:
     async def project(self, name: str, rescan_scores: dict[str, str] | None) -> str:
         ppl = self.people
         sales, head, auditor, arch = (
-            ppl["priya.nair"],
-            ppl["arvind.rao"],
-            ppl["shruti.satam"],
-            ppl["nikhil.joshi"],
+            ppl["charmi"],
+            ppl["akash"],
+            ppl["shruti"],
+            ppl["sheshadri"],
         )
-        lead, pm, director = ppl["anil.deshmukh"], ppl["farah.khan"], ppl["rajesh.iyer"]
+        lead, pm, director = ppl["aditya"], ppl["ashwini"], ppl["sattish"]
         proj = await self.call(
             "POST",
             "/projects",
@@ -402,8 +425,8 @@ class Demo:
             (lead, "technical_lead"),
             (pm, "project_manager"),
             (director, "director"),
-            (ppl["ravi.kulkarni"], "field_engineer"),
-            (ppl["sneha.patil"], "field_engineer"),
+            (ppl["yash"], "field_engineer"),
+            (ppl["sakshi"], "field_engineer"),
         ]:
             await self.call(
                 "PUT",
@@ -624,7 +647,7 @@ class Demo:
     ) -> None:
         """Take one task as far as `until`: configured, verifier_review or closed."""
         rid = run["id"]
-        eng, lead = self._assignee(run), self.people["anil.deshmukh"]
+        eng, lead = self._assignee(run), self.people["aditya"]
 
         async def post(path: str, who: Person, body: dict[str, Any] | None = None) -> Any:
             return await self.call("POST", f"/field/runs/{rid}/{path}", who, json_body=body or {})
@@ -662,13 +685,13 @@ class Demo:
         await post("decision", lead, {"decision": "approve"})
 
     async def free_name(self, *names: str) -> str:
-        found = await self.call("GET", "/projects", self.people["arvind.rao"], params={"size": 200})
+        found = await self.call("GET", "/projects", self.people["akash"], params={"size": 200})
         items = found["items"] if isinstance(found, dict) else found
         used = {x["name"] for x in items}
         return next((n for n in names if n not in used), f"{names[0]} {secrets.randbelow(90) + 10}")
 
     async def runs(self, pid: str) -> list[dict[str, Any]]:
-        runs = await self.call("GET", f"/projects/{pid}/field/runs", self.people["farah.khan"])
+        runs = await self.call("GET", f"/projects/{pid}/field/runs", self.people["ashwini"])
         out = []
         for r in sorted(runs, key=lambda r: (r.get("planned_start") or "", r["task_ref"])):
             out.append((await self.call("GET", f"/field/runs/{r['id']}", self._assignee(r)))["run"])
@@ -698,11 +721,11 @@ class Demo:
         self.say(f"  {len(runs)} tasks closed and verified")
         ppl = self.people
         pm, lead, director, auditor, arch = (
-            ppl["farah.khan"],
+            ppl["ashwini"],
             ppl["aditya"],
-            ppl["rajesh.iyer"],
+            ppl["sattish"],
             ppl["shruti"],
-            ppl["nikhil.joshi"],
+            ppl["sheshadri"],
         )
         await self.settle()
         await self.call("POST", f"/reporting/projects/{pid}/field-summary", pm, idem=True)
@@ -767,7 +790,7 @@ class Demo:
             None,
         )
         runs = await self.runs(pid)
-        pm = self.people["farah.khan"]
+        pm = self.people["ashwini"]
         plan = ["closed", "verifier_review", "failed", "blocked", "accepted"]
         for run, what in zip(runs, plan, strict=False):
             if what in ("closed", "verifier_review"):
@@ -834,8 +857,14 @@ async def run(samples: Path, out: Path) -> dict[str, Any]:
     from app.main import app as fastapi_app
     from app.modules import registry
 
-    if get_settings().is_prod:
+    settings = get_settings()
+    if settings.is_prod:
         raise DemoError("Demo data is for development only.")
+    if settings.smtp_host not in LOCAL_MAIL:
+        raise DemoError(
+            f"P1_SMTP_HOST is {settings.smtp_host!r}. The demo accounts use real staff addresses, "
+            "so it only runs when mail goes to Mailpit (or nowhere)."
+        )
     registry.load_handlers()
     transport = httpx.ASGITransport(app=fastapi_app, client=("127.0.0.1", 50000))
     async with httpx.AsyncClient(

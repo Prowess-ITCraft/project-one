@@ -1,6 +1,6 @@
 # Phase 4: Dataset engine and library
 
-Window: 12 to 20 Oct 2026 (mock plan). Status: built.
+Window: 12 to 20 Oct 2026 (planned). Status: built.
 
 ## Goal
 

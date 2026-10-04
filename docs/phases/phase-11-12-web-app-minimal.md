@@ -1,7 +1,8 @@
 # Phases 11 and 12: web app, minimal edition
 
-Window: pulled forward from 30 Nov to 16 Dec in the mock plan, built on 1 Oct 2026 as a first
-slice against the screens the backend already supports. Status: first slice built.
+Window: planned for 30 Nov to 16 Dec, but we pulled a first slice forward to 1 Oct 2026 so
+people could click through the screens the backend already supported. Status: built, with a few
+phase 12 items left (see `TASKS.md`).
 
 ## Goal
 
@@ -34,7 +35,7 @@ built with as little machinery as possible.
 
 ## Design
 
-See `docs/design/frontend-design-plan.md`. Plain CSS tokens, one accent colour, hairlines
+See `DESIGN.md`. Plain CSS tokens, one accent colour, hairlines
 instead of cards, sentence case, no icon or component libraries. The stage rail is the one
 memorable element. Responsive to 360 px: the sidebar becomes a top bar, tables become stacked
 rows and the rail turns vertical.
@@ -49,16 +50,17 @@ rows and the rail turns vertical.
 
 | Criterion | State |
 | --- | --- |
-| Responsive to 360 px, keyboard focus, AA contrast, reduced motion | Built; manual review recorded in PROGRESS.md |
+| Responsive to 360 px, keyboard focus, AA contrast, reduced motion | Built and checked by hand |
 | Typed API client generated from OpenAPI | Done |
 | Sign in with MFA | Done |
-| Planner, field engineer mobile flow, dataset workspace, BOQ editor, Director live view | Not yet: their backends arrive in phases 4 to 9 |
+| Planner, field engineer mobile flow, BOQ editor, Director live view | Built as their backends landed (see below) |
 
 ## Known limitations
 
-- No automated browser tests yet (Playwright arrives with phase 12 proper).
-- Offline queue and PWA install for engineers come with the field operations work.
-- Customer sign-in is not part of this slice.
+- Playwright smoke tests cover every role on desktop and phone; there is no full field task
+  walk-through on a phone yet.
+- The offline queue is built; installing the app on a phone (PWA) is not.
+- Customer sign-in is not part of v1; customers use links.
 
 ## Demo script
 
@@ -68,7 +70,7 @@ rows and the rail turns vertical.
 4. As the architect approve it; submit the gate; approve as a technical lead.
 5. Open Catalogue, then Prices to refresh, enter a new price.
 
-## Brand pass and Batch 1 screens (3 Oct 2026)
+## Brand pass and field screens (3 Oct 2026)
 
 - **Brand:** ITCraft's logo (from itcraft.net.in) in the sidebar, sign-in and favicon; IITPL's mark (from
   iitpl.co.in) on the sign-in panel, because IITPL certifies the work. Accent changed from a generic cobalt to
@@ -85,4 +87,14 @@ rows and the rail turns vertical.
   events with polling fallback).
 - **Library**: Files (status names fixed, held lines confirmed in place), Corpus (document drawer with labels and
   the text read), Data quality (label balance, price bands per gap type, outliers, rebuild for Admin).
-- Still only Next.js and React at runtime. The impeccable design hook is on for this project (`.claude/`).
+- Still only Next.js and React at runtime.
+
+## Completion screens (4 Oct 2026)
+
+- **Dashboard** (Director): every active project with its stage, field progress, blocked work and
+  open deviations, plus the waivers waiting for a decision.
+- **Project, Completion tab**: the eight release conditions with what is missing for each, the
+  field work summary, waivers, report preview and lock, and certificate issue or revoke.
+- **Settings, Certificate**: wording and the IITPL stamp.
+- **Public pages**: `/verify/<number>` shows whether a certificate is genuine; `/ack/<token>` and
+  `/ack/waiver/<token>` let the customer acknowledge without an account.

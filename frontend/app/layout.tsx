@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import "./refresh.css";
+import "./pages.css";
 import "./field.css";
 import "./signin.css";
-import "./polish.css";
+import "./shell.css";
 import "./completion.css";
 
 const sans = Geist({ subsets: ["latin"], variable: "--font-sans", display: "swap" });

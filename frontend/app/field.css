@@ -1,5 +1,5 @@
-/* Field work, review and data quality. Loaded after globals.css and refresh.css.
-   The task timeline is the one bold element (docs/DESIGN.md section 5). */
+/* Field work, review and data quality. Loaded after globals.css and pages.css.
+   The task timeline is the main visual on these screens (docs/DESIGN.md section 5). */
 
 /* ---------- brand in the shell ---------- */
 .brand {

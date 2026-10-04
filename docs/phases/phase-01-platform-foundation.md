@@ -1,6 +1,6 @@
 # Phase 1: Platform foundation
 
-Window: 28 Sep to 2 Oct 2026 (mock plan). Status: built.
+Window: 28 Sep to 2 Oct 2026 (planned). Status: built.
 
 ## Goal
 
@@ -68,7 +68,7 @@ logging, money, time, background work or storage again.
 
 | Criterion | State |
 | --- | --- |
-| One command starts everything healthy | Compose files written; first full start verified at the end of this session (see PROGRESS.md) |
+| One command starts everything healthy | Done; first full start verified on 30 Sep |
 | Tests green with real containers | 92 tests pass against real PostgreSQL, Redis and MinIO started by the test suite |
 | CI passes | Workflows written; they run once the repository is pushed to GitHub |
 | No critical image vulnerabilities | Trivy runs in CI; not yet run locally |

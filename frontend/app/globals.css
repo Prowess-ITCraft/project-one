@@ -1,6 +1,6 @@
 /* Project One. Plain CSS with tokens: light and dark follow the system, with a manual switch.
    Colours come from the ITCraft and IITPL marks (docs/DESIGN.md section 2).
-   One radius family (6px controls, 8px panels). No shadows except the focus ring. */
+   One radius family (6px controls, 8px panels). */
 
 :root {
   --paper: #f3f5f8;
@@ -598,7 +598,7 @@ textarea::placeholder {
   font-weight: 600;
 }
 
-/* ---------- the stage rail: the one memorable element ---------- */
+/* ---------- stage rail ---------- */
 .rail {
   list-style: none;
   margin: 0 0 8px;

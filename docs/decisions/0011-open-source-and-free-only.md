@@ -5,7 +5,7 @@ Date: 2026-10-01
 
 ## Context
 
-The owner asked that Project One use only free and open-source services. Redis 7.4 and later
+Project One should use only free and open-source services (Aditya, 1 Oct). Redis 7.4 and later
 moved to source-available licences (RSALv2 and SSPL), so it no longer counts as open source.
 
 ## Decision
@@ -37,7 +37,7 @@ Rules going forward:
 3. Notifications: email through any SMTP server (self-hosted Postfix or a free relay). SMS and
    WhatsApp normally need a paid carrier account; phase 8 will use adapters, ship an open
    gateway option (for example a self-hosted Gammu or a phone-based SMS gateway) and treat paid
-   carriers as an optional adapter the owner chooses.
+   carriers as an optional adapter, chosen later.
 4. Machine learning (phase 13) uses scikit-learn, LightGBM and MLflow (all open source),
    no hosted ML services.
 

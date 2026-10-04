@@ -1,6 +1,6 @@
 # Phase 2: Identity, access, audit log, customers and projects
 
-Window: 1 to 6 Oct 2026 (mock plan). Status: built.
+Window: 1 to 6 Oct 2026 (planned). Status: built.
 
 ## Goal
 
@@ -89,8 +89,7 @@ ADR 0003 (no prices for field engineers), ADR 0004 (audit log and personal data)
 - Customer sign-in is switched off by a feature flag; customers use links in v1.
 - Email and SMS delivery are not connected yet (Phase 8).
 - Test coverage of the customers and identity services is below the 85% goal: contacts,
-  sites, gate configuration and several account paths have no dedicated tests yet. Closing
-  this is on the Batch B task list.
+  sites, gate configuration and several account paths have no dedicated tests yet.
 - Single sign-on (Google or Microsoft) is not built.
 
 ## Demo script

@@ -1,6 +1,6 @@
 # Phase 5: Infrastructure model, rule library and gap engine
 
-Window: 19 to 27 Oct 2026 (mock plan). Status: built.
+Window: 19 to 27 Oct 2026 (planned). Status: built.
 
 ## Goal
 

@@ -5,8 +5,8 @@ Date: 2026-10-03
 
 ## Context
 
-Brief v2.1 makes WeasyPrint the only PDF generator and asks for one shared rendering service.
-Reconciliation found WeasyPrint was the only generator in use (no ReportLab, wkhtmltopdf or
+We want WeasyPrint as the only PDF generator, behind one shared rendering service. A check of
+the code on 3 October found WeasyPrint was the only generator in use (no ReportLab, wkhtmltopdf or
 headless Chrome), but it was called directly from `boq/render.py`, with the default URL fetcher
 (which can reach the network), system fonts by name and no checksum.
 
