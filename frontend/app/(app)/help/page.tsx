@@ -85,8 +85,9 @@ const ROLE_SECTIONS: { role: string; title: string; steps: ReactNode[] }[] = [
       <>Work through <b>Before you change anything</b> and the <b>Steps</b>. Record <b>What the device shows</b> and add photos under <b>Evidence</b>.</>,
       <>Choose <b>Send for the check</b>. If a setting does not match, the page says which; fix it and send again.</>,
       <>Finish with <b>Hand over to the customer</b>. The technical lead then verifies your work.</>,
-      <>Stuck? Use <b>What stops you?</b> to mark the task blocked with a reason. Your project manager sees it straight away.</>,
-      <>No signal? Keep working. The app saves your steps on the phone and sends them when you are back online.</>,
+      <>Stuck? Choose <b>I cannot continue</b> and say what stops you. The task is marked blocked and your project manager sees it straight away.</>,
+      <>No signal? Keep working. The app saves your steps on the phone and sends them by itself when the signal is back. If the server refuses one, the task says why: fix it and choose <b>Try again</b>, or <b>Remove</b> it.</>,
+      <>Sign out only when everything is sent. If something is still on the phone, the app says so first; only you can send it, the next time you sign in on that phone.</>,
     ],
   },
   {
@@ -106,6 +107,7 @@ const ROLE_SECTIONS: { role: string; title: string; steps: ReactNode[] }[] = [
       <>Decide waivers on a project's <b>Completion</b> tab: <b>Approve</b> or <b>Turn down</b>.</>,
       <>When every condition on <b>Completion</b> is met, choose <b>Sign the certificate</b>. It carries your name and the IITPL stamp, and a QR code anyone can scan to check it.</>,
       <>Set the certificate wording and upload the stamp under <b>Certificate</b> in the sidebar.</>,
+      <>You can also do everything an admin does: add people and give them roles under <b>Accounts</b>, as in the Admin steps.</>,
     ],
   },
   {
@@ -150,6 +152,7 @@ export default function Help() {
   const { me } = useMe();
   const mine = new Set<string>(me.roles);
   if (mine.has("sales_head")) mine.add("sales_manager");
+  if (mine.has("director")) mine.add("admin"); // the Director does everything an admin does
   const yours = ROLE_SECTIONS.filter((s) => mine.has(s.role));
   const others = ROLE_SECTIONS.filter((s) => !mine.has(s.role));
 

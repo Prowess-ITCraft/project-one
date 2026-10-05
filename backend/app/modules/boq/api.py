@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_session
+from app.core.documents import rendered
 from app.core.errors import NotFound
 from app.core.idempotency import IdempotencyGuard, require_idempotency_key, run_idempotent
 from app.modules.boq import draft as d
@@ -203,10 +204,11 @@ async def estimate(
     comp = await service.company(session)
     name = f"estimate-{kind}.{fmt}"
     if fmt == "xlsx":
-        data = render.render_xlsx(draft, comp, quote_ref=ESTIMATE_REF, kind=kind)
+        data = await rendered(render.render_xlsx, draft, comp, quote_ref=ESTIMATE_REF, kind=kind)
         mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     else:
-        doc = render.render_pdf(render.render_html(draft, comp, quote_ref=ESTIMATE_REF, kind=kind))
+        html = render.render_html(draft, comp, quote_ref=ESTIMATE_REF, kind=kind)
+        doc = await rendered(render.render_pdf, html)
         data, mime = doc.pdf, "application/pdf"
     return Response(
         content=data,
@@ -489,14 +491,14 @@ async def render_doc(
     digest = ""
     if fmt == "xlsx":
         data, mime = (
-            render.render_xlsx(draft, comp, quote_ref=ref, kind=kind),
+            await rendered(render.render_xlsx, draft, comp, quote_ref=ref, kind=kind),
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
     else:
         html = render.render_html(draft, comp, quote_ref=ref, kind=kind)
         if fmt == "html":
             return Response(content=html, media_type="text/html; charset=utf-8")
-        doc = render.render_pdf(html)
+        doc = await rendered(render.render_pdf, html)
         data, mime, digest = doc.pdf, "application/pdf", doc.sha256
     name = f"{(ref or 'draft').replace('/', '-')}-{kind}.{fmt}"
     if not data:

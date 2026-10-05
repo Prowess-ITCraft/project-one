@@ -166,7 +166,7 @@ service so it can be tested without Celery (see `catalogue.service.expire_prices
 | Role | Main abilities |
 | --- | --- |
 | Admin | Users, gate settings, audit verify, feature flags, catalogue edit. No prices. |
-| Director | Approves gates, reviews audits, reads prices, MFA required. |
+| Director | Approves gates, reviews audits, reads prices, and holds every Admin permission (ADR 0026). MFA required. |
 | Sales head | Customers, projects, members, prices, approves BOQ gate. |
 | Sales manager | Customers, projects, enters prices. |
 | Solution architect | Imports, reviews and approves audits, edits catalogue. |

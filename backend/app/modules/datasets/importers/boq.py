@@ -10,7 +10,7 @@ from __future__ import annotations
 import io
 import re
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date
 from decimal import Decimal, InvalidOperation
 
 from app.core.money import parse_inr
@@ -341,12 +341,6 @@ def parse_xlsx(data: bytes) -> BoqDocument:
 def detect_xlsx(data: bytes) -> float:
     try:
         parse_xlsx(data)
-    except BoqParseError:
-        return 0.0
-    except Exception:
+    except Exception:  # anything that does not read as a BOQ sheet scores zero
         return 0.0
     return 0.8
-
-
-def parsed_at() -> datetime:  # pragma: no cover - trivial
-    return datetime.now()

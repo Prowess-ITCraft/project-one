@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_session
+from app.core.documents import rendered
 from app.core.errors import NotFound
 from app.core.idempotency import IdempotencyGuard, require_idempotency_key, run_idempotent
 from app.modules.identity.contracts import P, Principal, require
@@ -74,7 +75,7 @@ async def render_plan(
         raise NotFound("There is no plan for this project yet.")
     if fmt == "html":
         return Response(content=render.render_html(ctx), media_type="text/html; charset=utf-8")
-    doc = render.render_plan_pdf(ctx)
+    doc = await rendered(render.render_plan_pdf, ctx)
     name = f"{ctx['project_code']}-plan-{ctx['plan_number']}.pdf"
     return Response(
         content=doc.pdf,

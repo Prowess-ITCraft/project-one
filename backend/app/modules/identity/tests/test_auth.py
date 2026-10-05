@@ -105,6 +105,29 @@ async def test_director_must_enrol_mfa_before_getting_tokens(client: Any) -> Non
     assert done.status_code == 200, done.text
     assert len(done.json()["recovery_codes"]) >= 8
     assert done.json()["tokens"]["access_token"]
+    # The set-up token is spent: it cannot set up a second authenticator over the first.
+    again = await client.post(f"{API}/auth/mfa/enrol/start", json={"enrol_token": token})
+    assert again.status_code == 401 and again.json()["code"] == "challenge_invalid"
+    again = await client.post(
+        f"{API}/auth/mfa/enrol/confirm", json={"enrol_token": token, "code": code}
+    )
+    assert again.status_code == 401 and again.json()["code"] == "challenge_invalid"
+
+
+async def test_two_renewals_at_once_give_one_new_token(client: Any) -> None:
+    import asyncio
+
+    u = await make_user(client, Role.SALES_MANAGER)
+    await get_redis().flushall()
+    tokens = (
+        await client.post(f"{API}/auth/login", json={"email": u.email, "password": PASSWORD})
+    ).json()
+    body = {"refresh_token": tokens["refresh_token"]}
+    a, b = await asyncio.gather(
+        client.post(f"{API}/auth/refresh", json=body), client.post(f"{API}/auth/refresh", json=body)
+    )
+    assert sorted([a.status_code, b.status_code]) == [200, 401]
+    assert (a if a.status_code == 401 else b).json()["code"] == "refresh_race"
 
 
 async def test_mfa_code_is_required_and_wrong_code_fails(client: Any) -> None:

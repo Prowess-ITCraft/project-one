@@ -43,8 +43,11 @@ function useLiveEvents(projectId: string, enabled: boolean, onEvent: () => void)
       source.addEventListener("run_event", (m) => take([JSON.parse((m as MessageEvent).data) as Ev], true));
       source.onerror = () => {
         if (source.readyState === EventSource.CLOSED && !poll) {
-          poll = setInterval(async () => {
-            take(await get<Ev[]>(`/projects/${projectId}/field/events?after=${cursor.current}`), true);
+          poll = setInterval(() => {
+            get<Ev[]>(`/projects/${projectId}/field/events?after=${cursor.current}`).then(
+              (list) => take(list, true),
+              () => undefined, // no signal or a restart: the next poll tries again
+            );
           }, 15_000);
         }
       };

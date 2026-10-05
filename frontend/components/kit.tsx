@@ -1,8 +1,9 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { ArrowLeft } from "@phosphor-icons/react";
+import { openDoc } from "@/lib/api";
 
 /** Pages opened inside the app since it loaded. The shell counts them, so Back knows whether the
  * previous page is ours (go back) or not (a shared link or a new tab: go to the section). */
@@ -56,6 +57,133 @@ export function Tabs<T extends string>({
         </button>
       ))}
     </div>
+  );
+}
+
+/** A link to an API document (PDF, Excel, HTML preview) that renews the sign-in before the
+ * browser fetches it. Ctrl or middle click still opens it the plain way. */
+export function DocLink({
+  href,
+  newTab,
+  className,
+  children,
+}: {
+  href: string;
+  newTab?: boolean;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <a
+      className={className}
+      href={href}
+      target={newTab ? "_blank" : undefined}
+      rel={newTab ? "noreferrer" : undefined}
+      onClick={(e) => {
+        if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        e.preventDefault();
+        openDoc(href, newTab);
+      }}
+    >
+      {children}
+    </a>
+  );
+}
+
+/** Put text on the clipboard. The clipboard API works only over HTTPS; on a plain HTTP office
+ * address the older copy command still does. False when neither worked. */
+async function copyText(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    /* refused: try the older way */
+  }
+  const area = document.createElement("textarea");
+  area.value = text;
+  area.setAttribute("readonly", "");
+  area.style.position = "fixed";
+  area.style.opacity = "0";
+  document.body.appendChild(area);
+  area.select();
+  let ok = false;
+  try {
+    ok = document.execCommand("copy");
+  } catch {
+    ok = false;
+  }
+  area.remove();
+  return ok;
+}
+
+/** A Copy button that says whether it worked. */
+export function CopyButton({
+  text,
+  label = "Copy",
+  className = "btn quiet small",
+  icon,
+}: {
+  text: string;
+  label?: string;
+  className?: string;
+  icon?: ReactNode;
+}) {
+  const [state, setState] = useState<"idle" | "done" | "failed">("idle");
+  return (
+    <button type="button" className={className} onClick={async () => setState((await copyText(text)) ? "done" : "failed")}>
+      {icon}
+      {state === "done" ? "Copied" : state === "failed" ? "Could not copy, select it by hand" : label}
+    </button>
+  );
+}
+
+/** A button for something hard to undo: the first click asks, the second does it. */
+export function ConfirmButton({
+  question,
+  confirmLabel,
+  onConfirm,
+  disabled,
+  className = "btn",
+  confirmClassName = "btn danger small",
+  children,
+}: {
+  question: string;
+  confirmLabel: string;
+  onConfirm: () => unknown;
+  disabled?: boolean;
+  className?: string;
+  /** Red by default; a step forward rather than a loss can use the primary style. */
+  confirmClassName?: string;
+  children: ReactNode;
+}) {
+  const [asking, setAsking] = useState(false);
+  if (!asking) {
+    return (
+      <button type="button" className={className} disabled={disabled} onClick={() => setAsking(true)}>
+        {children}
+      </button>
+    );
+  }
+  return (
+    <span className="row" role="group" aria-label={question}>
+      <span className="small">{question}</span>
+      <button
+        type="button"
+        className={confirmClassName}
+        disabled={disabled}
+        onClick={async () => {
+          setAsking(false);
+          await onConfirm();
+        }}
+      >
+        {confirmLabel}
+      </button>
+      <button type="button" className="btn quiet small" onClick={() => setAsking(false)}>
+        Cancel
+      </button>
+    </span>
   );
 }
 

@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ApiError, message, post, resumeSession, type S } from "@/lib/api";
 import { Field, Notice } from "@/components/ui";
+import { CopyButton } from "@/components/kit";
 import { forgetKept } from "@/lib/hooks";
 import { Wordmark } from "@/components/field";
 import {
@@ -57,6 +58,13 @@ type Step =
 /** The development login is offered only when the app runs on this computer. The account does
  * not exist outside development: `seed-demo` refuses to run in production. */
 const DEMO = { email: "adi@test.com", password: "test1234" };
+/** Where to go once signed in: the page the person was on when the sign-in ran out, if it is a
+ * page of this app, otherwise the projects. */
+function nextPage(): string {
+  const n = typeof window === "undefined" ? "" : (new URLSearchParams(window.location.search).get("next") ?? "");
+  return /^\/(?![/\\])/.test(n) && !n.startsWith("/login") ? n : "/projects";
+}
+
 const isLocal = () =>
   typeof window !== "undefined" && ["localhost", "127.0.0.1", "[::1]"].includes(window.location.hostname);
 
@@ -95,7 +103,7 @@ export default function Login() {
   useEffect(() => setLocal(isLocal()), []);
   // Still signed in from earlier (the session lasts 14 days): no password or code needed.
   useEffect(() => {
-    void resumeSession().then((ok) => ok && router.replace("/projects"));
+    void resumeSession().then((ok) => ok && router.replace(nextPage()));
   }, [router]);
 
   async function go(fn: () => Promise<void>) {
@@ -116,7 +124,7 @@ export default function Login() {
 
   const finish = () => {
     forgetKept(); // a shared phone must not show the last person's tasks offline
-    router.replace("/projects");
+    router.replace(nextPage());
   };
 
   const signIn = (ev: React.FormEvent) => {
@@ -354,14 +362,12 @@ export default function Login() {
                 ))}
               </div>
               <div className="row">
-                <button
-                  type="button"
+                <CopyButton
                   className="btn"
-                  onClick={() => void navigator.clipboard?.writeText(step.codes.join("\n"))}
-                >
-                  <Copy size={16} aria-hidden="true" />
-                  Copy codes
-                </button>
+                  text={step.codes.join("\n")}
+                  label="Copy codes"
+                  icon={<Copy size={16} aria-hidden="true" />}
+                />
                 <button className="btn primary" onClick={finish}>
                   I saved them, continue
                 </button>

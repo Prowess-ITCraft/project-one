@@ -1,6 +1,6 @@
-"""What an admin does on the Accounts page, through the API: create with several roles, edit
-details and roles, reset a password or an authenticator, sign someone out, deactivate, erase.
-Also signing in with a recovery code when the phone is lost."""
+"""What an admin or the Director does on the Accounts page, through the API: create with several
+roles, edit details and roles, reset a password or an authenticator, sign someone out,
+deactivate, erase. Also signing in with a recovery code when the phone is lost."""
 
 from __future__ import annotations
 
@@ -81,6 +81,56 @@ async def test_admin_cannot_remove_own_admin_role_or_deactivate_self(client: Any
         json={"version": me["version"], "is_active": False},
     )
     assert r.status_code == 422
+
+
+async def test_director_manages_accounts_like_the_admin(client: Any) -> None:
+    """ADR 0026: the Director creates accounts and assigns any role, Admin included."""
+    director = await make_user(client, Role.DIRECTOR)
+    r = await client.post(
+        f"{API}/users",
+        headers=director.headers,
+        json={
+            "email": "meera.joshi@itcraft-test.in",
+            "full_name": "Meera Joshi",
+            "initials": "MJ",
+            "password": NEW_PASSWORD,
+            "roles": ["sales_manager"],
+        },
+    )
+    assert r.status_code == 201, r.text
+    created = r.json()
+    r = await client.put(
+        f"{API}/users/{created['id']}/roles",
+        headers=director.headers,
+        json={"version": created["version"], "roles": ["admin", "sales_head"]},
+    )
+    assert r.status_code == 200, r.text
+    assert sorted(r.json()["roles"]) == ["admin", "sales_head"]
+    # Nobody removes their own Director role, so the accounts never lose their last manager.
+    me = (await client.get(f"{API}/users/{director.id}", headers=director.headers)).json()
+    r = await client.put(
+        f"{API}/users/{director.id}/roles",
+        headers=director.headers,
+        json={"version": me["version"], "roles": ["sales_head"]},
+    )
+    assert r.status_code == 422 and "own director role" in r.json()["detail"]
+
+
+async def test_only_admin_and_director_create_accounts(client: Any) -> None:
+    for role in (Role.SALES_HEAD, Role.PROJECT_MANAGER, Role.TECHNICAL_LEAD):
+        someone = await make_user(client, role)
+        r = await client.post(
+            f"{API}/users",
+            headers=someone.headers,
+            json={
+                "email": f"nobody.{role.value}@itcraft-test.in",
+                "full_name": "Not Allowed",
+                "initials": "NA",
+                "password": NEW_PASSWORD,
+                "roles": ["admin"],
+            },
+        )
+        assert r.status_code == 403, (role, r.text)
 
 
 async def test_reset_password_ends_sessions_and_the_old_password(client: Any) -> None:

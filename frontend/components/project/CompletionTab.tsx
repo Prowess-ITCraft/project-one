@@ -4,7 +4,7 @@ import { useState } from "react";
 import { date, dateTime, post, type S } from "@/lib/api";
 import { useData, useMe } from "@/lib/hooks";
 import { Badge, Empty, Field, Notice, Skeleton, useAction } from "@/components/ui";
-import { Drawer } from "@/components/kit";
+import { DocLink, Drawer } from "@/components/kit";
 
 /** One release condition as the API states it. Order is the order the work happens in. */
 export type Condition = { key: string; label: string; met: boolean; detail: string };
@@ -375,9 +375,9 @@ function ReportAndCertificate({
           Work delivered, exclusions, before and after scores, configuration checks and deviations. No prices.
         </p>
         <div className="row" style={{ margin: "12px 0" }}>
-          <a className="btn" href={`/api/v1${R}/projects/${projectId}/report/preview?fmt=html`} target="_blank" rel="noreferrer">
+          <DocLink className="btn" href={`/api/v1${R}/projects/${projectId}/report/preview?fmt=html`} newTab>
             Preview
-          </a>
+          </DocLink>
           {can("report:write") && (
             <button
               className="btn primary"
@@ -400,7 +400,7 @@ function ReportAndCertificate({
           <ul className="doclist">
             {[...reports.data].reverse().map((r) => (
               <li key={r.id}>
-                <a href={`/api/v1${R}/reports/${r.id}/pdf`}>Completion report {r.number}</a>
+                <DocLink href={`/api/v1${R}/reports/${r.id}/pdf`}>Completion report {r.number}</DocLink>
                 <span className="muted small">Locked {dateTime(r.locked_at)}</span>
               </li>
             ))}
@@ -418,9 +418,9 @@ function ReportAndCertificate({
             </div>
             <p className="muted small">Signed {dateTime(valid.issued_at)}. Fingerprint {valid.payload_sha256.slice(0, 16)}.</p>
             <div className="row">
-              <a className="btn primary" href={`/api/v1${R}/certificates/${valid.id}/pdf`}>
+              <DocLink className="btn primary" href={`/api/v1${R}/certificates/${valid.id}/pdf`}>
                 Download PDF
-              </a>
+              </DocLink>
               <Link className="btn" href={`/verify/${valid.number}`} target="_blank">
                 Public check page
               </Link>

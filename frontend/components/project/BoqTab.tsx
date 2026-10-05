@@ -1,9 +1,9 @@
 "use client";
-import { useMemo, useState } from "react";
-import { ApiError, date, dateTime, get, money, post, type S } from "@/lib/api";
-import { useData, useMe, useToast } from "@/lib/hooks";
+import { useEffect, useMemo, useState } from "react";
+import { date, dateTime, get, money, openDoc as openApiDoc, post, type S } from "@/lib/api";
+import { useData, useMe } from "@/lib/hooks";
 import { Badge, Empty, Field, Notice, Skeleton, useAction } from "@/components/ui";
-import { Check, Drawer, toList } from "@/components/kit";
+import { Check, ConfirmButton, Drawer, toList } from "@/components/kit";
 import { EstimatePanel } from "@/components/project/EstimatePanel";
 
 type Boq = S["BoqOut"];
@@ -311,7 +311,6 @@ function SettingsPanel({ boq, queue, locked }: { boq: Boq; queue: (ops: Op[]) =>
 
 export function BoqTab({ projectId, stage, autoEstimate }: { projectId: string; stage: string; autoEstimate?: boolean }) {
   const { can } = useMe();
-  const toast = useToast();
   const boqQ = useData<Boq>(can("boq:read") ? `/projects/${projectId}/boq` : null);
   const versions = useData<S["VersionRowOut"][]>(boqQ.data ? `/boq/${boqQ.data.id}/versions` : null);
   const edits = useData<S["EditRowOut"][]>(boqQ.data ? `/boq/${boqQ.data.id}/edits` : null);
@@ -324,6 +323,9 @@ export function BoqTab({ projectId, stage, autoEstimate }: { projectId: string; 
   const [showAccept, setShowAccept] = useState(false);
   const [note, setNote] = useState("");
 
+  // The BOQ an action just returned, shown until the reload it starts comes back. The server's
+  // copy then wins again, so changes made by someone else show up instead of being hidden.
+  useEffect(() => setLocal(null), [boqQ.data]);
   const boq = local ?? boqQ.data;
   const canEdit = can("boq:edit");
 
@@ -337,22 +339,17 @@ export function BoqTab({ projectId, stage, autoEstimate }: { projectId: string; 
     versions.reload();
     edits.reload();
   };
-  const fail = (e: unknown) => toast(e instanceof ApiError ? e.message : "Something went wrong. Try again.", true);
 
   if (!can("boq:read")) return <Notice tone="warn">You do not have access to the BOQ.</Notice>;
   if (boqQ.loading && !boq) return <Skeleton lines={8} />;
 
   async function generate(replace: boolean) {
-    try {
-      const b = await run(() => post<Boq>(`/projects/${projectId}/boq/generate`, { replace }), "BOQ drafted from the gap register");
-      if (b) {
-        setPendingOps([]);
-        setLineEdits({});
-        apply(b);
-      }
-    } catch (e) {
-      fail(e);
-    }
+    const b = await run(() => post<Boq>(`/projects/${projectId}/boq/generate`, { replace }), "BOQ drafted from the gap register");
+    if (b) {
+      setPendingOps([]);
+      setLineEdits({});
+      apply(b);
+    } else boqQ.reload();
   }
 
   if (!boq) {
@@ -398,31 +395,26 @@ export function BoqTab({ projectId, stage, autoEstimate }: { projectId: string; 
   }
   const missingPriceReason = Object.entries(lineEdits).some(([, e]) => e.unit_price !== undefined && e.unit_price !== "" && (e.reason ?? "").trim().length < 3);
 
+  // A refused change (most often someone else saved first) reloads the BOQ. Unsaved edits stay
+  // on screen, so they can be checked against the new copy and saved again.
   async function save() {
-    try {
-      const b = await run(() => post<Boq>(`/boq/${boq!.id}/edit`, { draft_rev: boq!.draft_rev, reason, ops: buildOps() }), "Changes saved");
-      if (b) {
-        setPendingOps([]);
-        setLineEdits({});
-        setReason("");
-        apply(b);
-      }
-    } catch (e) {
-      fail(e);
-    }
+    const b = await run(() => post<Boq>(`/boq/${boq!.id}/edit`, { draft_rev: boq!.draft_rev, reason, ops: buildOps() }), "Changes saved");
+    if (b) {
+      setPendingOps([]);
+      setLineEdits({});
+      setReason("");
+      apply(b);
+    } else boqQ.reload();
   }
 
   async function simple(path: string, body: unknown, done: string) {
-    try {
-      const b = await run(() => post<Boq>(`/boq/${boq!.id}/${path}`, body), done);
-      if (b) apply(b);
-    } catch (e) {
-      fail(e);
-    }
+    const b = await run(() => post<Boq>(`/boq/${boq!.id}/${path}`, body), done);
+    if (b) apply(b);
+    else boqQ.reload();
   }
 
   const openDoc = (fmt: string, kind = "quotation", version?: number) =>
-    window.open(`/api/v1/boq/${boq.id}/render?fmt=${fmt}&kind=${kind}${version ? `&version=${version}` : ""}`, "_blank");
+    openApiDoc(`/api/v1/boq/${boq.id}/render?fmt=${fmt}&kind=${kind}${version ? `&version=${version}` : ""}`, true);
 
   // ---- grouped display ----
   const groups = boq.groups.map((g) => ({
@@ -529,20 +521,21 @@ export function BoqTab({ projectId, stage, autoEstimate }: { projectId: string; 
           )}
           {boq.stage === "pricing_review" && !can("boq:approve_pricing") && <span className="muted small">Waiting for a sales head or the director to approve the pricing.</span>}
           {boq.stage === "pricing_approved" && can("boq:issue") && (
-            <button
+            <ConfirmButton
               className="btn primary"
               disabled={busy}
-              onClick={async () => {
-                try {
-                  await run(() => post(`/boq/${boq.id}/issue`, undefined, { idem: true }), "Version issued");
-                  apply((await get<Boq>(`/boq/${boq.id}`)));
-                } catch (e) {
-                  fail(e);
-                }
+              question="Issue this as the next version? It gets the quote number and its PDF is kept as sent."
+              confirmLabel="Issue"
+              confirmClassName="btn primary small"
+              onConfirm={async () => {
+                await run(() => post(`/boq/${boq.id}/issue`, undefined, { idem: true }), "Version issued");
+                boqQ.reload();
+                versions.reload();
+                edits.reload();
               }}
             >
               Issue as a new version
-            </button>
+            </ConfirmButton>
           )}
         </div>
       )}

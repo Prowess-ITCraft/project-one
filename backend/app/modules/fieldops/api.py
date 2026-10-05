@@ -24,6 +24,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.db import get_session, get_sessionmaker
+from app.core.documents import rendered
 from app.core.idempotency import IdempotencyGuard, require_idempotency_key, run_idempotent
 from app.core.ratelimit import Limit, check
 from app.modules.fieldops import render, service
@@ -458,7 +459,7 @@ async def render_checklist(
     ctx = await render.checklist_context(session, principal, run_id)
     if fmt == "html":
         return Response(content=render.render_html(ctx), media_type="text/html; charset=utf-8")
-    doc = render.render_checklist_pdf(ctx)
+    doc = await rendered(render.render_checklist_pdf, ctx)
     return Response(
         content=doc.pdf,
         media_type="application/pdf",

@@ -1,7 +1,7 @@
 "use client";
 import { Back } from "@/components/kit";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { dateTime, post, type S } from "@/lib/api";
 import { useData, useMe } from "@/lib/hooks";
 import { Badge, Field, Notice, Skeleton, useAction } from "@/components/ui";
@@ -53,14 +53,14 @@ function Attention({ row, d, reload }: { row: FieldRow; d: Detail; reload: (x?: 
       () => post<Detail>(`/prismsuite/imports/${d.id}/resolutions`, { path: row.path, reason, version: d.version }),
       "Field confirmed",
     );
-    if (r) reload(r);
+    reload(r);
   }
   async function setVal() {
     const r = await run(
       () => post<Detail>(`/prismsuite/imports/${d.id}/corrections`, { path: row.path, value, reason, resolves: row.path, version: d.version }),
       "Value saved",
     );
-    if (r) reload(r);
+    reload(r);
   }
 
   return (
@@ -124,6 +124,9 @@ export default function ImportReview() {
   const [reject, setReject] = useState(false);
   const [note, setNote] = useState("");
 
+  // What an action just returned, shown until the reload it starts comes back; the server's copy
+  // then wins again, so a change someone else made is never hidden behind it.
+  useEffect(() => setLocal(null), [data]);
   const d = local ?? data;
   if (error && !d) return <Notice tone="bad">{error}</Notice>;
   if (!d) return <Skeleton lines={10} />;
@@ -140,10 +143,7 @@ export default function ImportReview() {
 
   const refresh = (x?: Detail) => {
     if (x) setLocal(x);
-    else {
-      setLocal(null);
-      reload();
-    }
+    reload();
   };
 
   async function approve() {

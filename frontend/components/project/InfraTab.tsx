@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
-import { ApiError, post, type S } from "@/lib/api";
-import { useData, useMe, useToast } from "@/lib/hooks";
+import { post, type S } from "@/lib/api";
+import { useData, useMe } from "@/lib/hooks";
 import { Badge, Empty, Notice, Skeleton, roleLabel, useAction } from "@/components/ui";
 
 type State = S["StateOut"];
@@ -188,7 +188,6 @@ export function InfraTab({ projectId }: { projectId: string }) {
   const { can } = useMe();
   const states = useData<State[]>(can("infra:read") ? `/projects/${projectId}/infra` : null);
   const { busy, run } = useAction();
-  const toast = useToast();
   const canWrite = can("infra:write");
   if (!can("infra:read")) return <Notice tone="warn">You do not have access to the infrastructure view.</Notice>;
   if (states.loading && !states.data) return <Skeleton lines={6} />;
@@ -197,11 +196,7 @@ export function InfraTab({ projectId }: { projectId: string }) {
   const ideal = list.find((s) => s.kind === "ideal" && s.status !== "superseded");
 
   async function build(kind: "current" | "ideal") {
-    try {
-      await run(() => post(`/projects/${projectId}/infra/${kind}`), kind === "current" ? "Current infrastructure built" : "Ideal infrastructure built");
-    } catch (e) {
-      if (e instanceof ApiError) toast(e.message, true);
-    }
+    await run(() => post(`/projects/${projectId}/infra/${kind}`), kind === "current" ? "Current infrastructure built" : "Ideal infrastructure built");
     states.reload();
   }
 

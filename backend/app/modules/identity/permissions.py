@@ -132,42 +132,47 @@ class P(StrEnum):
 
 _READ_WORK = {P.CUSTOMER_READ, P.PROJECT_READ, P.FILE_READ, P.CATALOGUE_READ}
 
+# Accounts and roles, sessions, flags, gate settings, rules, deletes and the audit log check.
+# The Director holds all of it as well (ADR 0026); doer and approver still differ per action.
+_ADMIN = frozenset(
+    {
+        P.ML_READ,
+        P.ML_MANAGE,
+        P.POLICY_EDIT,
+        P.CERT_SETTINGS,
+        P.PLAN_READ,
+        P.USER_READ,
+        P.USER_MANAGE,
+        P.SESSION_MANAGE_ANY,
+        P.AUDIT_READ,
+        P.AUDIT_VERIFY,
+        P.PERSONAL_DATA_ERASE,
+        P.FLAGS_MANAGE,
+        P.GATE_CONFIGURE,
+        P.CUSTOMER_READ,
+        P.CUSTOMER_READ_ALL,
+        P.CUSTOMER_DELETE,
+        P.PROJECT_READ,
+        P.PROJECT_READ_ALL,
+        P.PROJECT_MEMBERS,
+        P.PROJECT_DELETE,
+        P.FILE_READ,
+        P.CATALOGUE_READ,
+        P.CATALOGUE_WRITE,
+        P.DATASET_READ,
+        P.DATASET_WRITE,
+        P.DATASET_ADMIN,
+        P.INFRA_READ,
+        P.RULE_EDIT,
+        P.TEMPLATE_EDIT,
+        P.SETTINGS_EDIT,
+    }
+)
+
 ROLE_PERMISSIONS: dict[Role, frozenset[P]] = {
-    Role.ADMIN: frozenset(
-        {
-            P.ML_READ,
-            P.ML_MANAGE,
-            P.POLICY_EDIT,
-            P.CERT_SETTINGS,
-            P.PLAN_READ,
-            P.USER_READ,
-            P.USER_MANAGE,
-            P.SESSION_MANAGE_ANY,
-            P.AUDIT_READ,
-            P.AUDIT_VERIFY,
-            P.PERSONAL_DATA_ERASE,
-            P.FLAGS_MANAGE,
-            P.GATE_CONFIGURE,
-            P.CUSTOMER_READ,
-            P.CUSTOMER_READ_ALL,
-            P.CUSTOMER_DELETE,
-            P.PROJECT_READ,
-            P.PROJECT_READ_ALL,
-            P.PROJECT_MEMBERS,
-            P.PROJECT_DELETE,
-            P.FILE_READ,
-            P.CATALOGUE_READ,
-            P.CATALOGUE_WRITE,
-            P.DATASET_READ,
-            P.DATASET_WRITE,
-            P.DATASET_ADMIN,
-            P.INFRA_READ,
-            P.RULE_EDIT,
-            P.TEMPLATE_EDIT,
-            P.SETTINGS_EDIT,
-        }
-    ),
-    Role.DIRECTOR: frozenset(
+    Role.ADMIN: _ADMIN,
+    Role.DIRECTOR: _ADMIN
+    | frozenset(
         {
             P.ML_READ,
             P.ML_MANAGE,

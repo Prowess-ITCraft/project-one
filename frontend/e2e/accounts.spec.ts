@@ -52,6 +52,7 @@ test.describe("Admin", () => {
     await drawer.getByRole("button", { name: "Save roles" }).click();
     await settle(page);
     await drawer.getByRole("button", { name: "Deactivate account" }).click();
+    await drawer.getByRole("button", { name: "Deactivate", exact: true }).click();
     await expect(drawer.getByText("Deactivated")).toBeVisible();
     await drawer.getByRole("button", { name: "Close" }).click();
 

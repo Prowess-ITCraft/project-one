@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Back, Tabs } from "@/components/kit";
+import { Back, CopyButton, Tabs } from "@/components/kit";
 import { IntakeTab } from "@/components/project/IntakeTab";
 import { InfraTab } from "@/components/project/InfraTab";
 import { GapsTab } from "@/components/project/GapsTab";
@@ -76,9 +76,7 @@ function AckLink({ projectId, customerId, submissionId }: { projectId: string; c
       {url && (
         <div className="row">
           <input readOnly value={url} aria-label="Acknowledgement link" onFocus={(e) => e.currentTarget.select()} />
-          <button className="btn quiet small" onClick={() => navigator.clipboard?.writeText(url)}>
-            Copy
-          </button>
+          <CopyButton text={url} />
         </div>
       )}
     </div>

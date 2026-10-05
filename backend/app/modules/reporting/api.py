@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, StringConstraints
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_session
+from app.core.documents import rendered
 from app.core.errors import NotFound
 from app.core.idempotency import IdempotencyGuard, require_idempotency_key, run_idempotent
 from app.core.ratelimit import Limit, check
@@ -191,7 +192,7 @@ async def report_preview(
         return Response(
             content=render.render_report_html(ctx), media_type="text/html; charset=utf-8"
         )
-    doc = render.render_report_pdf(ctx)
+    doc = await rendered(render.render_report_pdf, ctx)
     return _pdf(doc.pdf, f"{content['project']['code']}-completion-preview.pdf", doc.sha256)
 
 

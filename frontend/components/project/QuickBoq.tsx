@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { FileArrowUp } from "@phosphor-icons/react";
-import { ApiError, post, put, type S } from "@/lib/api";
+import { ApiError, message, post, put, type S } from "@/lib/api";
 import { useData, useMe } from "@/lib/hooks";
 import { Field, Notice } from "@/components/ui";
 import { EstimatePanel } from "@/components/project/EstimatePanel";
@@ -21,6 +21,7 @@ export function QuickBoq({ projectId, stage, onImported }: { projectId: string; 
   const [step, setStep] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [drafted, setDrafted] = useState(0);
+  const [picker, setPicker] = useState(0); // a new key empties the file input after an upload
   const [f, setF] = useState({ company_size: "small", budget_tier: "standard", sites: "1", users_now: "", users_12m: "" });
 
   useEffect(() => {
@@ -60,6 +61,7 @@ export function QuickBoq({ projectId, stage, onImported }: { projectId: string; 
           if (!(e instanceof ApiError && e.code === "already_imported")) throw e;
         }
         setFile(null);
+        setPicker((n) => n + 1);
         imports.reload();
         onImported?.();
       }
@@ -83,7 +85,8 @@ export function QuickBoq({ projectId, stage, onImported }: { projectId: string; 
       brief.reload();
       setDrafted((n) => n + 1);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong. Try again.");
+      setError(message(e));
+      brief.reload(); // someone else may have saved the answers meanwhile
     } finally {
       setStep(null);
     }
@@ -121,7 +124,7 @@ export function QuickBoq({ projectId, stage, onImported }: { projectId: string; 
           label="PrismSuite report (.docx or .json)"
           hint={current ? `Leave empty to use revision ${current.revision}, already imported.` : undefined}
         >
-          <input id="qb-file" type="file" accept=".docx,.json" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+          <input key={picker} id="qb-file" type="file" accept=".docx,.json" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
         </Field>
         <div className="grid3">
           <Field id="qb-size" label="Company size">

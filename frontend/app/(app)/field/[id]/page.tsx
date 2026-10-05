@@ -1,10 +1,10 @@
 "use client";
-import { Back } from "@/components/kit";
+import { Back, DocLink } from "@/components/kit";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { dateTime, get, post, type S } from "@/lib/api";
 import { useData, useMe, useToast } from "@/lib/hooks";
-import { discard, pending, queueAction, queueEvidence, subscribe, type FlushResult, type Pending } from "@/lib/offline";
+import { discard, pending, queueAction, queueEvidence, retry, subscribe, type FlushResult, type Pending } from "@/lib/offline";
 import { Badge, Field, Notice, Skeleton, roleLabel, useAction } from "@/components/ui";
 import { STATE_SHORT, TaskTimeline, shortTitle, stateTone } from "@/components/field";
 
@@ -176,6 +176,7 @@ function CodeStep({
   onDone,
   waitFor,
   codes,
+  held,
 }: {
   run: Run;
   purpose: "check_in" | "handover";
@@ -185,20 +186,27 @@ function CodeStep({
   onDone: (r: FlushResult) => void;
   /** Why the code cannot be asked for yet; the button stays off and says so. */
   waitFor?: string;
+  /** The same action is already saved on the phone; sending it again would be refused. */
+  held?: boolean;
 }) {
   const toast = useToast();
   const { busy, run: act } = useAction();
   const [sent, setSent] = useState<S["CodeSentOut"] | null>(null);
   const [code, setCode] = useState("");
+  const [sending, setSending] = useState(false);
+  async function confirm(body: Record<string, unknown>) {
+    setSending(true);
+    try {
+      onDone(await queueAction(run.id, `/field/runs/${run.id}/${action}`, label, { ...body, ...(await locate()) }));
+    } finally {
+      setSending(false);
+    }
+  }
   if (!codes) {
     return (
       <div className="stack">
         {waitFor && <p className="small muted">{waitFor}</p>}
-        <button
-          className="btn primary big"
-          disabled={!!waitFor}
-          onClick={async () => onDone(await queueAction(run.id, `/field/runs/${run.id}/${action}`, label, await locate()))}
-        >
+        <button className="btn primary big" disabled={!!waitFor || sending || held} onClick={() => void confirm({})}>
           {label}
         </button>
       </div>
@@ -229,8 +237,7 @@ function CodeStep({
         className="otp"
         onSubmit={async (e) => {
           e.preventDefault();
-          const where = await locate();
-          onDone(await queueAction(run.id, `/field/runs/${run.id}/${action}`, label, { code, ...where }));
+          await confirm({ code });
           setCode("");
         }}
       >
@@ -245,7 +252,7 @@ function CodeStep({
           value={code}
           onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
         />
-        <button className="btn primary" disabled={code.length !== 6}>
+        <button className="btn primary" disabled={code.length !== 6 || sending || held}>
           {label}
         </button>
       </form>
@@ -287,8 +294,18 @@ export default function TaskPage() {
     else if (r.waiting) toast("No signal. Saved on this phone; it will be sent when you are back online.");
     d.reload();
   }
+  // One action at a time, and never one that is already saved on the phone: the state only
+  // moves once the server has it, so a second tap would be sent again and refused.
+  const [sending, setSending] = useState(false);
+  const held = (path: string) => sending || queued.some((q) => q.path === `/field/runs/${id}/${path}` && !q.error);
   async function doAction(path: string, label: string, body: Record<string, unknown> = {}) {
-    after(await queueAction(id, `/field/runs/${id}/${path}`, label, body));
+    if (held(path)) return;
+    setSending(true);
+    try {
+      after(await queueAction(id, `/field/runs/${id}/${path}`, label, body));
+    } finally {
+      setSending(false);
+    }
   }
 
   if (d.error) return <Notice tone="bad">{d.error}</Notice>;
@@ -366,9 +383,14 @@ export default function TaskPage() {
               <span>
                 {q.label}: {q.error}
               </span>
-              <button className="btn quiet small" onClick={() => void discard(q.id)}>
-                Remove
-              </button>
+              <span className="row">
+                <button className="btn small" onClick={async () => after(await retry(q.id))}>
+                  Try again
+                </button>
+                <button className="btn quiet small" onClick={() => void discard(q.id)}>
+                  Remove
+                </button>
+              </span>
             </div>
           ))}
         </div>
@@ -378,7 +400,7 @@ export default function TaskPage() {
       {mine && (
         <div className="section stack">
           {run.state === "assigned" && (
-            <button className="btn primary big" onClick={() => void doAction("accept", "Accept task")}>
+            <button className="btn primary big" disabled={held("accept")} onClick={() => void doAction("accept", "Accept task")}>
               Accept task
             </button>
           )}
@@ -400,6 +422,7 @@ export default function TaskPage() {
                     label="Check in"
                     onDone={after}
                     codes={detail.customer_codes}
+                    held={held("check-in")}
                     waitFor={
                       stageItems("check_in").some(({ i }) => !evidenceFor(i).length && !queuedFor(i).length)
                         ? detail.customer_codes
@@ -412,6 +435,7 @@ export default function TaskPage() {
               )}
               <button
                 className="btn quiet"
+                disabled={held("depart")}
                 onClick={async () => void doAction("depart", "On my way", await locate())}
               >
                 I am on my way
@@ -426,7 +450,7 @@ export default function TaskPage() {
               {evidenceBlock("prechecks")}
               <button
                 className="btn primary big"
-                disabled={stageItems("prechecks").some(({ i }) => !evidenceFor(i).length && !queuedFor(i).length)}
+                disabled={held("prechecks-done") || stageItems("prechecks").some(({ i }) => !evidenceFor(i).length && !queuedFor(i).length)}
                 onClick={() => void doAction("prechecks-done", "Prechecks done")}
               >
                 Mark prechecks done
@@ -444,7 +468,7 @@ export default function TaskPage() {
                       <li key={i} data-done={s.done} data-next={i === nextStep}>
                         <span className="text">{String(s.text)}</span>
                         {i === nextStep ? (
-                          <button className="btn primary small" onClick={() => void doAction(`steps/${i}`, `Step ${i + 1} done`)}>
+                          <button className="btn primary small" disabled={held(`steps/${i}`)} onClick={() => void doAction(`steps/${i}`, `Step ${i + 1} done`)}>
                             Done
                           </button>
                         ) : (
@@ -484,7 +508,7 @@ export default function TaskPage() {
               {run.state === "prechecks_done" && (
                 <button
                   className="btn primary big"
-                  disabled={nextStep !== -1 || baseline.some((f) => !(f.key in run.actuals))}
+                  disabled={held("configured") || nextStep !== -1 || baseline.some((f) => !(f.key in run.actuals))}
                   onClick={() => void doAction("configured", "Configured")}
                 >
                   Mark configured
@@ -505,7 +529,7 @@ export default function TaskPage() {
                   {evidenceBlock("work")}
                   <button
                     className="btn primary big"
-                    disabled={stageItems("work").some(({ r, i }) => r.required !== false && !evidenceFor(i).length)}
+                    disabled={held("submit-evidence") || stageItems("work").some(({ r, i }) => r.required !== false && !evidenceFor(i).length)}
                     onClick={() => void doAction("submit-evidence", "Send for the check")}
                   >
                     Send for the check
@@ -521,7 +545,15 @@ export default function TaskPage() {
               <p className="muted">
                 Show the customer the finished work{detail.customer_codes ? ", then ask for the hand over code" : ", then confirm the hand over"}.
               </p>
-              <CodeStep run={run} purpose="handover" action="hand-over" label="Confirm hand over" onDone={after} codes={detail.customer_codes} />
+              <CodeStep
+                run={run}
+                purpose="handover"
+                action="hand-over"
+                label="Confirm hand over"
+                onDone={after}
+                codes={detail.customer_codes}
+                held={held("hand-over")}
+              />
             </>
           )}
 
@@ -534,7 +566,7 @@ export default function TaskPage() {
                 <div className="row">
                   <button
                     className="btn danger"
-                    disabled={reason.trim().length < 3}
+                    disabled={held("block") || reason.trim().length < 3}
                     onClick={async () => {
                       await doAction("block", "Blocked", { reason: reason.trim() });
                       setBlockOpen(false);
@@ -713,9 +745,9 @@ export default function TaskPage() {
       <div className="section">
         <div className="row between">
           <h2>History</h2>
-          <a className="btn quiet small" href={`/api/v1/field/runs/${id}/render?fmt=pdf`}>
+          <DocLink className="btn quiet small" href={`/api/v1/field/runs/${id}/render?fmt=pdf`}>
             Download the task record (PDF)
-          </a>
+          </DocLink>
         </div>
         <ul className="feed">
           {[...detail.events].reverse().map((e) => (

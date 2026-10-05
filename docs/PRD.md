@@ -28,9 +28,9 @@ verify or approve it** (enforced in code).
 | Sales head | Approves pricing, issues quotes |
 | Project manager | Plan, schedule, engineers, field work oversight |
 | Field engineer | Does the work on site. Never sees prices |
-| Director | Approves gates, waivers and the certificate. MFA required |
+| Director | Approves gates, waivers and the certificate. Also everything an Admin does, accounts and roles included (ADR 0026). MFA required |
 | Customer representative | Reads own projects, gives OTPs, signs off |
-| Admin | Users, settings, master data. MFA required. No prices |
+| Admin | Users and roles, settings, master data. MFA required. No prices. Only Admin and Director create accounts |
 
 ## 3. The eight stages
 

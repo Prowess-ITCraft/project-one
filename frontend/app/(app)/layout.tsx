@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { post, type S } from "@/lib/api";
 import { forgetKept, MeProvider, ToastHost, useData } from "@/lib/hooks";
+import { flush, pending } from "@/lib/offline";
 import { Skeleton, roleLabel } from "@/components/ui";
 import { Logo, Wordmark } from "@/components/field";
 import { notePage } from "@/components/kit";
@@ -112,6 +113,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const router = useRouter();
   const { data: me, error } = useData<S["MeOut"]>("/auth/me");
+  // Field work saved on this phone and not sent yet, found when signing out.
+  const [unsent, setUnsent] = useState(0);
   // Field engineers start on their own tasks, not on the project list.
   const engineerOnly = !!me && me.roles.length === 1 && me.roles[0] === "field_engineer";
   useEffect(() => {
@@ -151,7 +154,18 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const perms = new Set(me.permissions);
   const can = (p: string) => perms.has(p);
 
-  async function signOut() {
+  async function signOut(anyway = false) {
+    if (!anyway) {
+      // Phones get shared, and only the person who saved the work can send it. Send it now if
+      // there is signal; otherwise say so before signing out.
+      await flush().catch(() => null);
+      const left = (await pending().catch(() => [])).length;
+      if (left) {
+        setUnsent(left);
+        return;
+      }
+    }
+    setUnsent(0);
     try {
       await post("/auth/logout");
     } catch {
@@ -203,7 +217,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 </span>
               </div>
               <ThemeSwitch />
-              <button className="btn quiet small with-glyph" onClick={signOut}>
+              <button className="btn quiet small with-glyph" onClick={() => void signOut()}>
                 <SignOut size={16} aria-hidden="true" />
                 Sign out
               </button>
@@ -211,6 +225,22 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </aside>
           <div className="main">
             <div className="page">
+              {unsent > 0 && (
+                <div className="outbox-note stack" role="alert">
+                  <span>
+                    {unsent} action{unsent === 1 ? " is" : "s are"} saved on this phone and not sent yet. They stay on
+                    the phone and are sent when you next sign in here; nobody else can send them for you.
+                  </span>
+                  <span className="row">
+                    <button className="btn small primary" onClick={() => setUnsent(0)}>
+                      Stay signed in
+                    </button>
+                    <button className="btn small quiet" onClick={() => void signOut(true)}>
+                      Sign out anyway
+                    </button>
+                  </span>
+                </div>
+              )}
               <GuideHint path={path} />
               {children}
             </div>

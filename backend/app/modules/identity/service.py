@@ -28,6 +28,7 @@ from app.modules.identity import security as sec
 from app.modules.identity.models import AuthSession, RecoveryCode, RefreshToken, User, UserRole
 from app.modules.identity.permissions import (
     MFA_REQUIRED_ROLES,
+    ROLE_LABELS,
     STAFF_ROLES,
     Role,
     permissions_for,
@@ -341,7 +342,14 @@ async def user_for_enrolment(
 ) -> tuple[User, bool]:
     """Enrol with a challenge token (MFA forced at first sign-in) or from a signed-in session."""
     if enrol_token:
-        return await _user_from_challenge(session, enrol_token, "mfa_enrol"), True
+        enrolling = await _user_from_challenge(session, enrol_token, "mfa_enrol")
+        if enrolling.mfa_enabled:
+            # The set-up token is for the first set-up only. Once the authenticator works it
+            # must not replace it, and the sign-in goes through the code.
+            raise Unauthenticated(
+                "The authenticator is already set up. Sign in again.", code="challenge_invalid"
+            )
+        return enrolling, True
     if principal is None:
         raise Unauthenticated()
     user = await repo.user_by_id(session, principal.user_id, lock=True)
@@ -394,6 +402,9 @@ async def refresh(session: AsyncSession, raw_token: str, client: ClientInfo) -> 
     if rt is None:
         raise Unauthenticated("Your session has ended. Sign in again.", code="refresh_invalid")
     auth = await session.get(AuthSession, rt.session_id, with_for_update=True)
+    # Read the token again under the session lock: a renewal that waited for it must see
+    # that the other one already used the token.
+    await session.refresh(rt)
     now = utcnow()
     if (
         auth is None
@@ -637,8 +648,14 @@ async def set_roles(
     _check_version(user.version, version)
     wanted = set(roles)
     _validate_roles(wanted, user.customer_id)
-    if user.id == actor.user_id and Role.ADMIN in user_roles(user) and Role.ADMIN not in wanted:
-        raise ValidationFailed("You cannot remove your own admin role. Ask another admin.")
+    # Admin and Director run the accounts (ADR 0026). Nobody takes either role away from
+    # themselves, so the people who manage accounts cannot lock everyone out by mistake.
+    for top in (Role.ADMIN, Role.DIRECTOR):
+        if user.id == actor.user_id and top in user_roles(user) and top not in wanted:
+            raise ValidationFailed(
+                f"You cannot remove your own {ROLE_LABELS[top].lower()} role. "
+                "Ask another admin or the Director."
+            )
     before = user_snapshot(user)
     current = {r.role: r for r in user.roles}
     user.roles = [

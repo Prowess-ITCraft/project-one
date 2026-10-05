@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
-import { ApiError, patch, post, type S } from "@/lib/api";
-import { useData, useMe, useToast } from "@/lib/hooks";
+import { patch, post, type S } from "@/lib/api";
+import { useData, useMe } from "@/lib/hooks";
 import { Badge, Empty, Field, Notice, Skeleton, roleLabel, useAction } from "@/components/ui";
 import { Drawer, toList } from "@/components/kit";
 
@@ -160,7 +160,6 @@ function AddGap({ pid, rid, onClose, onDone }: { pid: string; rid: string; onClo
 
 export function GapsTab({ projectId }: { projectId: string }) {
   const { can } = useMe();
-  const toast = useToast();
   const reg = useData<Register>(can("infra:read") ? `/projects/${projectId}/gaps` : null);
   const { busy, run } = useAction();
   const [editing, setEditing] = useState<Gap | null>(null);
@@ -170,11 +169,7 @@ export function GapsTab({ projectId }: { projectId: string }) {
   if (reg.loading && !reg.data && !reg.error) return <Skeleton lines={6} />;
 
   async function generate() {
-    try {
-      await run(() => post(`/projects/${projectId}/gaps`), "Gap register drafted from the audit");
-    } catch (e) {
-      if (e instanceof ApiError) toast(e.message, true);
-    }
+    await run(() => post(`/projects/${projectId}/gaps`), "Gap register drafted from the audit");
     reg.reload();
   }
 

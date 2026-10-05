@@ -3,6 +3,7 @@ import { useState } from "react";
 import { dateTime, post, type S } from "@/lib/api";
 import { useData, useMe } from "@/lib/hooks";
 import { Badge, Empty, Field, Notice, Skeleton, useAction } from "@/components/ui";
+import { DocLink } from "@/components/kit";
 
 const hours = (m: number) => (m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ""}` : `${m} min`);
 const tomorrow = () => new Date(Date.now() + 86_400_000).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
@@ -69,12 +70,12 @@ export function PlanTab({ projectId }: { projectId: string }) {
           </Notice>
         ))}
         <div className="row" style={{ marginTop: 12 }}>
-          <a className="btn" href={`/api/v1${base}/render?fmt=pdf`}>
+          <DocLink className="btn" href={`/api/v1${base}/render?fmt=pdf`}>
             Download plan (PDF)
-          </a>
-          <a className="btn quiet" href={`/api/v1${base}/render?fmt=html`} target="_blank" rel="noreferrer">
+          </DocLink>
+          <DocLink className="btn quiet" href={`/api/v1${base}/render?fmt=html`} newTab>
             Open as a page
-          </a>
+          </DocLink>
         </div>
       </div>
 

@@ -31,6 +31,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core import outbox
 from app.core.config import get_settings
 from app.core.db import get_sessionmaker
+from app.core.documents import rendered
 from app.core.errors import Conflict, Forbidden, NotFound, ValidationFailed
 from app.core.sequences import next_value
 from app.core.timeutil import financial_year_code, format_long_date, to_ist, today_ist, utcnow
@@ -602,7 +603,7 @@ async def lock_report(
         + 1
     )
     content["report_number"] = number
-    doc = render.render_report_pdf(await render.report_context(session, content))
+    doc = await rendered(render.render_report_pdf, await render.report_context(session, content))
     key = f"reports/{project_id.hex}/completion-{number}.pdf"
     await storage.put_pdf(key, doc.pdf)
     rep = CompletionReport(
@@ -754,8 +755,9 @@ async def issue_certificate(
     signature = _sign(digest, get_settings().jwt_keys()[0])
     verify_url = f"{get_settings().public_base_url}/verify/{number}"
     stamp = await stamp_data_url(session)
-    doc = render.render_certificate_pdf(
-        await render.certificate_context(session, payload, digest, verify_url, stamp)
+    doc = await rendered(
+        render.render_certificate_pdf,
+        await render.certificate_context(session, payload, digest, verify_url, stamp),
     )
     key = f"certificates/{number}.pdf"
     await storage.put_pdf(key, doc.pdf)

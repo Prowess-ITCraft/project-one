@@ -1,9 +1,9 @@
 "use client";
 import { useMemo, useState } from "react";
-import { dateTime, patch, post, put, type S } from "@/lib/api";
+import { dateTime, get, patch, post, put, type S } from "@/lib/api";
 import { useData, useMe } from "@/lib/hooks";
 import { Badge, Empty, Field, Notice, Skeleton, useAction } from "@/components/ui";
-import { Check, Drawer, Tabs } from "@/components/kit";
+import { Check, ConfirmButton, CopyButton, Drawer, Tabs } from "@/components/kit";
 
 type Page<T> = { items: T[]; total: number };
 type User = S["UserOut"];
@@ -18,7 +18,7 @@ const ROLES: { id: string; label: string; does: string }[] = [
   { id: "project_manager", label: "Project manager", does: "Plans the work, assigns field tasks, asks for waivers" },
   { id: "field_engineer", label: "Field engineer", does: "Does the tasks on site from a phone. Sees no prices" },
   { id: "technical_lead", label: "Technical lead / verifier", does: "Reviews and verifies field work" },
-  { id: "director", label: "Director", does: "Approves waivers, signs certificates. Needs an authenticator" },
+  { id: "director", label: "Director", does: "Approves waivers, signs certificates, and everything an admin does. Needs an authenticator" },
   { id: "admin", label: "Admin", does: "Manages accounts and settings. Needs an authenticator" },
 ];
 const LABEL = Object.fromEntries(ROLES.map((r) => [r.id, r.label]));
@@ -83,7 +83,6 @@ function RolePicker({ value, onChange }: { value: string[]; onChange: (v: string
 
 /** A password shown once, to be handed over in person. */
 function Secret({ email, password }: { email: string; password: string }) {
-  const [copied, setCopied] = useState(false);
   return (
     <div className="handover">
       <p>
@@ -96,16 +95,7 @@ function Secret({ email, password }: { email: string; password: string }) {
         <dt>Temporary password</dt>
         <dd>
           <code className="secret">{password}</code>{" "}
-          <button
-            type="button"
-            className="btn quiet small"
-            onClick={async () => {
-              await navigator.clipboard?.writeText(password);
-              setCopied(true);
-            }}
-          >
-            {copied ? "Copied" : "Copy"}
-          </button>
+          <CopyButton text={password} />
         </dd>
       </dl>
     </div>
@@ -296,8 +286,8 @@ function Account({ user, isMe, onClose, onChanged }: { user: User; isMe: boolean
       <div className="stack">
         <h3>Roles</h3>
         <RolePicker value={roles} onChange={setRoles} />
-        {isMe && hasRole(u, "admin") && !roles.includes("admin") && (
-          <Notice tone="warn">You cannot remove your own admin role. Ask another admin.</Notice>
+        {isMe && ["admin", "director"].some((r) => hasRole(u, r) && !roles.includes(r)) && (
+          <Notice tone="warn">You cannot remove your own admin or director role. Ask another admin or the Director.</Notice>
         )}
         <div className="row">
           <button
@@ -315,24 +305,31 @@ function Account({ user, isMe, onClose, onChanged }: { user: User; isMe: boolean
         <h3>Access</h3>
         {secret && <Secret email={u.email} password={secret} />}
         <div className="row">
-          <button
-            className="btn"
+          <ConfirmButton
             disabled={busy}
-            onClick={async () => {
+            question={`Give ${u.full_name} a new password? They are signed out everywhere.`}
+            confirmLabel="Reset password"
+            onConfirm={async () => {
               const pw = newPassword();
-              const r = await run(async () => {
+              // The reset changes the account, so read it again: the next save needs its new version.
+              const r = await apply(async () => {
                 await post(`/users/${u.id}/reset-password`, { new_password: pw });
-                return true;
+                return get<User>(`/users/${u.id}`);
               }, "Password reset");
               if (r) setSecret(pw);
             }}
           >
             Reset password
-          </button>
+          </ConfirmButton>
           {u.mfa_enabled && (
-            <button className="btn" disabled={busy} onClick={() => apply(() => post<User>(`/users/${u.id}/reset-mfa`), "Authenticator reset")}>
+            <ConfirmButton
+              disabled={busy}
+              question={`Reset ${u.full_name}'s authenticator? Their app codes stop working and they set it up again at the next sign-in.`}
+              confirmLabel="Reset authenticator"
+              onConfirm={() => apply(() => post<User>(`/users/${u.id}/reset-mfa`), "Authenticator reset")}
+            >
               Reset authenticator
-            </button>
+            </ConfirmButton>
           )}
           {u.locked_until && (
             <button className="btn" disabled={busy} onClick={() => apply(() => post<User>(`/users/${u.id}/unlock`), "Account unlocked")}>
@@ -356,18 +353,25 @@ function Account({ user, isMe, onClose, onChanged }: { user: User; isMe: boolean
         </div>
         {!isMe && (
           <div className="row">
-            <button
-              className={`btn ${u.is_active ? "danger" : ""}`}
-              disabled={busy}
-              onClick={() =>
-                apply(
-                  () => patch<User>(`/users/${u.id}`, { version: u.version, is_active: !u.is_active }),
-                  u.is_active ? "Account deactivated" : "Account reactivated",
-                )
-              }
-            >
-              {u.is_active ? "Deactivate account" : "Reactivate account"}
-            </button>
+            {u.is_active ? (
+              <ConfirmButton
+                className="btn danger"
+                disabled={busy}
+                question={`Deactivate ${u.full_name}? They are signed out and cannot sign in.`}
+                confirmLabel="Deactivate"
+                onConfirm={() => apply(() => patch<User>(`/users/${u.id}`, { version: u.version, is_active: false }), "Account deactivated")}
+              >
+                Deactivate account
+              </ConfirmButton>
+            ) : (
+              <button
+                className="btn"
+                disabled={busy}
+                onClick={() => apply(() => patch<User>(`/users/${u.id}`, { version: u.version, is_active: true }), "Account reactivated")}
+              >
+                Reactivate account
+              </button>
+            )}
             <span className="muted small">
               {u.is_active ? "They can no longer sign in. Their history stays." : "They can sign in again."}
             </span>
@@ -394,7 +398,7 @@ export default function Users() {
     .sort((a, b) => a.full_name.localeCompare(b.full_name));
   const open = staff.find((u) => u.id === openId);
 
-  if (!can("user:manage")) return <Notice tone="warn">Only admins manage accounts.</Notice>;
+  if (!can("user:manage")) return <Notice tone="warn">Only an admin or the Director manages accounts.</Notice>;
 
   return (
     <>

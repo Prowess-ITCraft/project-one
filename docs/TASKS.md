@@ -3,10 +3,13 @@
 Phase status and what is left. Status words: `done`, `in progress`, `blocked`, `not started`.
 Planned dates are in `ROADMAP.md`, decisions in `decisions/`.
 
-## Where we are (4 October 2026)
+## Where we are (5 October 2026)
 
-- Phases 1 to 14 are done. Backend: 355 tests pass at 85 percent coverage; 13 browser tests
-  on desktop and phone, including one field task walked from accept to verified (4 Oct, night).
+- Phases 1 to 14 are done. Backend: 362 tests pass at 85 percent coverage; 20 browser tests
+  on desktop and phone, including one field task walked from accept to verified and the
+  sign-in renewal around downloads (5 Oct, evening).
+- Only an Admin or the Director creates accounts and assigns roles; the Director holds every
+  Admin permission (ADR 0026).
 - Phase 13 (learning) is built and waits for data (about 20 accepted BOQs).
 - Phase 15 (go-live): everything is ready to deploy (DEPLOYMENT.md, incident runbook, a
   production dry run that passed). Left: deploy on the real server, the IITPL stamp, and the
@@ -77,6 +80,11 @@ Planned dates are in `ROADMAP.md`, decisions in `decisions/`.
 - [x] Back button on every inner page; Help guide per role, linked from every sidebar
 - [x] Sign-in redesign with icons; Phosphor icons across the shell; no animation (ADR 0023)
 - [x] Recovery code accepted at sign-in (the API took it, the page had no field for it)
+- [x] Bug sweep (5 Oct): field outbox keeps work through sign-in renewal and restarts, retries
+  by itself, Try again for refused items, no double sends, warning at sign-out; downloads renew
+  the sign-in; BOQ editor and audit review reload after someone else's change; confirm step for
+  password and authenticator resets, deactivation and BOQ issue
+- [x] Director manages accounts and roles like the Admin (ADR 0026)
 
 ### Phase 13: Learning from the library
 

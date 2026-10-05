@@ -41,8 +41,10 @@ export async function signIn(page: Page, role: string): Promise<Account> {
 /** Every demo account with this role, for tests that need a particular person. */
 export const everyone = (role: string): Account[] => accounts.users.filter((u) => u.roles.includes(role));
 
-export async function signInAs(page: Page, a: Account): Promise<Account> {
-  await page.goto("/login");
+/** Sign in through the form. With `here`, use the sign-in page already open (it may carry
+ * `?next=`) instead of opening a fresh one. */
+export async function signInAs(page: Page, a: Account, opts: { here?: boolean } = {}): Promise<Account> {
+  if (!opts.here) await page.goto("/login");
   await page.locator("#email").fill(a.email);
   await page.locator("#password").fill(accounts.password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();

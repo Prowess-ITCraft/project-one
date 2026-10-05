@@ -11,6 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import outbox
+from app.core.documents import rendered
 from app.core.errors import Conflict, Forbidden, NotFound, StaleVersion, ValidationFailed
 from app.core.events import DomainEvent
 from app.core.money import quantize
@@ -587,11 +588,7 @@ async def add_from_catalogue(
     )
     draft.lines.append(line)
     try:
-        draft, _ = (
-            d.apply_ops(draft, [{"op": "update_settings", "fields": {}}])
-            if False
-            else (d.Draft.model_validate(draft.model_dump()), [])
-        )
+        draft = d.Draft.model_validate(draft.model_dump())  # the draft's own checks, re-run
     except ValueError as exc:
         raise ValidationFailed(str(exc)) from exc
     _store(b, draft)
@@ -726,9 +723,10 @@ async def issue(session: AsyncSession, principal: Principal, boq_id: uuid.UUID) 
     number = (prev.number + 1) if prev else 1
     # Keep the PDF exactly as issued, so a later change to company details or the template
     # never alters what the customer was sent. Stored before the row: the row cannot change.
-    doc = render.render_pdf(
-        render.render_html(draft, await company(session), quote_ref=b.quote_ref, kind="quotation")
+    html = render.render_html(
+        draft, await company(session), quote_ref=b.quote_ref, kind="quotation"
     )
+    doc = await rendered(render.render_pdf, html)
     pdf_key = storage.key_for(b.id, number)
     await storage.put_pdf(pdf_key, doc.pdf)
     if prev is not None:

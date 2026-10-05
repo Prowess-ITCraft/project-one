@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
-import { ApiError, get, message, type S } from "./api";
+import { ApiError, get, message, passing, type S } from "./api";
 
 // What an engineer needs to reopen a task with no signal: who they are and their field work.
 // Field responses never carry prices. Cleared on sign-out (forgetKept), since phones get shared.
@@ -56,7 +56,7 @@ export function useData<T>(path: string | null) {
       }
     } catch (e) {
       if (n !== seq.current) return;
-      const old = e instanceof ApiError ? null : kept<T>(path);
+      const old = passing(e) && !(e instanceof ApiError && e.status === 401) ? kept<T>(path) : null;
       if (old !== null) {
         setData((cur) => cur ?? old);
         setStale(true);

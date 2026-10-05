@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { ApiError, get, money, type S } from "@/lib/api";
+import { ApiError, get, message, money, openDoc, type S } from "@/lib/api";
 import { useData, useMe } from "@/lib/hooks";
 import { Badge, Notice } from "@/components/ui";
 
@@ -69,9 +69,7 @@ export function EstimatePanel({ projectId, autoStart }: { projectId: string; aut
           ? "Fill in the Questionnaire first: the company size and budget decide which rules apply."
           : e instanceof ApiError && e.code === "no_audit"
             ? "Upload the PrismSuite report on the Audit intake tab first."
-            : e instanceof ApiError
-              ? e.message
-              : "Something went wrong. Try again.",
+            : message(e),
       );
     } finally {
       setBusy(false);
@@ -84,7 +82,7 @@ export function EstimatePanel({ projectId, autoStart }: { projectId: string; aut
   if (!can("boq:estimate")) return null;
 
   const doc = (fmt: "pdf" | "xlsx", kind = "quotation") =>
-    window.open(`/api/v1/projects/${projectId}/boq/estimate?fmt=${fmt}&kind=${kind}`, "_blank");
+    openDoc(`/api/v1/projects/${projectId}/boq/estimate?fmt=${fmt}&kind=${kind}`, true);
 
   return (
     <div className="section estimate">

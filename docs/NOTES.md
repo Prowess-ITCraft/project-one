@@ -36,6 +36,7 @@ Maintained by Aditya Kumar.
 | Learned ranker | Shadow mode only, at least 20 accepted recommendations to train | 0020 |
 | BOQ estimate | Any time after the report and questionnaire, saved nowhere, labelled | 0021 |
 | Certificate wording | IITPL implemented the work; no "Implemented by"; Director and stamp only | 0022 |
+| Who manages accounts | Admin and Director only; the Director holds every Admin permission | 0026 |
 
 ## Machine quirks
 
@@ -80,6 +81,28 @@ Maintained by Aditya Kumar.
 
 ## Changelog
 
+- 2026-10-05 (evening): Only an Admin or the Director creates accounts and assigns roles; the
+  Director now holds every Admin permission as well as its own (ADR 0026). Neither can remove
+  their own Admin or Director role. Separation of duties is unchanged.
+- 2026-10-05 (evening): Bug sweep of the whole app. Field work: an action or photo saved on
+  the phone was marked "refused" for good when the sign-in had to be renewed or the server was
+  restarting, so the engineer could only remove it; such failures now wait and are sent again,
+  queued work is retried every 30 seconds and when the app comes back to the front (not only
+  on an "online" event), a refused item has **Try again**, a double tap can no longer send the
+  same action twice, and signing out says when work is still on the phone. Downloads (quotation,
+  estimate, plan, task record, completion report, certificate) answered 401 after 15 minutes
+  on one page, because the browser fetches them itself and cannot renew the short cookie; they
+  now renew first. The BOQ editor and the audit review kept their own copy after a save and
+  never took the server's again, so after a colleague's change every save failed as out of
+  date; they now reload. Signing in again returns to the page you were on. Accounts: reset
+  password, reset authenticator, deactivate and BOQ issue ask once more before acting; after
+  a password reset the next save no longer fails. Copy buttons work on a plain HTTP office
+  address and say when they could not copy. Errors from the proxy (file too large, too many
+  requests, server restarting) are shown as such instead of "could not reach the server".
+  Server: PDFs are laid out on their own thread, so a download no longer holds up every other
+  request on that worker (the live field feed included); the one-time authenticator set-up
+  token can no longer replace an authenticator that is already set up; two renewals of one
+  session at the same moment give one new token, not two.
 - 2026-10-05: Customer codes at check-in and hand over switched off (ADR 0025). The code flow,
   its emails and its tests stay; the admin flag `field_customer_codes` turns it back on.
   Bug check: the task record PDF failed (500) for any task with steps still open, and it said

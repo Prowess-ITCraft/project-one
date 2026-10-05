@@ -16,7 +16,11 @@ WeasyPrint needs Pango and HarfBuzz from the image. Where they are missing (a Wi
 
 from __future__ import annotations
 
+import asyncio
+import functools
 import hashlib
+from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -149,3 +153,15 @@ def render_pdf(html: str) -> RenderedDocument:
     doc = html_cls(string=html, url_fetcher=fetcher).render()
     pdf = bytes(doc.write_pdf())
     return RenderedDocument(pdf, hashlib.sha256(pdf).hexdigest(), len(doc.pages))
+
+
+# Laying out a PDF takes from a fraction of a second to a few seconds. Done on the event loop it
+# would hold up every other request on that worker, the live field feed included. One thread
+# per process: renders wait for each other instead of sharing WeasyPrint between threads.
+_render_thread = ThreadPoolExecutor(max_workers=1, thread_name_prefix="documents")
+
+
+async def rendered[**P, T](fn: Callable[P, T], *args: P.args, **kwargs: P.kwargs) -> T:
+    """Run a document render (PDF or Excel) off the event loop: `await rendered(f, ctx)`."""
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(_render_thread, functools.partial(fn, *args, **kwargs))

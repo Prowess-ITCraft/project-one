@@ -7,7 +7,7 @@
  *
  * Stored in IndexedDB so photos survive a closed browser. No library: about 100 lines.
  */
-import { api, ApiError, message } from "./api";
+import { api, message, passing } from "./api";
 
 export type Pending = {
   id: string;
@@ -113,11 +113,21 @@ export async function discard(id: string) {
   notify();
 }
 
+/** Send a refused item again, for when the reason has been dealt with. */
+export async function retry(id: string) {
+  const item = await tx<Pending | undefined>("readonly", (s) => s.get(id) as IDBRequest<Pending | undefined>);
+  if (!item) return flush();
+  await tx("readwrite", (s) => s.put({ ...item, error: undefined }));
+  notify();
+  return flush();
+}
+
 let running: Promise<FlushResult> | null = null;
 export type FlushResult = { sent: number; waiting: number; failed: string[] };
 
-/** Send everything in order. Stops at the first network failure (still offline); an action the
- * server refuses is kept with its reason so the engineer can see it and discard it. */
+/** Send everything in order. Stops at the first failure that may pass (no signal, the server
+ * restarting or busy, the sign-in to renew); an action the server refuses is kept with its
+ * reason so the engineer can see it, then send it again or remove it. */
 export function flush(): Promise<FlushResult> {
   // A send is already going: it only covers what was waiting when it started, so anything
   // saved since then goes in a second send right after it (otherwise it would sit on the
@@ -142,13 +152,12 @@ export function flush(): Promise<FlushResult> {
         await tx("readwrite", (s) => s.delete(item.id));
         out.sent += 1;
       } catch (e) {
-        if (e instanceof ApiError) {
-          await tx("readwrite", (s) => s.put({ ...item, error: message(e) }));
-          out.failed.push(`${item.label}: ${message(e)}`);
-        } else {
+        if (passing(e)) {
           out.waiting = (await pending()).filter((p) => !p.error).length;
-          break; // no signal: try again later
+          break; // try again later
         }
+        await tx("readwrite", (s) => s.put({ ...item, error: message(e) }));
+        out.failed.push(`${item.label}: ${message(e)}`);
       }
     }
     notify();
@@ -159,6 +168,17 @@ export function flush(): Promise<FlushResult> {
   return running;
 }
 
+// Signal can come back without an "online" event (the server was down, or the phone had a
+// weak connection), so also try when the app comes to the front and every 30 seconds.
 if (typeof window !== "undefined") {
-  window.addEventListener("online", () => void flush());
+  // Storage can be blocked (a private window); then there is nothing saved to send.
+  const quietly = () => void flush().catch(() => undefined);
+  window.addEventListener("online", quietly);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") quietly();
+  });
+  setInterval(() => {
+    if (navigator.onLine && document.visibilityState === "visible") quietly();
+  }, 30_000);
+  quietly();
 }

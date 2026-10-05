@@ -69,6 +69,27 @@ export async function resumeSession(): Promise<boolean> {
   return (await refresh()) && (await me());
 }
 
+/** Open an API document (PDF, Excel, an HTML preview). The browser fetches these itself and so
+ * cannot renew the short sign-in cookie, which lasts 15 minutes: after a while on one page the
+ * download would answer 401. Renew first, then open. The new tab is opened at once, while the
+ * click still counts, or the browser would block it. */
+export function openDoc(url: string, newTab = false) {
+  const tab = newTab ? window.open("about:blank", "_blank") : null;
+  api("GET", "/auth/me").then(
+    () => {
+      if (tab) tab.location.href = url;
+      else window.location.href = url;
+    },
+    () => tab?.close(),
+  );
+}
+
+/** Off to the sign-in page, coming back to this page once signed in. */
+export function toSignIn() {
+  const here = window.location.pathname + window.location.search + window.location.hash;
+  window.location.href = here.startsWith("/login") ? "/login" : `/login?next=${encodeURIComponent(here)}`;
+}
+
 export async function api<T = unknown>(
   method: string,
   path: string,
@@ -88,20 +109,42 @@ export async function api<T = unknown>(
   const res = await fetch(`${BASE}${path}`, { method, headers, body: payload });
   if (res.status === 401 && !opts.noRefresh && !NO_RENEWAL.some((p) => path.startsWith(p))) {
     if (await refresh()) return api<T>(method, path, body, { ...opts, noRefresh: true });
-    if (typeof window !== "undefined") window.location.href = "/login";
+    if (typeof window !== "undefined") toSignIn();
   }
   if (res.status === 204) return undefined as T;
   const text = await res.text();
-  const data = text ? JSON.parse(text) : undefined;
+  let data;
+  try {
+    data = text ? JSON.parse(text) : undefined;
+  } catch {
+    // Not from the API: the proxy answered (file too large, too many requests, API restarting)
+    // with an HTML page.
+    throw new ApiError(res.ok ? 502 : res.status, "proxy", PROXY_SAYS[res.ok ? 502 : res.status] ?? PROXY_SAYS[0]);
+  }
   if (!res.ok) {
     throw new ApiError(
       res.status,
       data?.code ?? "error",
-      data?.detail ?? "Something went wrong. Try again.",
+      data?.detail ?? PROXY_SAYS[res.status] ?? PROXY_SAYS[0],
       data?.errors ?? [],
     );
   }
   return data as T;
+}
+
+const PROXY_SAYS: Record<number, string> = {
+  0: "Something went wrong. Try again.",
+  413: "The file is too large. The limit is 50 MB.",
+  429: "Too many requests just now. Wait a minute and try again.",
+  502: "The server is not answering right now. Try again in a minute.",
+  503: "The server is not answering right now. Try again in a minute.",
+  504: "The server took too long to answer. Try again in a minute.",
+};
+
+/** A failure that may pass on its own: no signal, the server restarting or busy, or a sign-in
+ * that has to be renewed. Saved field work waits and is sent again rather than given up. */
+export function passing(e: unknown): boolean {
+  return !(e instanceof ApiError) || [401, 408, 429, 502, 503, 504].includes(e.status);
 }
 
 export const get = <T>(p: string) => api<T>("GET", p);
