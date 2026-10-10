@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { date, dateTime, get, money, openDoc as openApiDoc, post, type S } from "@/lib/api";
-import { useData, useMe } from "@/lib/hooks";
+import { useData, useMe, useToast } from "@/lib/hooks";
 import { Badge, Empty, Field, Notice, Skeleton, useAction } from "@/components/ui";
 import { Check, ConfirmButton, Drawer, toList } from "@/components/kit";
 import { EstimatePanel } from "@/components/project/EstimatePanel";
@@ -18,6 +18,7 @@ const FLAG: Record<string, [string, "ok" | "warn" | "bad" | "accent" | undefined
   price_expiring: ["Price expires soon", "warn"],
   manual_price: ["Price by hand", "accent"],
   below_cost: ["Below cost", "bad"],
+  low_margin: ["Margin under the minimum", "warn"],
   out_of_stock: ["Out of stock", "warn"],
   on_order: ["On order", "warn"],
   end_of_life: ["End of life", "warn"],
@@ -315,6 +316,7 @@ export function BoqTab({ projectId, stage, autoEstimate }: { projectId: string; 
   const versions = useData<S["VersionRowOut"][]>(boqQ.data ? `/boq/${boqQ.data.id}/versions` : null);
   const edits = useData<S["EditRowOut"][]>(boqQ.data ? `/boq/${boqQ.data.id}/edits` : null);
   const { busy, run } = useAction();
+  const toast = useToast();
   const [local, setLocal] = useState<Boq | null>(null);
   const [pendingOps, setPendingOps] = useState<Op[]>([]);
   const [lineEdits, setLineEdits] = useState<Record<string, LineEdit>>({});
@@ -500,6 +502,26 @@ export function BoqTab({ projectId, stage, autoEstimate }: { projectId: string; 
               <button className="btn" disabled={busy || pendingCount > 0} onClick={() => simple("refresh-prices", { draft_rev: boq.draft_rev }, "Prices refreshed from the price book")}>
                 Refresh prices
               </button>
+              {latest && latest.state === "issued" && boq.outcome === "open" && (
+                <button
+                  className="btn"
+                  disabled={busy || pendingCount > 0}
+                  title="Take today's price book prices and send the BOQ for pricing approval in one step"
+                  onClick={async () => {
+                    const b = await run(() => post<Boq>(`/boq/${boq.id}/reprice`, { draft_rev: boq.draft_rev }));
+                    if (b) {
+                      apply(b);
+                      toast(
+                        b.submitted
+                          ? `Re-priced (${b.changes?.length ?? 0} change${b.changes?.length === 1 ? "" : "s"}) and sent for pricing approval.`
+                          : "Re-priced. Fix what is listed above, then submit for pricing review.",
+                      );
+                    } else boqQ.reload();
+                  }}
+                >
+                  Re-price for a new version
+                </button>
+              )}
               <button className="btn primary" disabled={busy || pendingCount > 0 || boq.blockers.length > 0} onClick={() => simple("submit", undefined, "Submitted for pricing review")}>
                 Submit for pricing review
               </button>
@@ -509,15 +531,13 @@ export function BoqTab({ projectId, stage, autoEstimate }: { projectId: string; 
             </>
           )}
           {boq.stage === "pricing_review" && can("boq:approve_pricing") && (
-            <>
-              <input type="text" aria-label="Note" placeholder="Note (required to send back)" value={note} onChange={(e) => setNote(e.target.value)} style={{ maxWidth: 300 }} />
-              <button className="btn primary" disabled={busy} onClick={() => simple("pricing-decision", { approve: true, note: note || null }, "Pricing approved")}>
-                Approve pricing
-              </button>
-              <button className="btn" disabled={busy || note.trim().length < 3} onClick={() => simple("pricing-decision", { approve: false, note }, "Sent back")}>
-                Send back
-              </button>
-            </>
+            <PricingDecision
+              boq={boq}
+              busy={busy}
+              note={note}
+              setNote={setNote}
+              decide={(body, done) => simple("pricing-decision", body, done)}
+            />
           )}
           {boq.stage === "pricing_review" && !can("boq:approve_pricing") && <span className="muted small">Waiting for a sales head or the director to approve the pricing.</span>}
           {boq.stage === "pricing_approved" && can("boq:issue") && (
@@ -549,6 +569,9 @@ export function BoqTab({ projectId, stage, autoEstimate }: { projectId: string; 
           )}
         </Notice>
       )}
+
+      {latest && <Outcome boq={boq} canEdit={canEdit} busy={busy} onChange={(b) => apply(b)} run={run} />}
+      {canEdit && !locked && <SuggestedLines projectId={projectId} lines={lines} />}
 
       {/* the editor */}
       {groups.map(({ g, sections }) => (
@@ -645,6 +668,11 @@ export function BoqTab({ projectId, stage, autoEstimate }: { projectId: string; 
                             <input className={`cell${e.unit_price !== undefined ? " dirty" : ""}`} type="text" inputMode="decimal" aria-label={`Price for ${l.title}`} disabled={!canEdit || locked}
                               placeholder={l.hint_price ? `was ${l.hint_price}` : "enter price"} value={e.unit_price ?? l.unit_price ?? ""}
                               onChange={(ev) => setLineEdits({ ...lineEdits, [l.id]: { ...e, unit_price: ev.target.value } })} />
+                            {l.margin_pct !== null && l.margin_pct !== undefined && e.unit_price === undefined && (
+                              <div className={`small${l.flags.includes("low_margin") ? "" : " muted"}`} style={l.flags.includes("low_margin") ? { color: "var(--warn)" } : undefined}>
+                                margin {l.margin_pct}%
+                              </div>
+                            )}
                             {e.unit_price !== undefined && e.unit_price !== "" && (
                               <input className="cell" style={{ marginTop: 4, textAlign: "left", fontFamily: "inherit" }} type="text" aria-label="Source of this price" placeholder="Source of this price"
                                 value={e.reason ?? ""} onChange={(ev) => setLineEdits({ ...lineEdits, [l.id]: { ...e, reason: ev.target.value } })} />
@@ -905,5 +933,200 @@ function Accept({ boq, version, onDone }: { boq: Boq; version: number; onDone: (
         </button>
       </div>
     </div>
+  );
+}
+
+
+/** Approve or send back the pricing. Lines under the minimum margin are accepted one by one, with
+ * a reason (ADR 0028). */
+function PricingDecision({
+  boq,
+  busy,
+  note,
+  setNote,
+  decide,
+}: {
+  boq: Boq;
+  busy: boolean;
+  note: string;
+  setNote: (v: string) => void;
+  decide: (body: Record<string, unknown>, done: string) => Promise<void>;
+}) {
+  const low = boq.lines.filter((l) => l.flags.includes("low_margin"));
+  const [acked, setAcked] = useState<string[]>([]);
+  const allAcked = low.every((l) => acked.includes(l.id));
+  return (
+    <div className="stack" style={{ width: "100%" }}>
+      {low.length > 0 && (
+        <Notice tone="warn">
+          <strong>
+            {low.length} line{low.length === 1 ? " is" : "s are"} under the {boq.min_margin_pct}% minimum margin.
+          </strong>{" "}
+          Accept each one and say why in the note.
+          <div className="stack" style={{ marginTop: 8 }}>
+            {low.map((l) => (
+              <Check key={l.id} checked={acked.includes(l.id)} onChange={(v) => setAcked(v ? [...acked, l.id] : acked.filter((x) => x !== l.id))}>
+                <span className="mono">{l.ref}</span> {l.title}: margin {l.margin_pct}%
+              </Check>
+            ))}
+          </div>
+        </Notice>
+      )}
+      <div className="row">
+        <input
+          type="text"
+          aria-label="Note"
+          placeholder={low.length ? "Why the low margins are acceptable" : "Note (required to send back)"}
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          style={{ maxWidth: 360, flex: 1 }}
+        />
+        <button
+          className="btn primary"
+          disabled={busy || (low.length > 0 && (!allAcked || note.trim().length < 5))}
+          onClick={() => decide({ approve: true, note: note || null, margin_ack: acked }, "Pricing approved")}
+        >
+          Approve pricing
+        </button>
+        <button className="btn" disabled={busy || note.trim().length < 3} onClick={() => decide({ approve: false, note }, "Sent back")}>
+          Send back
+        </button>
+      </div>
+    </div>
+  );
+}
+
+const LOSS_REASONS: { id: string; label: string }[] = [
+  { id: "price", label: "Our price was too high" },
+  { id: "competitor", label: "They chose a competitor" },
+  { id: "budget", label: "No budget" },
+  { id: "timing", label: "Not now, maybe later" },
+  { id: "scope", label: "The scope did not fit" },
+  { id: "no_decision", label: "They never decided" },
+  { id: "relationship", label: "The relationship" },
+  { id: "other", label: "Something else" },
+];
+
+/** Won or lost, with the reason: every quote ends one way or the other, and the learning module
+ * learns from both. A win is recorded by accepting a version with the purchase order. */
+function Outcome({
+  boq,
+  canEdit,
+  busy,
+  onChange,
+  run,
+}: {
+  boq: Boq;
+  canEdit: boolean;
+  busy: boolean;
+  onChange: (b: Boq) => void;
+  run: <T>(fn: () => Promise<T>, done?: string) => Promise<T | undefined>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState("price");
+  const [competitor, setCompetitor] = useState("");
+  const [note, setNote] = useState("");
+  if (boq.outcome === "won") return null; // shown as accepted and locked
+  if (boq.outcome === "lost") {
+    return (
+      <Notice tone="warn">
+        <strong>Lost:</strong> {LOSS_REASONS.find((r) => r.id === boq.outcome_reason)?.label ?? boq.outcome_reason}
+        {boq.outcome_at ? `, recorded ${date(boq.outcome_at)}` : ""}. The BOQ is closed.
+        {canEdit && (
+          <div className="row" style={{ marginTop: 8 }}>
+            <input type="text" aria-label="Why it is open again" placeholder="Why it is open again" value={note} onChange={(e) => setNote(e.target.value)} style={{ flex: 1, maxWidth: 360 }} />
+            <button
+              className="btn small"
+              disabled={busy || note.trim().length < 5}
+              onClick={async () => {
+                const b = await run(() => post<Boq>(`/boq/${boq.id}/outcome`, { outcome: "open", note: note.trim() }), "Open again");
+                if (b) onChange(b);
+              }}
+            >
+              Open the quote again
+            </button>
+          </div>
+        )}
+      </Notice>
+    );
+  }
+  if (!canEdit || boq.status !== "draft") return null;
+  if (!open) {
+    return (
+      <div style={{ marginBottom: 16 }}>
+        <button className="btn quiet small" onClick={() => setOpen(true)}>
+          The customer said no
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div className="section stack">
+      <h3>Record a lost quote</h3>
+      <div className="form-grid">
+        <Field id="lost-reason" label="Why">
+          <select id="lost-reason" value={reason} onChange={(e) => setReason(e.target.value)}>
+            {LOSS_REASONS.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.label}
+              </option>
+            ))}
+          </select>
+        </Field>
+        {reason === "competitor" && (
+          <Field id="lost-comp" label="Which competitor">
+            <input id="lost-comp" value={competitor} onChange={(e) => setCompetitor(e.target.value)} />
+          </Field>
+        )}
+        <div className="wide">
+          <Field id="lost-note" label="What happened" hint={reason === "other" ? "Needed for Something else." : "Optional."}>
+            <textarea id="lost-note" rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
+          </Field>
+        </div>
+      </div>
+      <div className="row">
+        <button
+          className="btn danger"
+          disabled={busy || (reason === "other" && note.trim().length < 5)}
+          onClick={async () => {
+            const b = await run(
+              () => post<Boq>(`/boq/${boq.id}/outcome`, { outcome: "lost", reason, competitor: competitor || null, note: note.trim() || null }),
+              "Recorded as lost",
+            );
+            if (b) {
+              setOpen(false);
+              onChange(b);
+            }
+          }}
+        >
+          Record as lost
+        </button>
+        <button className="btn quiet" onClick={() => setOpen(false)}>
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Lines an approved learning model expects from the audit findings. Advice only: a person adds
+ * a line by hand if it belongs. Hidden while no model is approved. */
+function SuggestedLines({ projectId, lines }: { projectId: string; lines: Line[] }) {
+  const s = useData<S["SuggestionsOut"]>(`/ml/projects/${projectId}/suggested-lines`);
+  if (!s.data?.available || s.data.lines.length === 0) return null;
+  const have = new Set(lines.map((l) => l.title.trim().toLowerCase()));
+  const missing = s.data.lines.filter((x) => !have.has(x.title.trim().toLowerCase()));
+  if (missing.length === 0) return null;
+  return (
+    <Notice>
+      <strong>The learning module expects these lines too</strong> (model {s.data.model}, advice only):
+      <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+        {missing.slice(0, 8).map((x) => (
+          <li key={x.label}>
+            {x.title} <span className="muted small">({Math.round(x.probability * 100)} percent of similar audits)</span>
+          </li>
+        ))}
+      </ul>
+    </Notice>
   );
 }

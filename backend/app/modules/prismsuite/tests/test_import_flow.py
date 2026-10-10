@@ -6,10 +6,16 @@ from typing import Any
 
 from sqlalchemy import select
 
-from app.core import outbox
 from app.core.db import get_sessionmaker
 from app.modules.identity.permissions import Role
-from tests.helpers import Workspace, idem, make_user, make_workspace, upload_sample_report
+from tests.helpers import (
+    Workspace,
+    drain_outbox,
+    idem,
+    make_user,
+    make_workspace,
+    upload_sample_report,
+)
 
 BASE = "/api/v1/prismsuite/imports"
 
@@ -106,7 +112,7 @@ async def test_resolve_then_approve_locks_the_artifact(client: Any) -> None:
     assert r.json()["status"] == "approved"
 
     # The outbox carries the lock event; after dispatch the project has the artifact.
-    await outbox.dispatch_batch(get_sessionmaker())
+    await drain_outbox()
     from app.modules.customers.models import StageArtifact
 
     async with get_sessionmaker()() as s:

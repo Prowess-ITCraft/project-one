@@ -6,6 +6,7 @@ import "./field.css";
 import "./signin.css";
 import "./shell.css";
 import "./completion.css";
+import "./app.css";
 
 const sans = Geist({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
 const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" });

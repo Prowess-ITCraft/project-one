@@ -34,7 +34,10 @@ from app.modules.fieldops.schemas import (
     ClientIn,
     CodeIn,
     CodeSentOut,
+    ConfigDiffOut,
     DecisionIn,
+    DeviceStatusIn,
+    EngineerStatusOut,
     EventOut,
     EvidenceOut,
     LocatedIn,
@@ -46,13 +49,19 @@ from app.modules.fieldops.schemas import (
     RunOut,
     StepIn,
     SummaryOut,
+    UploadLinkDoneOut,
+    UploadLinkIn,
+    UploadLinkInfoOut,
+    UploadLinkOut,
     ValuesIn,
+    WorkloadOut,
 )
 from app.modules.files.contracts import read_limited
 from app.modules.identity.contracts import P, Principal, require
 
 project_router = APIRouter(prefix="/projects/{project_id}/field", tags=["field work"])
 router = APIRouter(prefix="/field", tags=["field work"])
+public_router = APIRouter(prefix="/public/field-upload", tags=["public"])
 Session = Annotated[AsyncSession, Depends(get_session)]
 Idem = Annotated[IdempotencyGuard, Depends(require_idempotency_key)]
 Reader = Annotated[Principal, Depends(require(P.FIELD_READ))]
@@ -275,10 +284,19 @@ async def add_evidence(
     captured_at: Annotated[str | None, Form()] = None,
     text_value: Annotated[str | None, Form(max_length=500)] = None,
     note: Annotated[str | None, Form(max_length=2000)] = None,
+    lat: Annotated[float | None, Form(ge=-90, le=90)] = None,
+    lng: Annotated[float | None, Form(ge=-180, le=180)] = None,
+    accuracy_m: Annotated[float | None, Form(ge=0, le=100_000)] = None,
+    location_note: Annotated[str | None, Form(max_length=200)] = None,
     file: Annotated[UploadFile | None, File()] = None,
+    stamped: Annotated[UploadFile | None, File()] = None,
 ) -> EvidenceOut:
     """Add one piece of evidence. `client_id` is made on the phone, so a resent upload after a
-    dropped connection returns the first one instead of adding a copy."""
+    dropped connection returns the first one instead of adding a copy.
+
+    Photos may carry `stamped`, a copy with the time, place and task drawn on it; the original
+    `file` stays the evidence. The arrival photo needs `lat` and `lng`; elsewhere a missing
+    location is recorded with `location_note` saying why."""
     from datetime import datetime
 
     from app.core.errors import ValidationFailed
@@ -287,7 +305,9 @@ async def add_evidence(
         cap = datetime.fromisoformat(captured_at) if captured_at else None
     except ValueError as exc:
         raise ValidationFailed("captured_at must be an ISO date and time.") from exc
-    data = await read_limited(file, get_settings().max_upload_bytes) if file else None
+    limit = get_settings().max_upload_bytes
+    data = await read_limited(file, limit) if file else None
+    stamped_data = await read_limited(stamped, limit) if stamped else None
     ev = await service.add_evidence(
         session,
         principal,
@@ -300,8 +320,75 @@ async def add_evidence(
         note=note,
         captured_at=cap,
         client_ip=request.state.client_ip,
+        lat=lat,
+        lng=lng,
+        accuracy_m=accuracy_m,
+        location_note=location_note,
+        stamped=stamped_data,
+        stamped_name=stamped.filename if stamped else None,
     )
     return EvidenceOut.model_validate(ev, from_attributes=True)
+
+
+@router.get("/runs/{run_id}/config-diff", response_model=ConfigDiffOut)
+async def config_diff(session: Session, principal: Reader, run_id: uuid.UUID) -> ConfigDiffOut:
+    """The configuration export taken before any change (the rollback point) against the export
+    after the work. Values that look like secrets are hidden."""
+    return ConfigDiffOut(**await service.config_diff(session, principal, run_id))
+
+
+@router.post(
+    "/runs/{run_id}/upload-links",
+    response_model=UploadLinkOut,
+    status_code=status.HTTP_201_CREATED,
+)
+async def make_upload_link(
+    session: Session, principal: Worker, run_id: uuid.UUID, body: UploadLinkIn
+) -> UploadLinkOut:
+    """A single-use link and QR code, valid for 15 minutes, to upload this task's configuration
+    export from another device. The token is shown once and only its hash is kept."""
+    await check(f"user:{principal.user_id}", Limit("upload_link", 20, strict=True))
+    return UploadLinkOut(
+        **await service.create_upload_link(
+            session, principal, run_id, body.requirement_index, get_settings().public_base_url
+        )
+    )
+
+
+@router.post("/device-status", status_code=status.HTTP_204_NO_CONTENT)
+async def device_status(session: Session, principal: Worker, body: DeviceStatusIn) -> Response:
+    """The phone reports the work saved on it and not yet sent, so the Director can tell an
+    offline phone with work waiting from a quiet task."""
+    await service.report_device_status(
+        session,
+        principal,
+        pending=body.pending,
+        failed=body.failed,
+        oldest_pending_at=body.oldest_pending_at,
+        last_sync_at=body.last_sync_at,
+        app_version=body.app_version,
+        platform=body.platform,
+    )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/engineers", response_model=list[EngineerStatusOut])
+async def engineers(
+    session: Session, principal: Annotated[Principal, Depends(require(P.DASHBOARD_READ))]
+) -> list[EngineerStatusOut]:
+    """Every field engineer with their open work and their phone's sync state."""
+    return [EngineerStatusOut(**r) for r in await service.engineer_statuses(session, principal)]
+
+
+@router.get("/workload", response_model=list[WorkloadOut])
+async def workload(
+    session: Session,
+    principal: Manager,
+    days: Annotated[int, Query(ge=1, le=31)] = 14,
+) -> list[WorkloadOut]:
+    """Planned hours per engineer per day for the coming days, with open, blocked and overdue
+    tasks."""
+    return [WorkloadOut(**r) for r in await service.workload(session, principal, days)]
 
 
 @router.post("/runs/{run_id}/prechecks-done", response_model=RunDetailOut)
@@ -470,4 +557,45 @@ async def render_checklist(
     )
 
 
-routers = [project_router, router]
+# ------------------------------------------------------------------ public upload link
+
+
+async def _public_limit(request: Request, token: str) -> None:
+    await check(f"ip:{request.state.client_ip}", Limit("public", 30, strict=True))
+    if not 20 <= len(token) <= 100:
+        from app.core.errors import NotFound
+
+        raise NotFound(
+            "This upload link is not valid. Ask the engineer for a new one.", code="link_invalid"
+        )
+
+
+@public_router.get("/{token}", response_model=UploadLinkInfoOut)
+async def upload_link_info(request: Request, session: Session, token: str) -> UploadLinkInfoOut:
+    """Which task and which file the link is for. Nothing else about the customer or the job."""
+    await _public_limit(request, token)
+    return UploadLinkInfoOut(**await service.upload_link_info(session, token))
+
+
+@public_router.post("/{token}", response_model=UploadLinkDoneOut)
+async def upload_with_link(
+    request: Request,
+    session: Session,
+    token: str,
+    file: Annotated[UploadFile, File()],
+) -> UploadLinkDoneOut:
+    """Upload the configuration export once. The link cannot be used again."""
+    await _public_limit(request, token)
+    data = await read_limited(file, get_settings().max_upload_bytes)
+    return UploadLinkDoneOut(
+        **await service.upload_via_link(
+            session,
+            token,
+            data=data,
+            filename=file.filename or "export.txt",
+            client_ip=request.state.client_ip,
+        )
+    )
+
+
+routers = [project_router, router, public_router]

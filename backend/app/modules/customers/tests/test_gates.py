@@ -6,12 +6,12 @@ from typing import Any
 
 from sqlalchemy import func, select
 
-from app.core import outbox
 from app.core.db import get_sessionmaker
 from app.modules.audit_log.models import AuditEntry
 from app.modules.identity.permissions import Role
 from tests.helpers import (
     Workspace,
+    drain_outbox,
     idem,
     make_customer,
     make_user,
@@ -46,7 +46,7 @@ async def _audit_artifact(client: Any, ws: Workspace) -> str:
         headers={**ws.architect.headers, **idem()},
     )
     assert r.status_code == 200, r.text
-    await outbox.dispatch_batch(get_sessionmaker())
+    await drain_outbox()
     arts = (
         await client.get(f"{API}/projects/{ws.project_id}/artifacts", headers=ws.auditor.headers)
     ).json()

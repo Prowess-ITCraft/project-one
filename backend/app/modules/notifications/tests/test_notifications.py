@@ -36,9 +36,11 @@ async def test_preferences_mute_optional_messages_only(client: Any) -> None:
     pm = await make_user(client, Role.PROJECT_MANAGER)
     prefs = (await client.get(f"{API}/account/notification-preferences", headers=pm.headers)).json()
     kinds = {p["template"]: p for p in prefs}
-    assert kinds["task_update"]["optional"] is True and kinds["otp_check_in"]["optional"] is False
+    assert kinds["task_update"]["optional"] is True
+    assert kinds["verify_requested"]["optional"] is False
+    assert "otp_check_in" not in kinds  # customer codes never go to staff
     r = await client.put(
-        f"{API}/account/notification-preferences/otp_check_in",
+        f"{API}/account/notification-preferences/verify_requested",
         json={"enabled": False},
         headers=pm.headers,
     )

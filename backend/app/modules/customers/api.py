@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Query, Request, status
@@ -64,6 +65,7 @@ Idem = Annotated[IdempotencyGuard, Depends(require_idempotency_key)]
 customers_router = APIRouter(prefix="/customers", tags=["customers"])
 projects_router = APIRouter(prefix="/projects", tags=["projects"])
 gates_router = APIRouter(prefix="/gates", tags=["projects"])
+insights_router = APIRouter(prefix="/dashboard", tags=["projects"])
 public_router = APIRouter(
     prefix="/public/acks",
     tags=["public"],
@@ -647,3 +649,33 @@ async def confirm_ack(request: Request, session: Session, token: str, body: AckC
     await service.confirm_ack(
         session, token, body.full_name, request.state.client_ip, request.headers.get("user-agent")
     )
+
+
+# ------------------------------------------------------------------ the Director's bottlenecks
+
+
+class BottleneckOut(BaseModel):
+    project_id: uuid.UUID
+    code: str
+    name: str
+    customer: str | None
+    stage: str
+    stage_label: str
+    in_stage_since: datetime
+    days_in_stage: int
+    waiting_for: str
+    waiting_since: datetime
+    waiting_on_roles: list[str]
+    waiting_on_people: list[str]
+    health: str  # moving | slow (7 days) | stuck (14 days)
+    on_hold: bool
+
+
+@insights_router.get("/bottlenecks", response_model=list[BottleneckOut])
+async def bottlenecks(
+    session: Annotated[AsyncSession, Depends(get_session)],
+    principal: Annotated[Principal, Depends(require(P.DASHBOARD_READ))],
+) -> list[BottleneckOut]:
+    """Every open project: how long it has been in its stage and who it is waiting on, the
+    oldest first."""
+    return [BottleneckOut(**r) for r in await service.bottlenecks(session, principal)]

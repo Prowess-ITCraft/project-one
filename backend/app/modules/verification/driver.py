@@ -84,6 +84,7 @@ class ExportDriver:
                     severity=f.get("severity", "minor"),
                     outcome=outcome,
                     reason=reason[:500],
+                    source="export",
                 )
             )
         brands = "+".join(sorted(facts))

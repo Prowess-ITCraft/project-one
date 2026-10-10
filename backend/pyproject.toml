@@ -44,6 +44,9 @@ dependencies = [
     "jinja2>=3.1.6",
     "weasyprint>=70.0",
     "qrcode[pil]>=8.2",
+    "pywebpush>=2.5",
+    "scikit-learn>=1.9",
+    "lightgbm>=4.7",
 ]
 
 [dependency-groups]
@@ -98,7 +101,7 @@ plugins = ["pydantic.mypy"]
 exclude = ["migrations/"]
 
 [[tool.mypy.overrides]]
-module = ["weasyprint.*", "qrcode.*", "pyarrow.*", "duckdb.*", "celery.*", "kombu.*", "testcontainers.*", "pyotp.*", "docx.*", "pdfplumber.*", "openpyxl.*", "flower.*"]
+module = ["weasyprint.*", "qrcode.*", "pyarrow.*", "duckdb.*", "celery.*", "kombu.*", "testcontainers.*", "pyotp.*", "docx.*", "pdfplumber.*", "openpyxl.*", "flower.*", "pywebpush.*", "py_vapid.*", "sklearn.*", "lightgbm.*", "joblib.*", "scipy.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

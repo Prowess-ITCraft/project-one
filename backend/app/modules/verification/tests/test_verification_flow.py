@@ -7,13 +7,12 @@ import base64
 import uuid
 from typing import Any
 
-from app.core import outbox
 from app.core.db import get_sessionmaker
 from app.core.redis import get_redis
 from app.modules.fieldops.tests.test_field_flow import _code, _post, field_ready
 from app.modules.identity.permissions import Role
 from app.modules.verification.seed import seed_verification
-from tests.helpers import make_user
+from tests.helpers import drain_outbox, make_user
 
 API = "/api/v1"
 FIELD = f"{API}/field"
@@ -27,7 +26,12 @@ def sonicwall_exp(mfa: str, admin: str = "fw-admin") -> bytes:
 
 async def _ev(client: Any, user: Any, run: dict[str, Any], i: int, mfa: str = "on") -> None:
     req = run["evidence_reqs"][i]
-    data = {"requirement_index": str(i), "client_id": str(uuid.uuid4())}
+    data = {
+        "requirement_index": str(i),
+        "client_id": str(uuid.uuid4()),
+        "lat": "19.07",
+        "lng": "72.87",
+    }
     files = None
     if req["type"] in ("photo", "screenshot"):
         from app.modules.fieldops.tests.test_field_flow import _png
@@ -53,7 +57,12 @@ async def walk_to_configured(client: Any, p: Any, eng: Any, run: dict[str, Any],
     await _post(client, eng, f"{rid}/accept")
     await client.post(f"{FIELD}/runs/{rid}/codes/check_in", headers=eng.headers)
     await _ev(client, eng, run, 0)
-    r = await _post(client, eng, f"{rid}/check-in", {"code": await _code(rid, "otp_check_in")})
+    r = await _post(
+        client,
+        eng,
+        f"{rid}/check-in",
+        {"code": await _code(rid, "otp_check_in"), "lat": 19.07, "lng": 72.87},
+    )
     assert r.json()["run"]["state"] == "checked_in", r.text
     for i in (1, 2):
         await _ev(client, eng, run, i)
@@ -110,7 +119,7 @@ async def test_exports_drive_the_check_and_the_deviation_register(client: Any) -
     )
     r = await _post(client, both, f"{rid}/submit-evidence")
     assert r.json()["run"]["state"] == "configured" and r.json()["checks"][-1]["passed"] is False
-    await outbox.dispatch_batch(get_sessionmaker())
+    await drain_outbox()
 
     devs = (await client.get(f"{VER}/projects/{p.pid}/deviations", headers=p.lead.headers)).json()
     open_mfa = next(d for d in devs if d["field_key"] == "admin_mfa")
@@ -161,13 +170,15 @@ async def test_exports_drive_the_check_and_the_deviation_register(client: Any) -
 
     # fixed on the device: a new export passes and the register closes the deviation by itself
     run_now = (await client.get(f"{FIELD}/runs/{rid}", headers=both.headers)).json()["run"]
-    export_index = next(
-        i for i, e in enumerate(run_now["evidence_reqs"]) if e["type"] == "config_export"
+    export_index = next(  # the export after the work, not the one taken before it
+        i
+        for i, e in enumerate(run_now["evidence_reqs"])
+        if e["type"] == "config_export" and e.get("stage", "work") == "work"
     )
     await _ev(client, both, run_now, export_index, mfa="on")
     r = await _post(client, both, f"{rid}/submit-evidence")
     assert r.json()["checks"][-1]["passed"] is True
-    await outbox.dispatch_batch(get_sessionmaker())
+    await drain_outbox()
     devs = (await client.get(f"{VER}/projects/{p.pid}/deviations", headers=p.lead.headers)).json()
     closed = next(d for d in devs if d["id"] == open_mfa["id"])
     assert (

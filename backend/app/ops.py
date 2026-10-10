@@ -1,4 +1,5 @@
-"""Operational helpers used by the CLI and the nightly job: database backup with retention."""
+"""Operational helpers used by the CLI and the nightly job: database backup with retention, and
+the operational gauges Prometheus alerts on (docs/runbooks/alerts.md)."""
 
 from __future__ import annotations
 
@@ -16,6 +17,7 @@ from app.core.timeutil import utcnow
 
 log = structlog.get_logger(__name__)
 PREFIX = "pg_dump/"
+LAST_BACKUP_KEY = "p1:ops:last_backup_ok"
 
 
 def _pg_env(url: str) -> tuple[list[str], dict[str, str]]:
@@ -53,7 +55,72 @@ def run_backup() -> str:
             s3_client().put_object(Bucket=s.s3_bucket_backups, Key=key, Body=fh)
     log.info("backup_done", key=key)
     prune_backups()
+    _mark_backup()
     return key
+
+
+def _mark_backup() -> None:
+    """Remember when the last backup succeeded; Prometheus alerts when it is over a day old."""
+    import redis as redis_sync
+
+    try:
+        r = redis_sync.Redis.from_url(get_settings().redis_url, socket_timeout=5)
+        r.set(LAST_BACKUP_KEY, str(int(utcnow().timestamp())))
+    except redis_sync.RedisError as exc:  # the backup itself worked; only the gauge is stale
+        log.warning("backup_mark_failed", error=str(exc))
+
+
+async def ops_metrics() -> str:
+    """Gauges for the alert rules: outbox backlog and dead messages (failed jobs), the Celery
+    queue, failed notifications in the last day, and the time of the last good backup."""
+    from sqlalchemy import text
+
+    from app.core.db import get_engine
+    from app.core.redis import get_redis
+
+    lines: list[str] = []
+
+    def gauge(name: str, value: float, help_: str) -> None:
+        lines.extend([f"# HELP {name} {help_}", f"# TYPE {name} gauge", f"{name} {value}"])
+
+    async with get_engine().connect() as conn:
+        rows: dict[str, int] = dict(
+            (
+                await conn.execute(
+                    text("SELECT status, count(*) FROM outbox_messages GROUP BY status")
+                )
+            ).all()
+        )
+        failed = await conn.scalar(
+            text(
+                "SELECT count(*) FROM notifications WHERE status = 'failed' "
+                "AND created_at > now() - interval '1 day'"
+            )
+        )
+    gauge("p1_outbox_pending", float(rows.get("pending", 0)), "Outbox messages waiting")
+    gauge("p1_outbox_dead", float(rows.get("dead", 0)), "Outbox messages given up after retries")
+    gauge("p1_notifications_failed_1d", float(failed or 0), "Messages that failed in a day")
+    try:
+        import redis.asyncio as aioredis
+
+        broker = aioredis.from_url(  # type: ignore[no-untyped-call]
+            get_settings().celery_broker_url, socket_timeout=3
+        )
+        try:
+            depth = await broker.llen("celery")
+        finally:
+            await broker.aclose()
+        gauge("p1_celery_queue_length", float(depth), "Tasks waiting for a Celery worker")
+        last = await get_redis().get(LAST_BACKUP_KEY)
+        if last:
+            gauge(
+                "p1_backup_last_success_timestamp_seconds",
+                float(last),
+                "Unix time of the last good database backup",
+            )
+    except Exception as exc:
+        log.warning("ops_metrics_redis", error=str(exc)[:200])
+    return "\n".join(lines) + "\n"
 
 
 def export_backups(out: str) -> int:

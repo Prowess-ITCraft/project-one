@@ -105,7 +105,12 @@ async def _evidence(
     client: Any, user: Any, run: dict[str, Any], index: int, cid: str | None = None
 ) -> Any:
     req = run["evidence_reqs"][index]
-    data: dict[str, str] = {"requirement_index": str(index), "client_id": cid or str(uuid.uuid4())}
+    data: dict[str, str] = {
+        "requirement_index": str(index),
+        "client_id": cid or str(uuid.uuid4()),
+        "lat": "19.07",
+        "lng": "72.87",
+    }
     files = None
     if req["type"] in ("photo", "screenshot"):
         files = {"file": ("e.png", _png(), "image/png")}
@@ -157,7 +162,7 @@ async def test_a_task_walks_from_assigned_to_closed(client: Any) -> None:
     assert resent.json()["id"] == ev.json()["id"]
     code = await _code(rid, "otp_check_in")
     wrong = "111111" if code != "111111" else "222222"
-    bad = await _post(client, eng, f"{rid}/check-in", {"code": wrong})
+    bad = await _post(client, eng, f"{rid}/check-in", {"code": wrong, "lat": 19.07, "lng": 72.87})
     assert bad.status_code == 422 and bad.json()["code"] == "otp_invalid"
     r = await _post(client, eng, f"{rid}/check-in", {"code": code, "lat": 19.07, "lng": 72.87})
     assert r.status_code == 200 and r.json()["run"]["state"] == "checked_in"

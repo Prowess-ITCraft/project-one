@@ -20,6 +20,7 @@ from app.modules.boq.schemas import (
     BoqOut,
     CompareOut,
     EditRowOut,
+    OutcomeOut,
     VersionRowOut,
     VersionViewOut,
 )
@@ -66,6 +67,31 @@ class RefreshIn(_In):
 class DecisionIn(_In):
     approve: bool
     note: Annotated[str, StringConstraints(max_length=500)] | None = None
+    # Lines under the minimum margin the approver accepts, one by one (ADR 0028).
+    margin_ack: list[str] = Field(default_factory=list, max_length=400)
+
+
+class RepriceIn(_In):
+    draft_rev: int = Field(ge=1)
+
+
+class OutcomeIn(_In):
+    outcome: Literal["lost", "open"]
+    reason: (
+        Literal[
+            "price",
+            "competitor",
+            "budget",
+            "timing",
+            "scope",
+            "no_decision",
+            "relationship",
+            "other",
+        ]
+        | None
+    ) = None
+    competitor: Annotated[str, StringConstraints(max_length=120)] | None = None
+    note: Annotated[str, StringConstraints(max_length=1000)] | None = None
 
 
 class AcceptIn(_In):
@@ -96,12 +122,25 @@ class WeightsIn(_In):
     weights: dict[str, float]
 
 
+async def _view(session: AsyncSession, b: Any, principal: Principal) -> dict[str, Any]:
+    floor = await service.min_margin(session) if principal.has(P.PRICE_READ) else None
+    return service.view(b, principal, floor)
+
+
 # ------------------------------------------------------------------ master data
 
 
 @router.get("/company")
 async def get_company(session: Session, _: Reader) -> dict[str, Any]:
     return await service.company(session)
+
+
+@router.get("/company/record")
+async def get_company_record(
+    session: Session, principal: Annotated[Principal, Depends(require(P.SETTINGS_EDIT))]
+) -> dict[str, Any]:
+    """Company settings with their version, for the settings page that saves them."""
+    return await service.company_record(session)
 
 
 @router.put("/company")
@@ -132,7 +171,10 @@ async def put_weights(
 
 
 @router.get("/templates")
-async def list_templates(session: Session, _: Reader) -> list[dict[str, Any]]:
+async def list_templates(
+    session: Session, _: Annotated[Principal, Depends(require(P.TEMPLATE_EDIT))]
+) -> list[dict[str, Any]]:
+    """What each gap type turns into, for the people who maintain the templates."""
     return [
         {
             "id": str(t.id),
@@ -182,7 +224,7 @@ async def generate(
 ) -> dict[str, Any]:
     """Draft the BOQ from the locked gap register. Prices come from the price book only."""
     b = await service.generate(session, principal, project_id, replace=body.replace)
-    return service.view(b, principal)
+    return await _view(session, b, principal)
 
 
 ESTIMATE_REF = "ESTIMATE, NOT APPROVED"
@@ -221,7 +263,9 @@ async def estimate(
 async def get_project_boq(
     session: Session, principal: Reader, project_id: uuid.UUID
 ) -> dict[str, Any]:
-    return service.view(await service.for_project(session, principal, project_id), principal)
+    return await _view(
+        session, await service.for_project(session, principal, project_id), principal
+    )
 
 
 # ------------------------------------------------------------------ editing
@@ -229,7 +273,7 @@ async def get_project_boq(
 
 @router.get("/{boq_id}", response_model=BoqOut)
 async def get_boq(session: Session, principal: Reader, boq_id: uuid.UUID) -> dict[str, Any]:
-    return service.view(await service._load(session, principal, boq_id), principal)
+    return await _view(session, await service._load(session, principal, boq_id), principal)
 
 
 @router.post("/{boq_id}/edit", response_model=BoqOut)
@@ -238,7 +282,8 @@ async def edit(
 ) -> dict[str, Any]:
     """Add, change, delete or move anything: lines, sections, groups, options, terms, settings.
     All operations apply together or not at all, and the reason is kept."""
-    return service.view(
+    return await _view(
+        session,
         await service.edit(
             session, principal, boq_id, draft_rev=body.draft_rev, reason=body.reason, ops=body.ops
         ),
@@ -261,7 +306,7 @@ async def add_item(
         qty=body.qty,
         option_group=body.option_group,
     )
-    return service.view(b, principal)
+    return await _view(session, b, principal)
 
 
 @router.post("/{boq_id}/refresh-prices", response_model=BoqOut)
@@ -272,7 +317,55 @@ async def refresh_prices(
     b, changes = await service.refresh_prices(
         session, principal, boq_id, draft_rev=body.draft_rev, reason=body.reason
     )
-    return {**service.view(b, principal), "changes": changes}
+    return {**(await _view(session, b, principal)), "changes": changes}
+
+
+@router.post("/{boq_id}/reprice", response_model=BoqOut)
+async def reprice(
+    session: Session, principal: Editor, boq_id: uuid.UUID, body: RepriceIn
+) -> dict[str, Any]:
+    """When a quote's prices lapse: take today's price book price into every price book line and,
+    if nothing blocks it, send the BOQ for pricing approval in the same step. Issuing the new
+    version still needs the approval."""
+    b, changes, submitted = await service.reprice(
+        session, principal, boq_id, draft_rev=body.draft_rev
+    )
+    return {**(await _view(session, b, principal)), "changes": changes, "submitted": submitted}
+
+
+@router.post("/{boq_id}/outcome", response_model=BoqOut)
+async def outcome(
+    session: Session, principal: Editor, boq_id: uuid.UUID, body: OutcomeIn
+) -> dict[str, Any]:
+    """Record that the customer said no, with the reason, or open a lost quote again. A win is
+    recorded by accepting a version with the purchase order."""
+    b = await service.record_outcome(
+        session,
+        principal,
+        boq_id,
+        outcome=body.outcome,
+        reason=body.reason,
+        competitor=body.competitor,
+        note=body.note,
+    )
+    return await _view(session, b, principal)
+
+
+@router.get("/{boq_id}/outcomes", response_model=list[OutcomeOut])
+async def outcomes(session: Session, principal: Reader, boq_id: uuid.UUID) -> list[dict[str, Any]]:
+    """Every win, loss and reopening of this quote, oldest first."""
+    return [
+        {
+            "at": o.at.isoformat(),
+            "by": str(o.by),
+            "outcome": o.outcome,
+            "reason": o.reason,
+            "competitor": o.competitor,
+            "note": o.note,
+            "version_number": o.version_number,
+        }
+        for o in await service.list_outcomes(session, principal, boq_id)
+    ]
 
 
 @router.get("/{boq_id}/lines/{line_id}/history")
@@ -350,7 +443,9 @@ async def edits(session: Session, principal: Reader, boq_id: uuid.UUID) -> list[
 @router.post("/{boq_id}/submit", response_model=BoqOut)
 async def submit(session: Session, principal: Editor, boq_id: uuid.UUID) -> dict[str, Any]:
     """Send the BOQ for pricing review. Missing or expired prices must be fixed first."""
-    return service.view(await service.submit_for_pricing(session, principal, boq_id), principal)
+    return await _view(
+        session, await service.submit_for_pricing(session, principal, boq_id), principal
+    )
 
 
 @router.post("/{boq_id}/pricing-decision", response_model=BoqOut)
@@ -361,9 +456,15 @@ async def pricing_decision(
     body: DecisionIn,
 ) -> dict[str, Any]:
     """Approve or send back the pricing. Not the person who drafted or edited it."""
-    return service.view(
+    return await _view(
+        session,
         await service.decide_pricing(
-            session, principal, boq_id, approve=body.approve, note=body.note
+            session,
+            principal,
+            boq_id,
+            approve=body.approve,
+            note=body.note,
+            margin_ack=body.margin_ack,
         ),
         principal,
     )
@@ -453,7 +554,9 @@ async def reopen(
     session: Session, principal: Editor, boq_id: uuid.UUID, body: ReopenIn
 ) -> dict[str, Any]:
     """After the project is returned to the BOQ stage, start a new draft from the accepted version."""
-    return service.view(await service.reopen(session, principal, boq_id, body.reason), principal)
+    return await _view(
+        session, await service.reopen(session, principal, boq_id, body.reason), principal
+    )
 
 
 # ------------------------------------------------------------------ documents

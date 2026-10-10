@@ -17,16 +17,20 @@ from app.modules.customers.contracts import get_project_ref
 from app.modules.fieldops.engine import (
     BLOCKING,
     DRIVERS,
+    EXPORT_READERS,
     AnswerDriver,
     CheckResult,
     ConfigCheckDriver,
+    ExportFacts,
     ExportFile,
+    ExportReader,
     FieldResult,
     passes,
 )
 from app.modules.fieldops.models import FLOW, RunCheck, TaskRun
 from app.modules.fieldops.service import CHECK_COMPLETED
 from app.modules.identity.contracts import P, Principal
+from app.modules.search.contracts import SearchDoc
 
 
 @dataclass(frozen=True)
@@ -178,7 +182,7 @@ async def field_snapshots(
         )
         .group_by(RunEvent.project_id)
     )
-    checkins = {pid: int(n) for pid, n in rows.tuples()}
+    checkins = {pid: int(n) for pid, n in rows.all()}
     now = utcnow()
     out: dict[uuid.UUID, dict[str, Any]] = {}
     for pid, runs in by_project.items():
@@ -207,9 +211,23 @@ async def field_snapshots(
     return out
 
 
+async def search_documents(session: AsyncSession) -> list[SearchDoc]:
+    """Every field task, for rebuilding the search index."""
+    from app.modules.fieldops import service as _service
+
+    return [_service.task_doc(r) for r in await session.scalars(select(TaskRun))]
+
+
 def register_driver(device_type: str, driver: ConfigCheckDriver) -> None:
     """Phase 9 adds brand drivers (SonicWall, Sophos, Fortinet, Cisco) here."""
     DRIVERS[device_type] = driver
+
+
+def register_export_reader(reader: ExportReader) -> None:
+    """The module that owns the brand parsers (verification) teaches field work to read an
+    export: for the summary shown after an upload and for the before and after comparison."""
+    if reader not in EXPORT_READERS:
+        EXPORT_READERS.append(reader)
 
 
 __all__ = [
@@ -219,7 +237,9 @@ __all__ = [
     "AnswerDriver",
     "CheckResult",
     "ConfigCheckDriver",
+    "ExportFacts",
     "ExportFile",
+    "ExportReader",
     "FieldResult",
     "FieldStatus",
     "RunRef",
@@ -230,4 +250,5 @@ __all__ = [
     "list_run_refs",
     "passes",
     "register_driver",
+    "register_export_reader",
 ]

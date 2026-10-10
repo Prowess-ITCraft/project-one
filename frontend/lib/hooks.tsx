@@ -7,20 +7,23 @@ import { ApiError, get, message, passing, type S } from "./api";
 const KEEP = /^\/(auth\/me$|field\/)/;
 const KEPT = "p1-kept:";
 
-function keep(path: string, data: unknown) {
+function keep(path: string, data: unknown, at: number) {
   if (!KEEP.test(path)) return;
   try {
-    localStorage.setItem(KEPT + path, JSON.stringify(data));
+    localStorage.setItem(KEPT + path, JSON.stringify({ at, data }));
   } catch {
     /* storage full or blocked: the page still works online */
   }
 }
 
-function kept<T>(path: string): T | null {
+function kept<T>(path: string): { at: number; data: T } | null {
   if (!KEEP.test(path)) return null;
   try {
     const raw = localStorage.getItem(KEPT + path);
-    return raw ? (JSON.parse(raw) as T) : null;
+    if (!raw) return null;
+    const v = JSON.parse(raw) as { at?: unknown; data?: T };
+    // copies kept before the time was stored count as very old
+    return typeof v.at === "number" && "data" in v ? { at: v.at, data: v.data as T } : { at: 0, data: v as T };
   } catch {
     return null;
   }
@@ -35,30 +38,41 @@ export function forgetKept() {
 }
 
 /** Load data once and on demand. Keeps the last good data while reloading. With no network,
- * field pages fall back to what they last loaded and say so through `stale`. */
+ * field pages fall back to what they last loaded and say so through `stale`. `at` is when the
+ * data shown was asked of the server (ms), so a page can lay newer local changes over it. */
 export function useData<T>(path: string | null) {
   const [data, setData] = useState<T | null>(null);
+  const [at, setAt] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [stale, setStale] = useState(false);
   const [loading, setLoading] = useState(path !== null);
   const seq = useRef(0);
+  const shown = useRef(false);
   const load = useCallback(async () => {
     if (path === null) return;
     const n = ++seq.current;
+    const asked = Date.now();
     setLoading(true);
     try {
       const d = await get<T>(path);
       if (n === seq.current) {
+        shown.current = true;
         setData(d);
+        setAt(asked);
         setError(null);
         setStale(false);
-        keep(path, d);
+        keep(path, d, asked);
       }
     } catch (e) {
       if (n !== seq.current) return;
       const old = passing(e) && !(e instanceof ApiError && e.status === 401) ? kept<T>(path) : null;
       if (old !== null) {
-        setData((cur) => cur ?? old);
+        // keep what is on screen; only an empty page takes the kept copy
+        if (!shown.current) {
+          shown.current = true;
+          setData(old.data);
+          setAt(old.at);
+        }
         setStale(true);
       } else setError(message(e));
     } finally {
@@ -68,7 +82,7 @@ export function useData<T>(path: string | null) {
   useEffect(() => {
     load();
   }, [load]);
-  return { data, error, stale, loading, reload: load };
+  return { data, at, error, stale, loading, reload: load };
 }
 
 type Me = S["MeOut"];

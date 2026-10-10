@@ -12,7 +12,6 @@ import pytest
 from sqlalchemy import select, text
 from sqlalchemy.exc import DBAPIError
 
-from app.core import outbox
 from app.core.db import get_sessionmaker
 from app.core.redis import get_redis
 from app.modules.fieldops.tests.test_field_flow import _png, field_ready
@@ -22,7 +21,7 @@ from app.modules.prismsuite.tests.test_rescan_json import _snapshot_json, _uploa
 from app.modules.reporting.models import Certificate
 from app.modules.reporting.service import signature_ok
 from app.modules.verification.seed import seed_verification
-from tests.helpers import idem, make_user
+from tests.helpers import drain_outbox, idem, make_user
 
 API = "/api/v1"
 REP = f"{API}/reporting"
@@ -149,7 +148,7 @@ async def _upload_stamp(client: Any, user: Any) -> Any:
 async def _completion_signoff(client: Any, p: Any, director: Any) -> None:
     """The completion gate: the PM submits the locked report, the customer acknowledges it by
     link, and a Director approves (the final check)."""
-    await outbox.dispatch_batch(get_sessionmaker())
+    await drain_outbox()
     arts = (await client.get(f"{API}/projects/{p.pid}/artifacts", headers=p.pm.headers)).json()
     art = next(a for a in arts if a["artifact_type"] == "completion_report")
     r = await client.post(

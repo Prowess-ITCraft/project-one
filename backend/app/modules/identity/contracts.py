@@ -91,6 +91,37 @@ async def create_customer_representative(
     return user.id
 
 
+async def principal_for_link(
+    session: AsyncSession,
+    user_id: uuid.UUID,
+    *,
+    link_id: uuid.UUID,
+    permissions: frozenset[P],
+    ip: str | None = None,
+) -> Principal | None:
+    """Act for an active user through a single-use link they made (the field upload link). The
+    principal holds only the permissions given here and only those the user has anyway, and the
+    audit log shows the link as the session. None when the user is gone or inactive."""
+    from app.modules.identity.permissions import permissions_for
+
+    u = await _repo.user_by_id(session, user_id)
+    if u is None or not u.is_active or u.deleted_at is not None:
+        return None
+    roles = _service.user_roles(u)
+    return Principal(
+        user_id=u.id,
+        email=u.email,
+        full_name=u.full_name,
+        initials=u.initials,
+        roles=roles,
+        permissions=permissions & permissions_for(roles),
+        session_id=link_id,
+        customer_id=u.customer_id,
+        ip=ip,
+        extra={"via": "upload_link"},
+    )
+
+
 def system_principal(name: str = "system", permissions: frozenset[P] = frozenset()) -> Principal:
     return _principal.system_principal(name, permissions)
 
@@ -111,6 +142,7 @@ __all__ = [
     "get_principal",
     "get_user_summary",
     "optional_principal",
+    "principal_for_link",
     "require",
     "system_principal",
     "users_with_role",

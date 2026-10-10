@@ -37,6 +37,9 @@ DEFAULT_COMPANY: dict[str, Any] = {
     "gstin": "27AAPCP3476M1ZL",
     "quote_prefix": "ITCraft",
     "default_validity_days": 5,
+    # Lines under this margin on the selling price must be accepted one by one, with a reason,
+    # by whoever approves the pricing (ADR 0028). The Director can change it in company settings.
+    "min_margin_pct": 10,
     "gst_default": "18.00",
     "groups": ["High Priority", "To Consider"],
     "terms": DEFAULT_TERMS,

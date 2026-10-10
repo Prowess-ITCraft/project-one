@@ -22,6 +22,7 @@ source_modules =
     app.modules.verification
     app.modules.reporting
     app.modules.ml
+    app.modules.search
 forbidden_modules =
     app.modules.audit_log.models
     app.modules.audit_log.service
@@ -54,6 +55,8 @@ forbidden_modules =
     app.modules.reporting.service
     app.modules.ml.models
     app.modules.ml.service
+    app.modules.search.models
+    app.modules.search.service
 allow_indirect_imports = True
 ignore_imports =
     app.modules.audit_log.** -> app.modules.audit_log.**
@@ -71,6 +74,7 @@ ignore_imports =
     app.modules.verification.** -> app.modules.verification.**
     app.modules.reporting.** -> app.modules.reporting.**
     app.modules.ml.** -> app.modules.ml.**
+    app.modules.search.** -> app.modules.search.**
     app.modules.**.tests.** -> app.modules.**
 
 [importlinter:contract:core-is-independent]
@@ -78,3 +82,12 @@ name = core never imports a module
 type = forbidden
 source_modules = app.core
 forbidden_modules = app.modules
+
+[importlinter:contract:verdicts-ignore-learning]
+name = Verification and reporting never read a model's output (ADR 0029)
+type = forbidden
+source_modules =
+    app.modules.verification
+    app.modules.reporting
+forbidden_modules =
+    app.modules.ml

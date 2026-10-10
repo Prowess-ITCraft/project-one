@@ -1,0 +1,100 @@
+# Alert rules (Phase 14). Each says what is wrong in plain words; docs/runbooks/alerts.md says
+# what to do. Tested by alerts.test.yml with `promtool test rules`.
+groups:
+  - name: project-one
+    rules:
+      - alert: ApiDown
+        expr: up{job="project-one-api"} == 0
+        for: 2m
+        labels: {severity: critical}
+        annotations:
+          summary: "The API is not answering"
+          description: "Prometheus has not reached the API for 2 minutes. People cannot sign in or save work."
+
+      - alert: PublicAddressDown
+        expr: probe_success{job="public"} == 0
+        for: 3m
+        labels: {severity: critical}
+        annotations:
+          summary: "The public address is down"
+          description: "{{ $labels.instance }} has not answered for 3 minutes."
+
+      - alert: ServerErrors
+        expr: sum(rate(p1_http_requests_total{status=~"5.."}[10m])) / clamp_min(sum(rate(p1_http_requests_total[10m])), 0.001) > 0.05
+        for: 10m
+        labels: {severity: warning}
+        annotations:
+          summary: "More than 5 percent of requests fail"
+          description: "Server errors for 10 minutes. Check GlitchTip and the API logs."
+
+      - alert: SlowResponses
+        expr: histogram_quantile(0.95, sum by (le) (rate(p1_http_request_duration_seconds_bucket[10m]))) > 1.5
+        for: 15m
+        labels: {severity: warning}
+        annotations:
+          summary: "Responses are slow"
+          description: "95 percent of requests take more than 1.5 seconds."
+
+      - alert: OutboxBacklog
+        expr: p1_outbox_pending > 500
+        for: 10m
+        labels: {severity: warning}
+        annotations:
+          summary: "Background work is piling up"
+          description: "{{ $value }} outbox messages waiting. The worker may be stopped or stuck."
+
+      - alert: FailedJobs
+        expr: p1_outbox_dead > 0
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: "Background jobs failed for good"
+          description: "{{ $value }} outbox messages gave up after every retry."
+
+      - alert: QueueDepth
+        expr: p1_celery_queue_length > 200
+        for: 10m
+        labels: {severity: warning}
+        annotations:
+          summary: "The task queue is deep"
+          description: "{{ $value }} tasks waiting for a Celery worker."
+
+      - alert: MessagesFailing
+        expr: p1_notifications_failed_1d > 20
+        for: 15m
+        labels: {severity: warning}
+        annotations:
+          summary: "Emails or push messages are failing"
+          description: "{{ $value }} messages failed in the last day. Check the mail server settings."
+
+      - alert: BackupMissing
+        expr: time() - p1_backup_last_success_timestamp_seconds > 26 * 3600
+        for: 10m
+        labels: {severity: critical}
+        annotations:
+          summary: "No good backup for more than a day"
+          description: "The last database backup succeeded {{ $value | humanizeDuration }} ago."
+
+      - alert: DiskSpaceLow
+        expr: node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"} < 0.15
+        for: 10m
+        labels: {severity: critical}
+        annotations:
+          summary: "Disk almost full"
+          description: "{{ $labels.mountpoint }} has less than 15 percent free."
+
+      - alert: MemoryLow
+        expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 0.10
+        for: 10m
+        labels: {severity: warning}
+        annotations:
+          summary: "Memory almost used up"
+          description: "Less than 10 percent of memory is free."
+
+      - alert: CertificateExpiring
+        expr: probe_ssl_earliest_cert_expiry - time() < 14 * 86400
+        for: 1h
+        labels: {severity: warning}
+        annotations:
+          summary: "The HTTPS certificate expires within 14 days"
+          description: "Certbot should have renewed it. Renew it by hand (docs/runbooks/deploy.md)."

@@ -61,6 +61,10 @@ Every change follows these. Changing a rule needs Aditya's sign-off and an ADR.
 - Raise `ValidationFailed`, `Conflict`, `NotFound`, `Forbidden` with a helpful message and a
   stable `code`. Messages say what happened and how to fix it.
 - Never `eval`. Quantity rules use `core/safeexpr.py`.
+- Migrations expand, then contract. A migration may add tables, nullable columns, columns with
+  a server default, and indexes. Dropping, renaming or retyping waits for a later release, once
+  no running code reads the old shape, so a rollback is only a redeploy of the previous image.
+  Every `downgrade()` must run. `tests/test_migrations.py` checks all three.
 - Frontend: TypeScript strict, Next.js and React only, plain CSS tokens, typed client generated
   from OpenAPI (never hand-written types).
 

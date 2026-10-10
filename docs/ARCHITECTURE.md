@@ -31,11 +31,12 @@ samples/       the reference inputs; samples/corpus/ holds their canonical JSON
 | `infra` | current and ideal model, rule DSL, gap engine | built |
 | `boq` | templates, quantity rules, recommender, editor, versions, quote refs, rendering | built |
 | `planning` | task and config templates, plan, dependencies, scheduler, baselines, leave, downtime | built |
-| `notifications` | queue, providers (email; SMS and WhatsApp adapters), preferences, retries | built |
-| `fieldops` | task run state machine, evidence, OTP, offline idempotency, live events | built |
+| `notifications` | queue, providers (email, Web Push; SMS and WhatsApp adapters), message centre, preferences per channel, retries | built |
+| `fieldops` | task run state machine, evidence with stamps and location, OTP, offline idempotency (72 hours), single-use upload links, config snapshots, phone sync state, live events | built |
 | `verification` | export parsers, brand key mappings, deviation register, severity policy, Director dashboard | built |
 | `reporting` | release conditions, waivers, completion report, certificate, QR verification | built |
-| `ml` | examples from drafted BOQs, frozen training sets, learned ranker, shadow runs | built |
+| `ml` | examples from drafted BOQs, frozen training sets, learned ranker, BOQ line prediction, price drift, model cards, shadow runs (ADR 0029) | built |
+| `search` | one search table fed by events, Postgres full text and `pg_trgm`, filtered by permission | built |
 
 Every module has `api.py`, `schemas.py`, `models.py`, `service.py` (the only place rules live),
 `contracts.py` (the only file other modules import), optional `handlers.py`, and `tests/`.
@@ -51,7 +52,8 @@ Every module has `api.py`, `schemas.py`, `models.py`, `service.py` (the only pla
 
 Main contract edges: `boq -> infra, catalogue, customers, datasets(history)`;
 `planning -> boq(accepted, no prices)`; `fieldops -> planning, customers, notifications, files`;
-`datasets -> prismsuite(parse), files`.
+`datasets -> prismsuite(parse), files`; `search` only listens to events; `verification` and
+`reporting` may never import `ml` (a separate import-linter contract, ADR 0029).
 
 ## 3. Data model (table groups)
 
@@ -65,17 +67,20 @@ Main contract edges: `boq -> infra, catalogue, customers, datasets(history)`;
 | Catalogue | vendors, catalogue_categories, catalogue_items, catalogue_market_data, price_entries |
 | Datasets and library | datasets, dataset_versions (immutable), dataset_shares, dataset_quarantine, dataset_synonyms, dataset_promotions, library_files, corpus_documents |
 | Infra and gaps | infra_rules, infra_rule_changes, infra_states, gap_registers, gaps |
-| BOQ | boq_templates, reco_weights, company_settings, boqs, boq_versions, boq_edits |
+| BOQ | boq_templates, reco_weights, company_settings, boqs, boq_versions, boq_edits, boq_outcomes |
 | Planning | plan_task_templates, plan_config_templates, plans, plan_tasks, plan_config_baselines, engineer_leaves, downtime_windows |
-| Notifications | notifications, notification_prefs |
-| Field ops | task_runs, run_events (append only), run_evidence (append only), otp_challenges |
+| Notifications | notifications, notification_prefs, push_subscriptions |
+| Field ops | task_runs, run_events (append only), run_evidence (append only), otp_challenges, field_upload_links, field_device_status |
 | Verification | brand_field_maps, deviations, verification_settings |
 | Reporting | waivers, completion_reports, certificates, report_settings |
-| Learning | ml_examples, ml_training_sets (frozen), ml_models, ml_shadow_runs |
+| Learning | ml_examples, ml_line_examples, ml_price_points, ml_training_sets (frozen), ml_models (with card), ml_shadow_runs |
+| Search | search_documents |
 | Platform | outbox, idempotency keys, sequences, feature flags |
 
 Money is `NUMERIC(14,2)`. Editable rows carry a `version` column for optimistic locking.
 Approved outputs are stored as locked `stage_artifacts`; changes create new versions.
+Migrations only expand the schema; removals wait for a later release (RULES section 4), so a
+rollback is a redeploy of the previous image.
 
 ## 4. The document corpus and data pipeline
 
@@ -145,19 +150,24 @@ No other PDF generator is allowed without an ADR.
 
 | Port | Service | Published in prod |
 | --- | --- | --- |
-| 9595 | web (Next.js) | yes |
+| 80 / 443 | Nginx proxy (HTTPS) | yes, the only public ports (ADR 0030) |
+| 9595 | web (Next.js) | dev only |
 | 9596 | API | dev only |
-| 9597 | Nginx proxy | yes |
+| 9597 | Nginx proxy, plain HTTP | dev; prod only behind a load balancer (`docker-compose.lb.yml`) |
 | 9598 | Flower | no |
 | 9599 | PostgreSQL 16 | no |
 | 9600 | Valkey (Redis-compatible) | no |
 | 9601 / 9602 | MinIO API / console | no |
 | 9603 / 9604 | Prometheus / Grafana | admin only |
 | 9605 | Mailpit | dev only |
-| 9606 | Reserved (MLflow not needed, ADR 0020) | no |
+| 9606 | MLflow, optional profile `mlflow` (ADR 0029) | admin only |
+| 9607 / 9608 | Uptime Kuma / GlitchTip, profile `ops` | admin only |
 
 Compose files: `docker-compose.yml` (base), `docker-compose.dev.yml` (publishes ports, Mailpit),
-`docker-compose.prod.yml`. On Windows `scripts/dev.ps1` replaces `make`.
+`docker-compose.prod.yml`, and `docker-compose.lb.yml` only behind a load balancer. Profiles:
+`monitoring` (Prometheus, Alertmanager, exporters, Grafana), `ops` (GlitchTip, Uptime Kuma),
+`mlflow`. Alerts and what to do: `runbooks/alerts.md`. On Windows `scripts/dev.ps1` replaces
+`make`. Every Docker file is described in `guides/docker.md`.
 
 ## 8. Security model
 
@@ -166,7 +176,10 @@ TOTP MFA for Director and Admin, Valkey rate limits and lockout, RBAC with objec
 and deny by default, doer is never the verifier, RFC 9457 errors, append-only hash-chained audit
 log, uploads sniffed and ClamAV-scanned, presigned URLs, envelope encryption for device
 credentials and config exports, field engineers never receive prices, customer OTPs stored as
-salted hashes and wiped from the message log after an hour.
+salted hashes and wiped from the message log after an hour. Field phones never cache prices or
+another role's answers, lock after 15 minutes idle and clear their caches on sign-out (ADR 0027).
+Web Push goes only to known push services. The ASVS Level 2 review and its open findings are in
+`runbooks/security-review.md`.
 
 ## 9. Decisions
 
@@ -193,3 +206,12 @@ salted hashes and wiped from the message log after an hour.
 | [0019](decisions/0019-verification-and-certificate-answers.md) | Verification and certificate decisions |
 | [0020](decisions/0020-learned-ranker-in-shadow.md) | A learned ranker that only runs in shadow mode |
 | [0021](decisions/0021-boq-estimate-before-approvals.md) | A BOQ estimate before the approvals |
+| [0022](decisions/0022-certificate-names-iitpl-only.md) | The certificate names IITPL as the implementer, and only the Director signs |
+| [0023](decisions/0023-icons-and-no-motion.md) | Icons from Phosphor, and no animation |
+| [0024](decisions/0024-one-step-report-to-boq-estimate.md) | One step from a PrismSuite report to a BOQ estimate |
+| [0025](decisions/0025-customer-codes-switched-off.md) | Customer codes at check-in and hand over, switched off for now |
+| [0026](decisions/0026-director-manages-accounts.md) | The Director holds every Admin permission |
+| [0027](decisions/0027-field-app-on-phones.md) | The field app on phones: location at check-in, 72 hours offline |
+| [0028](decisions/0028-minimum-margin.md) | A minimum margin, accepted line by line |
+| [0029](decisions/0029-learning-models-in-shadow.md) | BOQ line prediction and price checks, in shadow until the Director approves |
+| [0030](decisions/0030-production-ports-80-443.md) | Production publishes only ports 80 and 443 |

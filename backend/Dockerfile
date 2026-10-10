@@ -17,10 +17,11 @@ ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 \
 # pg_dump must match the server's major version (PostgreSQL 16) or it refuses to run, and
 # Debian bookworm only ships 15, so the client comes from the PostgreSQL project's repository.
 # libpango, libharfbuzz and the fonts are what WeasyPrint needs to render the quotation PDF.
+# libgomp1 is the OpenMP runtime LightGBM needs for the learning models (Phase 13).
 ARG PG_MAJOR=16
 RUN apt-get update \
  && apt-get install -y --no-install-recommends ca-certificates curl tini \
-    libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz0b fonts-dejavu-core shared-mime-info \
+    libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz0b fonts-dejavu-core shared-mime-info libgomp1 \
  && install -d /usr/share/postgresql-common/pgdg \
  && curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
     https://www.postgresql.org/media/keys/ACCC4CF8.asc \

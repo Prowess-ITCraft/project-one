@@ -12,9 +12,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.boq import draft as _d
 from app.modules.boq.models import Boq, BoqVersion
-from app.modules.boq.service import ARTIFACT, BOQ_ACCEPTED, BOQ_RECOMMENDED, VERSION_ISSUED
+from app.modules.boq.service import (
+    ARTIFACT,
+    BOQ_ACCEPTED,
+    BOQ_DRAFTED,
+    BOQ_OUTCOME,
+    BOQ_RECOMMENDED,
+    VERSION_ISSUED,
+)
 from app.modules.customers.contracts import get_project_ref
 from app.modules.identity.contracts import P, Principal
+from app.modules.search.contracts import SearchDoc
 
 
 @dataclass(frozen=True)
@@ -88,6 +96,23 @@ async def get_accepted_boq(
     )
 
 
+async def search_documents(session: AsyncSession) -> list[SearchDoc]:
+    """The latest issued version of every quote, for rebuilding the search index."""
+    from app.modules.boq.service import quote_doc
+
+    out: list[SearchDoc] = []
+    for b in await session.scalars(select(Boq)):
+        v = await session.scalar(
+            select(BoqVersion)
+            .where(BoqVersion.boq_id == b.id)
+            .order_by(BoqVersion.number.desc())
+            .limit(1)
+        )
+        if v is not None:
+            out.append(quote_doc(b, v))
+    return out
+
+
 async def boq_exists(session: AsyncSession, project_id: uuid.UUID) -> bool:
     return await session.scalar(select(Boq.id).where(Boq.project_id == project_id)) is not None
 
@@ -103,6 +128,8 @@ async def get_company_profile(session: AsyncSession) -> dict[str, Any]:
 __all__ = [
     "ARTIFACT",
     "BOQ_ACCEPTED",
+    "BOQ_DRAFTED",
+    "BOQ_OUTCOME",
     "BOQ_RECOMMENDED",
     "VERSION_ISSUED",
     "AcceptedBoq",

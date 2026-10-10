@@ -1,0 +1,51 @@
+# promtool test rules alerts.test.yml : each alert fires on the data that should fire it, and
+# stays quiet when all is well. Run: docker run --rm -v ./infra/prometheus:/p -w /p --entrypoint
+# promtool prom/prometheus:v2.55.1 test rules alerts.test.yml
+rule_files:
+  - alerts.yml
+evaluation_interval: 1m
+tests:
+  - interval: 1m
+    input_series:
+      - series: 'up{job="project-one-api", instance="api:9596"}'
+        values: "1 1 0 0 0 0 0"
+      - series: "p1_outbox_pending"
+        values: "10 600 600 600 600 600 600 600 600 600 600 600 600"
+      - series: "p1_outbox_dead"
+        values: "0 0 3 3 3 3 3 3 3"
+      - series: 'node_filesystem_avail_bytes{mountpoint="/", fstype="ext4"}'
+        values: "10x20"
+      - series: 'node_filesystem_size_bytes{mountpoint="/", fstype="ext4"}'
+        values: "100x20"
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: ApiDown
+        exp_alerts: []
+      - eval_time: 5m
+        alertname: ApiDown
+        exp_alerts:
+          - exp_labels: {severity: critical, job: project-one-api, instance: "api:9596"}
+            exp_annotations:
+              summary: "The API is not answering"
+              description: "Prometheus has not reached the API for 2 minutes. People cannot sign in or save work."
+      - eval_time: 12m
+        alertname: OutboxBacklog
+        exp_alerts:
+          - exp_labels: {severity: warning}
+            exp_annotations:
+              summary: "Background work is piling up"
+              description: "600 outbox messages waiting. The worker may be stopped or stuck."
+      - eval_time: 8m
+        alertname: FailedJobs
+        exp_alerts:
+          - exp_labels: {severity: warning}
+            exp_annotations:
+              summary: "Background jobs failed for good"
+              description: "3 outbox messages gave up after every retry."
+      - eval_time: 12m
+        alertname: DiskSpaceLow
+        exp_alerts:
+          - exp_labels: {severity: critical, mountpoint: "/", fstype: ext4}
+            exp_annotations:
+              summary: "Disk almost full"
+              description: "/ has less than 15 percent free."

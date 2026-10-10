@@ -40,7 +40,12 @@ async def _seed() -> None:
         out["boq"] = await seed_boq(s)
         out["planning"] = await seed_planning(s)
         out["verification"] = await seed_verification(s)
-        print(json.dumps(out))
+    # Seeded rows are written directly, not through the services that index them for search.
+    from app.modules.search import service as search
+
+    async with get_sessionmaker()() as s:
+        out["search"] = await search.reindex(s)
+    print(json.dumps(out))
 
 
 DEMO_EMAIL = "adi@test.com"
@@ -313,6 +318,26 @@ async def _corpus_ingest(folder: str) -> None:
     print(await library.scan_folder(db.get_sessionmaker(), Path(folder), move=False))
 
 
+def vapid_keys() -> tuple[str, str]:
+    """A new Web Push key pair: (public, private), both base64url without padding, as browsers
+    and pywebpush expect them."""
+    import base64
+
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import ec
+
+    key = ec.generate_private_key(ec.SECP256R1())
+    private = key.private_numbers().private_value.to_bytes(32, "big")
+    public = key.public_key().public_bytes(
+        serialization.Encoding.X962, serialization.PublicFormat.UncompressedPoint
+    )
+
+    def b64(b: bytes) -> str:
+        return base64.urlsafe_b64encode(b).rstrip(b"=").decode()
+
+    return b64(public), b64(private)
+
+
 def main(argv: list[str] | None = None) -> int:
     from app.modules import registry
 
@@ -351,6 +376,8 @@ def main(argv: list[str] | None = None) -> int:
     rs = sub.add_parser("render-samples", help="render every PDF template from the samples")
     rs.add_argument("--corpus", default="../samples/corpus")
     rs.add_argument("--out", default="sample-documents")
+    sub.add_parser("vapid-keys", help="print a new Web Push key pair for the .env file")
+    sub.add_parser("search-reindex", help="rebuild the global search index from every module")
     cp = csub.add_parser("purge", help="apply the originals retention rule")
     cp.add_argument("--days", type=int, default=None)
     args = p.parse_args(argv)
@@ -373,6 +400,11 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{_corpus_convert(args.folder, args.out)} file(s) converted")
         return 0
 
+    if args.cmd == "vapid-keys":
+        public, private = vapid_keys()
+        print(f"P1_VAPID_PUBLIC_KEY={public}")
+        print(f"P1_VAPID_PRIVATE_KEY={private}")
+        return 0
     if args.cmd == "openapi":
         _openapi(args.out)
         return 0
@@ -411,6 +443,11 @@ def main(argv: list[str] | None = None) -> int:
                 await _expire()
             elif args.cmd == "dispatch-outbox":
                 await _dispatch()
+            elif args.cmd == "search-reindex":
+                from app.modules.search import service as search
+
+                async with db.get_sessionmaker()() as s:
+                    print(await search.reindex(s))
             elif args.cmd == "corpus" and args.corpus_cmd == "rebuild":
                 await _corpus_rebuild()
             elif args.cmd == "corpus" and args.corpus_cmd == "purge":

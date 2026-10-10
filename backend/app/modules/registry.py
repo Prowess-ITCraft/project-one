@@ -26,6 +26,7 @@ MODULES = [
     "verification",
     "reporting",
     "ml",
+    "search",
 ]
 
 _HANDLER_MODULES = [
@@ -35,6 +36,7 @@ _HANDLER_MODULES = [
     "app.modules.datasets.handlers",
     "app.modules.verification.handlers",
     "app.modules.ml.handlers",
+    "app.modules.search.handlers",
 ]
 
 
@@ -79,6 +81,7 @@ def routers() -> list[APIRouter]:
         customers_api.customers_router,
         customers_api.projects_router,
         customers_api.gates_router,
+        customers_api.insights_router,
         customers_api.public_router,
     ]
     for optional in (
@@ -94,6 +97,7 @@ def routers() -> list[APIRouter]:
         "verification",
         "reporting",
         "ml",
+        "search",
     ):
         try:
             mod = importlib.import_module(f"app.modules.{optional}.api")

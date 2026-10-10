@@ -8,7 +8,6 @@ from typing import Any
 
 from sqlalchemy import text
 
-from app.core import outbox
 from app.core.db import get_sessionmaker
 from app.core.timeutil import today_ist
 from app.modules.boq.seed import seed_boq
@@ -17,6 +16,7 @@ from tests.helpers import (
     BRIEF,
     Workspace,
     approve_baseline,
+    drain_outbox,
     idem,
     make_user,
     make_workspace,
@@ -55,7 +55,8 @@ async def fresh_prices(client: Any, user: Any) -> None:
             f"{API}/catalogue/items/{item['id']}/prices",
             json={
                 "supplier": "Distributor",
-                "cost": selling,
+                # a 15 percent margin, above the 10 percent minimum (ADR 0028)
+                "cost": str(round(float(selling) * 0.85, 2)),
                 "selling": selling,
                 "quoted_on": str(today),
                 "valid_until": str(today + timedelta(days=10)),
@@ -611,7 +612,7 @@ async def test_acceptance_locks_the_version_with_the_purchase_order(client: Any)
     # Locked: the draft cannot change, and the accepted version cannot change in the database.
     locked = await edit(client, c.sm, cur, [{"op": "set_terms", "terms": []}])
     assert locked.status_code == 409 and locked.json()["code"] == "boq_locked"
-    await outbox.dispatch_batch(get_sessionmaker())
+    await drain_outbox()
     arts = (
         await client.get(f"{API}/projects/{c.pid}/artifacts", headers=c.ws.architect.headers)
     ).json()
@@ -788,7 +789,7 @@ async def test_history_advice_comes_from_the_library_and_never_sets_a_price(clie
         headers=sm.headers,
     )
     assert r.status_code == 201
-    await outbox.dispatch_batch(get_sessionmaker())
+    await drain_outbox()
     h = (
         await client.get(
             f"{API}/boq/{b['id']}/lines/{line(b, 'Sophos XGS-108')['id']}/history",

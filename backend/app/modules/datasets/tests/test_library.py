@@ -6,11 +6,10 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-from app.core import outbox
 from app.core.db import get_sessionmaker
 from app.modules.datasets import cleaning, library
 from app.modules.identity.permissions import Role
-from tests.helpers import make_user
+from tests.helpers import drain_outbox, make_user
 
 LIB = "/api/v1/library"
 DS = "/api/v1/datasets"
@@ -30,7 +29,7 @@ async def _drop(client: Any, user: Any, path: Path, mime: str) -> dict[str, Any]
 
 
 async def _process() -> None:
-    await outbox.dispatch_batch(get_sessionmaker())
+    await drain_outbox()
 
 
 async def _collections(client: Any, user: Any) -> dict[str, Any]:

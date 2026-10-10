@@ -129,9 +129,8 @@ class RunEvidence(UUIDPk, Base):
         Index("ix_run_evidence_run_req", "run_id", "requirement_index"),
     )
 
-    run_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("task_runs.id", ondelete="CASCADE"), nullable=False
-    )
+    # No cascade: evidence is append only and outlives anything done to its task.
+    run_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("task_runs.id"), nullable=False)
     project_id: Mapped[uuid.UUID] = mapped_column(nullable=False)
     requirement_index: Mapped[int] = mapped_column(Integer, nullable=False)
     type: Mapped[str] = mapped_column(String(14), nullable=False)
@@ -141,9 +140,63 @@ class RunEvidence(UUIDPk, Base):
     client_id: Mapped[uuid.UUID] = mapped_column(nullable=False)
     captured_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     uploaded_by: Mapped[uuid.UUID] = mapped_column(nullable=False)
+    # `created_at` is the server's own time and, with the file's SHA-256, the authoritative
+    # record. The phone's time and location are kept as reported.
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=text("now()")
     )
+    lat: Mapped[float | None] = mapped_column(Float)
+    lng: Mapped[float | None] = mapped_column(Float)
+    accuracy_m: Mapped[float | None] = mapped_column(Float)
+    # Why there is no location ("permission denied", "no fix in time"), when there is none.
+    location_note: Mapped[str | None] = mapped_column(String(200))
+    # A copy of a photo with the time, place and task drawn on it by the phone. The original
+    # (file_id) is the evidence; the copy is for people reading it.
+    stamped_file_id: Mapped[uuid.UUID | None] = mapped_column()
+    # What a configuration export contained: brand, format, settings read, target coverage.
+    parse: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    # app (the engineer's phone) or link (a single-use upload link for this task).
+    via: Mapped[str] = mapped_column(String(8), nullable=False, server_default="app")
+
+
+class FieldUploadLink(UUIDPk, Base):
+    """A short-lived, single-use link that lets a configuration export for one task be uploaded
+    from any browser (a laptop on the customer's network, say). Only a hash of the token is
+    kept."""
+
+    __tablename__ = "field_upload_links"
+
+    run_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("task_runs.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    project_id: Mapped[uuid.UUID] = mapped_column(nullable=False)
+    requirement_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    token_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    created_by: Mapped[uuid.UUID] = mapped_column(nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    used_ip: Mapped[str | None] = mapped_column(String(64))
+    evidence_id: Mapped[uuid.UUID | None] = mapped_column()
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=text("now()")
+    )
+
+
+class FieldDeviceStatus(Base):
+    """What an engineer's phone last said about its saved, unsent work. Lets the Director tell
+    a phone that is offline with work waiting from a task that is simply quiet."""
+
+    __tablename__ = "field_device_status"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
+    pending: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    failed: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    oldest_pending_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_sync_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    reported_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    app_version: Mapped[str | None] = mapped_column(String(40))
+    platform: Mapped[str | None] = mapped_column(String(40))
 
 
 class RunCheck(UUIDPk, Base):

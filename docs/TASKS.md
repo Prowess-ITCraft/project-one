@@ -3,14 +3,22 @@
 Phase status and what is left. Status words: `done`, `in progress`, `blocked`, `not started`.
 Planned dates are in `ROADMAP.md`, decisions in `decisions/`.
 
-## Where we are (5 October 2026)
+## Where we are (8 October 2026)
 
-- Phases 1 to 14 are done. Backend: 362 tests pass at 85 percent coverage; 20 browser tests
-  on desktop and phone, including one field task walked from accept to verified and the
-  sign-in renewal around downloads (5 Oct, evening).
+- Phases 1 to 14 are done, with Phase 12A (the field app on phones and the missing office
+  screens) added. Backend: 403 tests pass at 86 percent coverage. Browser tests: 25 of 31 pass on desktop, Android and iPhone screens; 5 skip by
+  design or for want of unused demo tasks, and the project manager test fails only because that
+  demo account's password was changed on 5 Oct. Lighthouse on the field pages: performance 92
+  to 96, accessibility 96 to 100.
+- The field app installs on Android and iPhone, works offline for up to 72 hours between
+  check-in and sending for checking, needs the phone's location at check-in, and never
+  receives a price (ADR 0027).
+- Quotes record won or lost with a reason, warn before their prices lapse, re-price in one
+  click, and lines under the minimum margin need the approver's reason (ADR 0028).
+- Phase 13 (learning) has three models in shadow mode (ranker, BOQ lines, price drift) and
+  waits for data (about 20 accepted BOQs). Only the Director can approve a model (ADR 0029).
 - Only an Admin or the Director creates accounts and assigns roles; the Director holds every
   Admin permission (ADR 0026).
-- Phase 13 (learning) is built and waits for data (about 20 accepted BOQs).
 - Phase 15 (go-live): everything is ready to deploy (DEPLOYMENT.md, incident runbook, a
   production dry run that passed). Left: deploy on the real server, the IITPL stamp, and the
   first real SonicWall export.
@@ -31,8 +39,9 @@ Planned dates are in `ROADMAP.md`, decisions in `decisions/`.
 | 10 | Completion report and certificate | done | real IITPL stamp still needed |
 | 11 | Frontend foundation | done | |
 | 12 | Frontend core workflows | done | accounts panel, Help guide, phone test of a whole field task |
-| 13 | Learning from accepted BOQs | done | shadow mode only; needs about 20 accepted BOQs before a model can train |
-| 14 | Hardening and performance | done | one decision left for the owner: hosted CI and dependency updates |
+| 12A | Field app on phones, office screens | done | installable, offline, push; tested on Android and iPhone screens in Chrome, not yet on a real iPhone |
+| 13 | Learning from accepted BOQs | done | three models in shadow mode; needs about 20 accepted BOQs before one can train |
+| 14 | Hardening and performance | done | ASVS Level 2 review, chaos checks, alerts; backup encryption before go-live (F6) |
 | 15 | Go-live | in progress | ready to deploy: DEPLOYMENT.md, prod dry run passed; real server next |
 
 ## Open items by phase
@@ -86,13 +95,37 @@ Planned dates are in `ROADMAP.md`, decisions in `decisions/`.
   password and authenticator resets, deactivation and BOQ issue
 - [x] Director manages accounts and roles like the Admin (ADR 0026)
 
+### Phase 12A: Field app on phones and office screens
+
+- [x] Installable app: manifest, service worker, install prompt, "New version ready" banner
+- [x] Separate phone layout with bottom navigation; field engineers reach only their pages
+- [x] Offline outbox with a badge, Sync now and Background Sync where supported (72 hours)
+- [x] Location required at check-in (ADR 0027); evidence stamps with time, location and task
+- [x] Single-use upload link with a QR code for configuration exports; before and after compare
+- [x] Customer code screen: paste, one-time-code autofill, resend countdown
+- [x] Web Push, Messages page, message settings per channel; iPhone note about Add to Home Screen
+- [x] Idle sign-out after 15 minutes, warning when work is still waiting, caches cleared
+- [x] Account settings, customers, company, templates, stage approvals and switches settings
+- [x] Global search (Postgres full text and `pg_trgm`), filtered by role
+- [x] Director: how long each project waits and on whom, each engineer's phone sync state;
+  project manager's two-week workload
+- [x] Quotes: won or lost with a reason, re-price in one click, price lapse alerts, minimum
+  margin (ADR 0028)
+- [x] Tests: backend test that no route sends a price to a field engineer; browser tests on
+  Android and iPhone screens, offline sync, no prices in field traffic, installability
+- [x] Lighthouse on the field pages (`npm run lighthouse`) and a bundle budget (`npm run budget`)
+- [ ] Try Web Push and Add to Home Screen on a real iPhone
+- [ ] Confirm the 10 percent minimum margin with the Director
+
 ### Phase 13: Learning from the library
 
 - [x] Trains only on frozen training sets with a data card (RULES 2.6)
 - [x] Learned ranker behind the recommender contract, in shadow mode next to the rules
 - [x] Agreement report and Learning page
-- [ ] Train the first model once about 20 accepted BOQs exist
-- [ ] Decide (new ADR, Director) whether a model may ever influence real BOQs
+- [x] BOQ line prediction and price drift checks (scikit-learn, LightGBM), model cards
+- [x] 30 days and 20 comparisons in shadow before the Director may approve; `ml_enabled` switch
+- [x] Optional MLflow (compose profile `mlflow`), off by default (ADR 0029)
+- [ ] Train the first models once about 20 accepted BOQs exist
 
 ### Phase 14: Hardening and performance
 
@@ -110,6 +143,21 @@ Planned dates are in `ROADMAP.md`, decisions in `decisions/`.
 - [x] Pin the Dockerfile base images by digest
 - [x] Director dashboard in four queries for any number of projects (was about seven per project)
 - [x] Coverage back to 85 percent (355 tests, with the Accounts actions and backups tested)
+- [x] Migrations expand only and every downgrade runs (`tests/test_migrations.py`, RULES 4)
+- [x] Models match the migrated schema (same test file)
+- [x] Chaos checks: worker killed mid-job, API killed mid-PDF, Valkey restart, database
+  connections cut (`scripts/chaos.py`, all pass 8 Oct); a task lost with its worker now
+  returns in 10 minutes (measured: 10.5)
+- [x] Load test at the agreed size (8 Oct, 30 people at once, no pauses): p95 276 to 392 ms on
+  every read path, no errors; the per-person limit answered 429 as designed
+- [x] Restore drill (8 Oct): 83 tables and 8,254 rows identical, recovery 3.7 s on demo data
+- [x] GlitchTip, Uptime Kuma, Alertmanager, node and blackbox exporters; 12 alert rules tested
+  with promtool; `docs/runbooks/alerts.md`
+- [x] OWASP ASVS Level 2 review (`docs/runbooks/security-review.md`)
+- [x] Production publishes only 80 and 443; load balancer port opt-in (ADR 0030)
+- [x] Licence check feeding `docs/LICENSES.md` (`scripts/licenses.py --check`)
+- [ ] Encrypt the off-server backup copy before go-live (security review F6)
+- [ ] Decide on the Next.js 16 upgrade (security review F1 and F2)
 - [ ] Decide whether to bring back hosted CI and dependency updates
 
 ### Phase 15: Go-live
@@ -130,3 +178,6 @@ Planned dates are in `ROADMAP.md`, decisions in `decisions/`.
 
 1. Severity rules beyond critical, major and minor (ADR 0019).
 2. The IITPL stamp image.
+3. The minimum margin: 10 percent for now (ADR 0028).
+4. Upgrade to Next.js 16 now or after go-live (security review F1, F2).
+5. How to encrypt the off-server backup copy, and who keeps the key (security review F6).

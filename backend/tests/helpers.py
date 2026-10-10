@@ -243,3 +243,18 @@ BRIEF = {
     "keep_assets": ["Cisco Business 350 switch"],
     "compliance": [],
 }
+
+
+async def drain_outbox(max_batches: int = 100) -> int:
+    """Deliver every outbox message, as the worker does every five seconds. One batch is 50
+    messages; a busy flow publishes more than that."""
+    from app.core import outbox
+    from app.core.db import get_sessionmaker
+
+    done = 0
+    for _ in range(max_batches):
+        n = await outbox.dispatch_batch(get_sessionmaker())
+        if not n:
+            break
+        done += n
+    return done

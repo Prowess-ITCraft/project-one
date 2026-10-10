@@ -1,0 +1,8 @@
+# Blackbox exporter: probes the public address for uptime and the HTTPS certificate's expiry.
+modules:
+  http_2xx:
+    prober: http
+    timeout: 10s
+    http:
+      preferred_ip_protocol: ip4
+      valid_status_codes: [200]

@@ -56,6 +56,15 @@ class Settings(BaseSettings):
     smtp_from: str = "no-reply@itcraft.example"
     smtp_starttls: bool = True
 
+    # Web Push (VAPID). Both empty turns push off; `python -m app.cli vapid-keys` makes a pair.
+    # The public key goes to browsers; the private key signs each push and stays secret.
+    vapid_public_key: str = ""
+    vapid_private_key: SecretStr = SecretStr("")
+    vapid_subject: str = "mailto:it@itcraft.net.in"
+
+    # Self-hosted error tracking: GlitchTip speaks the Sentry protocol (sentry_dsn below).
+    # Hosted Sentry is never used; production refuses a DSN on sentry.io.
+
     clamav_host: str = "localhost"
     clamav_port: int = 3310
     clamav_timeout_seconds: float = 60.0
@@ -99,6 +108,9 @@ class Settings(BaseSettings):
     # turns the watch off. In compose it is ./inbox on the host, mounted at /data/inbox.
     library_inbox_dir: str = ""
 
+    # Optional self-hosted MLflow for training runs (compose profile `mlflow`). Empty: off.
+    mlflow_tracking_uri: str = ""
+
     log_level: str = "INFO"
     log_json: bool = True
     otel_exporter_otlp_endpoint: str | None = None
@@ -110,6 +122,10 @@ class Settings(BaseSettings):
         if isinstance(v, str):
             return [o.strip() for o in v.split(",") if o.strip()]
         return v
+
+    @property
+    def push_enabled(self) -> bool:
+        return bool(self.vapid_public_key and self.vapid_private_key.get_secret_value())
 
     @property
     def is_prod(self) -> bool:
@@ -148,6 +164,12 @@ class Settings(BaseSettings):
                 )
             if self.s3_secret_key.get_secret_value() == "p1minio-dev-secret":
                 problems.append("P1_S3_SECRET_KEY still uses the dev value")
+            if self.sentry_dsn and "sentry.io" in self.sentry_dsn.get_secret_value():
+                problems.append(
+                    "P1_SENTRY_DSN points at hosted Sentry; use the self-hosted GlitchTip DSN"
+                )
+            if bool(self.vapid_public_key) != bool(self.vapid_private_key.get_secret_value()):
+                problems.append("Set both P1_VAPID_PUBLIC_KEY and P1_VAPID_PRIVATE_KEY, or neither")
             if not self.smtp_host:
                 problems.append(
                     "P1_SMTP_HOST is empty: visit codes, waiver links and notices cannot be sent"

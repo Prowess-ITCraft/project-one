@@ -38,6 +38,9 @@ from app.modules.catalogue.schemas import (
     VendorUpdateIn,
 )
 from app.modules.identity.contracts import P, Principal, audit_context
+from app.modules.search.contracts import SearchDoc
+from app.modules.search.contracts import index as search_index
+from app.modules.search.contracts import unindex as search_unindex
 
 PRICE_CHANGED = "catalogue.price_changed"
 PRICE_EXPIRED_EVENT = "catalogue.price_expired"
@@ -215,6 +218,27 @@ def _validate_dates(eol: date | None, eos: date | None) -> None:
         )
 
 
+def item_doc(item: CatalogueItem, vendor: str | None) -> SearchDoc:
+    """What search shows for a catalogue item: code, name, category and vendor. Never a price."""
+    return SearchDoc(
+        kind="item",
+        ref_id=str(item.id),
+        title=f"{item.code} {item.name}",
+        subtitle=f"{item.kind.capitalize()}, {item.category.replace('_', ' ')}"
+        + (f", {vendor}" if vendor else ""),
+        body=(item.description or "")[:1000] or None,
+        url=f"/catalogue/{item.id}",
+        perm="catalogue:read",
+    )
+
+
+async def _vendor_name(session: AsyncSession, vendor_id: uuid.UUID | None) -> str | None:
+    if vendor_id is None:
+        return None
+    v = await session.get(Vendor, vendor_id)
+    return v.name if v else None
+
+
 async def create_item(session: AsyncSession, principal: Principal, body: ItemIn) -> CatalogueItem:
     principal.require(P.CATALOGUE_WRITE)
     await _category(session, body.category, body.kind)
@@ -235,6 +259,9 @@ async def create_item(session: AsyncSession, principal: Principal, body: ItemIn)
         entity_type="catalogue_item",
         entity_id=item.id,
         after=_snap(item, _ITEM_FIELDS),
+    )
+    search_index(
+        session, item_doc(item, await _vendor_name(session, item.vendor_id)), principal.user_id
     )
     await session.commit()
     return item
@@ -264,6 +291,9 @@ async def update_item(
         entity_id=item.id,
         before=before,
         after=_snap(item, _ITEM_FIELDS),
+    )
+    search_index(
+        session, item_doc(item, await _vendor_name(session, item.vendor_id)), principal.user_id
     )
     await session.commit()
     return item
@@ -323,6 +353,7 @@ async def delete_item(session: AsyncSession, principal: Principal, item_id: uuid
         before={"code": item.code, "name": item.name},
         only_changes=False,
     )
+    search_unindex(session, "item", str(item.id), principal.user_id)
     await session.commit()
 
 
@@ -432,6 +463,13 @@ async def add_price(
                 "price_id": str(row.id),
                 "selling": str(row.selling),
                 "previous_selling": str(previous.selling) if previous else None,
+                # For the learning module's price check (ADR 0029). No supplier, no person.
+                "cost": str(row.cost),
+                "quoted_on": str(row.quoted_on),
+                "item_name": item.name[:300],
+                "category": item.category,
+                "item_kind": item.kind,
+                "vendor_id": str(item.vendor_id) if item.vendor_id else None,
             },
         ),
     )

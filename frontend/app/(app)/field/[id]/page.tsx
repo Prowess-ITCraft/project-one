@@ -1,10 +1,11 @@
 "use client";
-import { Back, DocLink } from "@/components/kit";
+import { Back, CopyButton, DocLink } from "@/components/kit";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { dateTime, get, post, type S } from "@/lib/api";
 import { useData, useMe, useToast } from "@/lib/hooks";
-import { discard, pending, queueAction, queueEvidence, retry, subscribe, type FlushResult, type Pending } from "@/lib/offline";
+import { locate, stampPhoto, type LocationResult } from "@/lib/device";
+import { discard, pending, queueAction, queueEvidence, retry, sentAfter, subscribe, type FlushResult, type Pending } from "@/lib/offline";
 import { Badge, Field, Notice, Skeleton, roleLabel, useAction } from "@/components/ui";
 import { STATE_SHORT, TaskTimeline, shortTitle, stateTone } from "@/components/field";
 
@@ -28,18 +29,6 @@ const EVIDENCE_WINDOW: Record<string, string[]> = {
 };
 const BLOCKABLE = ["accepted", "checked_in", "prechecks_done", "configured", "engine_check"];
 
-/** Where the phone is, if the engineer allows it. Never blocks the action. */
-function locate(): Promise<{ lat?: number; lng?: number; accuracy_m?: number }> {
-  return new Promise((resolve) => {
-    if (!("geolocation" in navigator)) return resolve({});
-    navigator.geolocation.getCurrentPosition(
-      (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude, accuracy_m: Math.round(p.coords.accuracy) }),
-      () => resolve({}),
-      { timeout: 6000, maximumAge: 60_000 },
-    );
-  });
-}
-
 function EvidenceThumb({ fileId, label }: { fileId: string; label: string }) {
   const { data } = useData<S["DownloadOut"]>(`/files/${fileId}/download`);
   if (!data) return <span className="skel" style={{ width: 96, height: 72, display: "inline-block" }} />;
@@ -50,7 +39,54 @@ function EvidenceThumb({ fileId, label }: { fileId: string; label: string }) {
   );
 }
 
-/** One evidence requirement: what is needed, what was sent, and the control to add it. */
+type Parse = { readable?: boolean; message?: string; brand?: string | null };
+
+/** A short-lived, single-use link and QR code to upload a configuration export from another
+ * device, such as a laptop on the customer's network. */
+function UploadLink({ runId, index }: { runId: string; index: number }) {
+  const [link, setLink] = useState<S["UploadLinkOut"] | null>(null);
+  const [left, setLeft] = useState(0);
+  const { busy, run } = useAction();
+  useEffect(() => {
+    if (!link) return;
+    const tick = () => setLeft(Math.max(0, Math.round((new Date(link.expires_at).getTime() - Date.now()) / 1000)));
+    tick();
+    const t = setInterval(tick, 1000);
+    return () => clearInterval(t);
+  }, [link]);
+  if (!link || left === 0) {
+    return (
+      <button
+        type="button"
+        className="btn quiet"
+        disabled={busy || (typeof navigator !== "undefined" && !navigator.onLine)}
+        onClick={async () => {
+          const r = await run(() => post<S["UploadLinkOut"]>(`/field/runs/${runId}/upload-links`, { requirement_index: index }));
+          if (r) setLink(r);
+        }}
+      >
+        {link ? "The link expired. Make a new one" : "Upload from another device"}
+      </button>
+    );
+  }
+  return (
+    <div className="upload-link">
+      <strong className="small">Scan this, or open the address on the laptop, then choose the export file.</strong>
+      {/* the QR code is drawn by the server from the link itself */}
+      <div className="qr" dangerouslySetInnerHTML={{ __html: link.qr_svg }} />
+      <code>{link.url}</code>
+      <span className="row">
+        <CopyButton text={link.url} label="Copy the address" />
+        <span className="muted small">
+          Works once, for {Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")} more.
+        </span>
+      </span>
+    </div>
+  );
+}
+
+/** One evidence requirement: what is needed, what was sent, and the control to add it. Photos
+ * get the time, place and task drawn on a copy; the original is the evidence. */
 function EvidenceItem({
   run,
   index,
@@ -70,11 +106,15 @@ function EvidenceItem({
 }) {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
   // Sent, but the task has not reloaded yet: keep the form away so it does not flash back and
   // invite a second upload. Back after ten seconds if the item never shows as added.
   const [sent, setSent] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const isFile = ["photo", "screenshot", "config_export"].includes(req.type);
+  const isPhoto = req.type === "photo" || req.type === "screenshot";
+  // The arrival photo must carry the phone's location (ADR 0027).
+  const needsPlace = (req.stage ?? "work") === "check_in" && isPhoto;
   const done = have.length > 0;
   useEffect(() => {
     if (!sent) return;
@@ -84,17 +124,37 @@ function EvidenceItem({
 
   async function send(file?: File | null) {
     setBusy(true);
-    const r = await queueEvidence(run.id, index, req.label, {
-      file,
-      text: req.type === "serial" ? text.trim() : undefined,
-      note: req.type === "note" ? text.trim() : undefined,
-    });
-    setBusy(false);
-    setText("");
-    setSent(!r.failed.length && !r.waiting);
-    onSent(r);
+    setProblem(null);
+    try {
+      let where: LocationResult | null = null;
+      if (isPhoto) {
+        where = await locate(needsPlace);
+        if (needsPlace && !where.ok) {
+          setProblem(
+            `${where.reason}. The arrival photo needs your location: turn on location for this app, step outside if the signal is weak, and take it again.`,
+          );
+          return;
+        }
+      }
+      const stamped =
+        isPhoto && file && where ? await stampPhoto(file, { task: `${run.task_ref} ${shortTitle(run.title, run.asset)}`, where }) : null;
+      const r = await queueEvidence(run.id, index, req.label, {
+        file,
+        text: req.type === "serial" ? text.trim() : undefined,
+        note: req.type === "note" ? text.trim() : undefined,
+        location: where?.ok ? where.at : null,
+        locationNote: where && !where.ok ? where.reason : undefined,
+        extra: stamped ? [{ field: "stamped", blob: stamped, name: "stamped.jpg" }] : undefined,
+      });
+      setText("");
+      setSent(!r.failed.length && !r.waiting);
+      onSent(r);
+    } finally {
+      setBusy(false);
+    }
   }
 
+  const parse = have.find((e) => e.parse)?.parse as Parse | undefined;
   return (
     <li>
       <div className="head">
@@ -109,21 +169,36 @@ function EvidenceItem({
           <Badge>Needed</Badge>
         )}
       </div>
+      {needsPlace && !done && canAdd && <p className="location-note">Your location is added to this photo. It is needed to check in.</p>}
       {have.some((e) => e.file_id) && (
         <div className="thumbs">
           {have.filter((e) => e.file_id && e.type !== "config_export").map((e) => (
-            <EvidenceThumb key={e.id} fileId={e.file_id as string} label={req.label} />
+            <EvidenceThumb key={e.id} fileId={(e.stamped_file_id ?? e.file_id) as string} label={req.label} />
           ))}
           {have.filter((e) => e.type === "config_export").map((e) => (
-            <span key={e.id} className="muted small">Configuration file added {dateTime(e.captured_at)}</span>
+            <span key={e.id} className="muted small">
+              Configuration file added {dateTime(e.captured_at)}
+              {e.via === "link" ? " through an upload link" : ""}
+            </span>
           ))}
         </div>
       )}
+      {parse?.message && <p className={`parse-result${parse.readable ? "" : " bad"}`}>{parse.message}</p>}
       {have.filter((e) => e.text_value || e.note).map((e) => (
         <p key={e.id} className="small">
           {e.text_value ?? e.note}
         </p>
       ))}
+      {have.filter((e) => isPhoto && e.location_note).map((e) => (
+        <p key={`${e.id}-loc`} className="location-note">
+          Location not recorded: {e.location_note}
+        </p>
+      ))}
+      {problem && (
+        <p className="location-note bad" role="alert">
+          {problem}
+        </p>
+      )}
       {canAdd && !done && !queued.length && !sent && (
         <form
           onSubmit={(e) => {
@@ -140,11 +215,16 @@ function EvidenceItem({
                 accept={req.type === "config_export" ? ".txt,.conf,.cfg,.json,.zip,.xml,.exp" : "image/*"}
                 capture={req.type === "config_export" ? undefined : "environment"}
                 aria-label={req.label}
-                onChange={(e) => e.target.files?.[0] && void send(e.target.files[0])}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = "";
+                  if (f) void send(f);
+                }}
               />
               <button type="button" className="btn primary big" disabled={busy} onClick={() => fileInput.current?.click()}>
-                {req.type === "photo" ? "Take photo" : req.type === "screenshot" ? "Add screenshot" : "Attach the file"}
+                {busy && isPhoto ? "Finding your location" : req.type === "photo" ? "Take photo" : req.type === "screenshot" ? "Add screenshot" : "Attach the file"}
               </button>
+              {req.type === "config_export" && <UploadLink runId={run.id} index={index} />}
             </>
           ) : (
             <>
@@ -166,8 +246,12 @@ function EvidenceItem({
   );
 }
 
+const RESEND_SECONDS = 30;
+
 /** Ask the customer for a code, then type it in. Used at check-in and at hand over. While
- * customer codes are switched off (ADR 0025) it is a single button. */
+ * customer codes are switched off (ADR 0025) it is a single button. Check-in always takes the
+ * phone's location (ADR 0027); with codes on, both steps need signal because the server checks
+ * the code. */
 function CodeStep({
   run,
   purpose,
@@ -194,39 +278,73 @@ function CodeStep({
   const [sent, setSent] = useState<S["CodeSentOut"] | null>(null);
   const [code, setCode] = useState("");
   const [sending, setSending] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
+  const [online, setOnline] = useState(true);
+  useEffect(() => {
+    const upd = () => setOnline(navigator.onLine);
+    upd();
+    window.addEventListener("online", upd);
+    window.addEventListener("offline", upd);
+    return () => {
+      window.removeEventListener("online", upd);
+      window.removeEventListener("offline", upd);
+    };
+  }, []);
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
+
   async function confirm(body: Record<string, unknown>) {
     setSending(true);
+    setProblem(null);
     try {
-      onDone(await queueAction(run.id, `/field/runs/${run.id}/${action}`, label, { ...body, ...(await locate()) }));
+      const where = await locate(purpose === "check_in");
+      if (purpose === "check_in" && !where.ok) {
+        setProblem(`${where.reason}. Check-in needs your location: turn on location for this app and try again.`);
+        return;
+      }
+      onDone(await queueAction(run.id, `/field/runs/${run.id}/${action}`, label, { ...body, ...(where.ok ? where.at : {}) }));
+      setCode("");
     } finally {
       setSending(false);
     }
   }
+  const problemNote = problem && (
+    <p className="location-note bad" role="alert">
+      {problem}
+    </p>
+  );
   if (!codes) {
     return (
       <div className="stack">
         {waitFor && <p className="small muted">{waitFor}</p>}
         <button className="btn primary big" disabled={!!waitFor || sending || held} onClick={() => void confirm({})}>
-          {label}
+          {sending && purpose === "check_in" ? "Finding your location" : label}
         </button>
+        {problemNote}
       </div>
     );
   }
   return (
     <div className="stack">
       {waitFor && !sent && <p className="small muted">{waitFor}</p>}
+      {!online && <Notice tone="warn">No signal. The customer&apos;s code is checked by the server, so this step needs signal.</Notice>}
       <button
         className={`btn ${sent ? "" : "primary "}big`}
-        disabled={busy || (!!waitFor && !sent)}
+        disabled={busy || !online || cooldown > 0 || (!!waitFor && !sent)}
         onClick={async () => {
           const r = await act(() => post<S["CodeSentOut"]>(`/field/runs/${run.id}/codes/${purpose}`));
           if (r) {
             setSent(r);
+            setCooldown(RESEND_SECONDS);
             toast(`Code sent to ${r.sent_to}`);
           }
         }}
       >
-        {sent ? "Send a new code" : "Send code to the customer"}
+        {cooldown > 0 ? `Send a new code in ${cooldown} s` : sent ? "Send a new code" : "Send code to the customer"}
       </button>
       {sent && (
         <p className="small muted">
@@ -238,7 +356,6 @@ function CodeStep({
         onSubmit={async (e) => {
           e.preventDefault();
           await confirm({ code });
-          setCode("");
         }}
       >
         <label className="small" htmlFor={`otp-${purpose}`} style={{ flexBasis: "100%" }}>
@@ -248,16 +365,101 @@ function CodeStep({
           id={`otp-${purpose}`}
           inputMode="numeric"
           autoComplete="one-time-code"
-          maxLength={6}
+          pattern="[0-9]*"
           value={code}
-          onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+          aria-describedby={`otp-${purpose}-hint`}
+          onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+          onPaste={(e) => {
+            e.preventDefault();
+            setCode(e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6));
+          }}
         />
-        <button className="btn primary" disabled={code.length !== 6 || sending || held}>
+        <button className="btn primary" disabled={code.length !== 6 || sending || held || !online}>
           {label}
         </button>
+        <span id={`otp-${purpose}-hint`} className="muted small" style={{ flexBasis: "100%" }}>
+          Six digits. Pasting the whole message works too.
+        </span>
       </form>
+      {problemNote}
     </div>
   );
+}
+
+/** The export taken before the work (the rollback point) against the one after it. */
+function ConfigChanges({ runId }: { runId: string }) {
+  const d = useData<S["ConfigDiffOut"]>(`/field/runs/${runId}/config-diff`);
+  if (!d.data) return null;
+  if (!d.data.available) return d.data.reason?.startsWith("Waiting") ? <p className="muted small">{d.data.reason}</p> : null;
+  const diff = d.data;
+  const changes = diff.changes ?? [];
+  return (
+    <div className="section stack">
+      <h2>What the work changed</h2>
+      <p className="muted small">
+        {diff.before_file} (before) against {diff.after_file} (after){diff.brand ? `, ${diff.brand}` : ""}. {changes.length} change
+        {changes.length === 1 ? "" : "s"}, {diff.unchanged} unchanged. Values that look like passwords or keys are hidden.
+        The export before the work is the way back if anything goes wrong.
+      </p>
+      {changes.length === 0 ? (
+        <p>No difference between the two exports.</p>
+      ) : (
+        <div className="table-scroll">
+          <table className="table config-changes">
+            <thead>
+              <tr>
+                <th>{diff.method === "settings" ? "Setting" : "Line"}</th>
+                <th>Before</th>
+                <th>After</th>
+              </tr>
+            </thead>
+            <tbody>
+              {changes.map((c, i) => (
+                <tr key={i} className={c.change}>
+                  <td data-label="Setting" className="mono">
+                    {c.key}
+                  </td>
+                  <td data-label="Before" className="mono">
+                    {c.before ?? ""}
+                  </td>
+                  <td data-label="After" className="mono">
+                    {c.after ?? ""}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {diff.truncated && <p className="muted small">Only the first 300 changes are shown.</p>}
+    </div>
+  );
+}
+
+/**
+ * The task as it will be once the actions saved on this phone reach the server, so an engineer
+ * with no signal can carry on from check-in to the evidence: steps ticked, values recorded,
+ * states moved. Only actions the phone can judge are projected; the configuration check and the
+ * hand over need the server. The server checks every action again, in order, when they arrive,
+ * and its answer wins: a refused action is listed with the reason.
+ */
+function projected(run: Run, queued: Pick<Pending, "path" | "body" | "error">[]): Run {
+  const r: Run = { ...run, steps: run.steps.map((x) => ({ ...x })), actuals: { ...run.actuals } };
+  const prefix = `/field/runs/${run.id}/`;
+  for (const q of queued) {
+    if (q.error || !q.path.startsWith(prefix)) continue;
+    const action = q.path.slice(prefix.length);
+    if (action === "accept" && r.state === "assigned") r.state = "accepted";
+    else if (action === "check-in" && r.state === "accepted") r.state = "checked_in";
+    else if (action === "prechecks-done" && r.state === "checked_in") r.state = "prechecks_done";
+    else if (action.startsWith("steps/") && r.state === "prechecks_done") {
+      const i = Number(action.split("/")[1]);
+      if (r.steps[i]) r.steps[i] = { ...r.steps[i], done: true };
+    } else if (action === "values") {
+      for (const [k, v] of Object.entries((q.body?.values ?? {}) as Record<string, string>)) r.actuals[k] = { value: v };
+    } else if (action === "configured" && r.state === "prechecks_done") r.state = "configured";
+  }
+  return r;
 }
 
 export default function TaskPage() {
@@ -280,14 +482,19 @@ export default function TaskPage() {
     return subscribe(read);
   }, [id]);
 
-  const run = d.data?.run;
+  const serverRun = d.data?.run;
   useEffect(() => {
-    if (!run) return;
-    setValues(Object.fromEntries(Object.entries(run.actuals).map(([k, v]) => [k, String((v as { value?: string }).value ?? "")])));
-  }, [run]);
+    if (!serverRun) return;
+    setValues(Object.fromEntries(Object.entries(serverRun.actuals).map(([k, v]) => [k, String((v as { value?: string }).value ?? "")])));
+  }, [serverRun]);
+  // Sent and accepted after this copy of the task was loaded: the reload that should have
+  // shown them failed (signal lost straight after sending), so lay them over it like the rest.
+  const sent = serverRun ? sentAfter(id, d.at) : [];
+  const run = serverRun ? projected(serverRun, [...sent, ...queued]) : undefined;
+  const projectId = serverRun?.project_id;
   useEffect(() => {
-    if (run && can("field:manage")) void get<S["MemberOut"][]>(`/projects/${run.project_id}/members`).then(setTeam).catch(() => setTeam([]));
-  }, [run, can]);
+    if (projectId && can("field:manage")) void get<S["MemberOut"][]>(`/projects/${projectId}/members`).then(setTeam).catch(() => setTeam([]));
+  }, [projectId, can]);
 
   function after(r: FlushResult) {
     if (r.failed.length) toast(r.failed[r.failed.length - 1], true);
@@ -314,7 +521,11 @@ export default function TaskPage() {
   const mine = run.assignee_id === me.id && can("field:work");
   const reqs = run.evidence_reqs as Req[];
   const baseline = run.baseline as BaseField[];
-  const evidenceFor = (i: number) => detail.evidence.filter((e) => e.requirement_index === i);
+  type Evidence = (typeof detail.evidence)[number];
+  const sentEvidence = sent
+    .filter((x) => x.fields?.requirement_index !== undefined)
+    .map((x, n) => ({ id: `sent-${n}`, requirement_index: Number(x.fields!.requirement_index), file_id: null, text_value: null, note: null }) as unknown as Evidence);
+  const evidenceFor = (i: number) => [...detail.evidence, ...sentEvidence].filter((e) => e.requirement_index === i);
   const queuedFor = (i: number) => queued.filter((q) => q.fields?.requirement_index === String(i));
   const stageItems = (stage: string) =>
     reqs.map((r, i) => ({ r, i })).filter(({ r }) => (r.stage ?? "work") === stage);
@@ -368,7 +579,9 @@ export default function TaskPage() {
 
       <TaskTimeline run={run} />
       <p className="next-action" aria-live="polite">
-        {detail.next_action}
+        {run.state !== detail.run.state || run.steps.some((x, i) => x.done !== detail.run.steps[i]?.done)
+          ? "Saved on this phone. Carry on: everything is sent, in order, when there is signal."
+          : detail.next_action}
       </p>
 
       {queued.length > 0 && (
@@ -436,7 +649,10 @@ export default function TaskPage() {
               <button
                 className="btn quiet"
                 disabled={held("depart")}
-                onClick={async () => void doAction("depart", "On my way", await locate())}
+                onClick={async () => {
+                  const where = await locate();
+                  void doAction("depart", "On my way", where.ok ? where.at : {});
+                }}
               >
                 I am on my way
               </button>
@@ -529,7 +745,10 @@ export default function TaskPage() {
                   {evidenceBlock("work")}
                   <button
                     className="btn primary big"
-                    disabled={held("submit-evidence") || stageItems("work").some(({ r, i }) => r.required !== false && !evidenceFor(i).length)}
+                    disabled={
+                      held("submit-evidence") ||
+                      stageItems("work").some(({ r, i }) => r.required !== false && !evidenceFor(i).length && !queuedFor(i).length)
+                    }
                     onClick={() => void doAction("submit-evidence", "Send for the check")}
                   >
                     Send for the check
@@ -724,6 +943,9 @@ export default function TaskPage() {
           </table>
         </div>
       )}
+
+      {["configured", "evidence_uploaded", "engine_check", "verifier_review", "closed"].includes(run.state) &&
+        reqs.some((r) => r.type === "config_export" && r.stage === "prechecks") && <ConfigChanges runId={run.id} />}
 
       {!mine && (
         <div className="section">

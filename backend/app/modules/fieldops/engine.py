@@ -34,6 +34,7 @@ class FieldResult:
     severity: str
     outcome: str  # pass | fail | not_checked
     reason: str
+    source: str = "answer"  # answer: the value the engineer typed; export: read from a file
 
 
 @dataclass(frozen=True)
@@ -62,6 +63,33 @@ class ExportFile:
 
     name: str
     data: bytes
+
+
+@dataclass(frozen=True)
+class ExportFacts:
+    """What a configuration export says, as flat settings. `brand` is None when no brand parser
+    recognised the file but its key and value lines could still be read."""
+
+    brand: str | None
+    shape: str  # exp | text | json
+    facts: dict[str, str] = field(default_factory=dict)
+
+
+class ExportReader(Protocol):
+    def __call__(self, name: str, data: bytes) -> ExportFacts | None: ...
+
+
+# Filled by the verification module at start-up, which owns the brand parsers.
+EXPORT_READERS: list[ExportReader] = []
+
+
+def read_export(name: str, data: bytes) -> ExportFacts | None:
+    """The first reader that understands the file, or None."""
+    for reader in EXPORT_READERS:
+        got = reader(name, data)
+        if got is not None:
+            return got
+    return None
 
 
 class ConfigCheckDriver(Protocol):

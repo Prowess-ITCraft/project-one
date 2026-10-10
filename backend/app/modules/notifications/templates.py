@@ -15,6 +15,11 @@ class Template:
     body: str
     optional: bool  # a person may mute it
     sensitive: bool = False  # the body carries a secret and is wiped after sending
+    title: str = ""  # how the preferences page names this kind of message
+
+    @property
+    def label(self) -> str:
+        return self.title or self.subject.split("{{")[0].strip() or self.code.replace("_", " ")
 
 
 TEMPLATES: dict[str, Template] = {
@@ -48,6 +53,7 @@ TEMPLATES: dict[str, Template] = {
             "starts "
             "on {{ first_start }}.\n\nOpen Project One and accept each task before you travel.\n",
             optional=True,
+            title="Tasks assigned to me",
         ),
         Template(
             "run_blocked",
@@ -56,6 +62,7 @@ TEMPLATES: dict[str, Template] = {
             "}}\n\n"
             "Please decide what to do next in Project One.\n",
             optional=True,
+            title="A task is blocked",
         ),
         Template(
             "task_update",
@@ -64,6 +71,7 @@ TEMPLATES: dict[str, Template] = {
             "{% if note %}\n{{ note }}\n{% endif %}"
             "\nBy {{ actor }} at {{ at }} (IST).\n",
             optional=True,
+            title="A field task changes state",
         ),
         Template(
             "verify_requested",
@@ -73,6 +81,7 @@ TEMPLATES: dict[str, Template] = {
             "{{ not_checked }} item(s) left for you to judge{% endif %}.\n\nOpen Project "
             "One to approve it or send it back.\n",
             optional=False,
+            title="Work waiting for me to verify",
         ),
         Template(
             "run_returned",
@@ -80,6 +89,7 @@ TEMPLATES: dict[str, Template] = {
             "Hello {{ name }},\n\n{{ task }} was sent back to configuration.\n\n"
             "Why: {{ reason }}\n\nFix it, add any new evidence and send it again.\n",
             optional=False,
+            title="My work is sent back",
         ),
         Template(
             "waiver_ack",
@@ -89,6 +99,7 @@ TEMPLATES: dict[str, Template] = {
             "It will be listed as an exclusion on the completion certificate. Please read and "
             "acknowledge it here within {{ days }} days:\n{{ link }}\n",
             optional=False,
+            title="Exclusion to acknowledge",
         ),
         Template(
             "handover_done",
@@ -96,6 +107,34 @@ TEMPLATES: dict[str, Template] = {
             "Hello {{ name }},\n\n{{ task }} on {{ project }} was handed over and confirmed by the "
             "customer. It is ready for verification.\n",
             optional=True,
+            title="A hand over is confirmed",
+        ),
+        Template(
+            "test_message",
+            "Test message from Project One",
+            "Hello {{ name }},\n\nThis is a test. If it reached this phone or browser, messages "
+            "from Project One will reach it too.\n",
+            optional=False,
+            title="Test message",
+        ),
+        Template(
+            "quote_expiring",
+            "Quote {{ quote_ref }} {{ when }}",
+            "Hello {{ name }},\n\nVersion {{ version }} of quote {{ quote_ref }} for {{ project }} "
+            "{{ when }}. Its prices are valid for {{ days }} days from the quote date.\n\nOpen the "
+            "BOQ and choose Re-price: every price is taken again from the price book and the BOQ "
+            "goes for pricing approval, then it can be issued as a new version.\n",
+            optional=True,
+            title="A quote is about to expire",
+        ),
+        Template(
+            "price_drift",
+            "Price to check: {{ item }}",
+            "Hello {{ name }},\n\nThe price just entered for {{ item }} is {{ change }} percent "
+            "{{ direction }} what its price history suggests. Check it before it goes into a "
+            "quote.\n\nThis is advice from the learning module, not a rule.\n",
+            optional=True,
+            title="A price looks unusual",
         ),
     )
 }

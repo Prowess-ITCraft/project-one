@@ -6,7 +6,14 @@ import json
 from typing import Any
 
 from app.modules.prismsuite.parsers import base, docx_v1, json_v1
-from tests.helpers import Workspace, idem, make_workspace, sample_report_path, upload_sample_report
+from tests.helpers import (
+    Workspace,
+    drain_outbox,
+    idem,
+    make_workspace,
+    sample_report_path,
+    upload_sample_report,
+)
 
 BASE = "/api/v1/prismsuite/imports"
 
@@ -100,8 +107,6 @@ async def test_rescan_needs_an_approved_baseline(client: Any) -> None:
 
 
 async def test_rescan_is_kept_beside_the_baseline_and_does_not_supersede_it(client: Any) -> None:
-    from app.core import outbox
-    from app.core.db import get_sessionmaker
 
     ws = await make_workspace(client)
     await _approved_baseline(client, ws)
@@ -129,7 +134,7 @@ async def test_rescan_is_kept_beside_the_baseline_and_does_not_supersede_it(clie
     }
 
     # The rescan does not add a second Audit intake artifact; only the baseline locked one.
-    await outbox.dispatch_batch(get_sessionmaker())
+    await drain_outbox()
     arts = (
         await client.get(
             f"/api/v1/projects/{ws.project_id}/artifacts", headers=ws.architect.headers

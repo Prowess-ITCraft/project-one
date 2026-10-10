@@ -134,7 +134,15 @@ In A and B, check the result with `curl -I https://p1.itcraft.net.in/healthz`: e
 
 - `/healthz`: process alive. `/readyz`: database, Redis and storage reachable.
 - `/metrics`: Prometheus metrics `p1_http_requests_total` and
-  `p1_http_request_duration_seconds`. Nginx hides this path from outside.
+  `p1_http_request_duration_seconds`, plus `p1_outbox_pending`, `p1_outbox_dead`,
+  `p1_celery_queue_length`, `p1_notifications_failed_1d` and
+  `p1_backup_last_success_timestamp_seconds`. Nginx hides this path from outside.
+- Alerts: 12 Prometheus rules sent through Alertmanager (critical to a phone through ntfy and
+  email, warnings by email). What each means and what to do: `docs/runbooks/alerts.md`.
+- Errors: GlitchTip (profile `ops`, 9608). Uptime: Uptime Kuma (9607) on `/healthz` and `/readyz`.
+- Resilience: `scripts/chaos.py` kills a worker mid-job and the API mid-PDF, restarts Valkey and
+  cuts database connections, and checks everything recovers by itself. Run it on a spare stack
+  after infrastructure changes.
 - Grafana dashboard "Project One API": request rate by status, p95 latency, 5xx rate.
 - Logs are JSON, one line per event, each with a `request_id`. Search by it to follow one
   request across api, worker and proxy.

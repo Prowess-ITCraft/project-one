@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.core import outbox
 from app.core.db import get_sessionmaker
 from app.modules.identity.permissions import Role
 from tests.helpers import (
     BRIEF,
     Workspace,
     approve_baseline,
+    drain_outbox,
     idem,
     make_user,
     make_workspace,
@@ -117,7 +117,7 @@ async def test_current_and_ideal_state_then_gaps_lock_the_stage_outputs(client: 
         headers={**ws.architect.headers, **idem()},
     )
     assert again.status_code == 409
-    await outbox.dispatch_batch(get_sessionmaker())
+    await drain_outbox()
     arts = (
         await client.get(f"{API}/projects/{ws.project_id}/artifacts", headers=ws.architect.headers)
     ).json()
@@ -276,7 +276,7 @@ async def test_gap_register_edit_verify_and_lock(client: Any) -> None:
         with pytest.raises(Exception):
             await s.execute(text("UPDATE gaps SET priority = 'consider'"))
             await s.commit()
-    await outbox.dispatch_batch(get_sessionmaker())
+    await drain_outbox()
     arts = (
         await client.get(f"{API}/projects/{ws.project_id}/artifacts", headers=ws.architect.headers)
     ).json()

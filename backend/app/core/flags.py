@@ -18,6 +18,9 @@ DEFAULTS: dict[str, bool] = {
     # The customer's one-time code at check-in and hand over. Built and tested, switched off
     # for now: the arrival photo, evidence and checks still apply (ADR 0025).
     "field_customer_codes": False,
+    # The learning module: examples, shadow models, suggestions and price alerts. Off stops all
+    # of it at once and changes nothing in any other module (ADR 0029).
+    "ml_enabled": True,
 }
 
 _CACHE_TTL = 30.0

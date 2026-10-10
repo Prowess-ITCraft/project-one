@@ -43,6 +43,10 @@ celery_app.conf.update(
     task_time_limit=300,
     task_soft_time_limit=240,
     broker_connection_retry_on_startup=True,
+    # A task held by a worker that died goes back on the queue after this long. The default is
+    # an hour; 10 minutes is still longer than any task may run (task_time_limit), so a task
+    # that is only slow is never handed out twice.
+    broker_transport_options={"visibility_timeout": 600},
     task_ignore_result=True,
     # Our structured logs go to stdout with their own level inside the JSON. Celery would
     # otherwise relabel every line WARNING, which makes routine scans look like warnings.
@@ -56,6 +60,16 @@ celery_app.conf.update(
         },
         "nightly-backup": {"task": "p1.ops.backup", "schedule": crontab(hour=21, minute=0)},
         "notifications-retry": {"task": "p1.notifications.send_pending", "schedule": 60.0},
+        # 02:00 IST is 20:30 UTC. Repairs anything an event missed.
+        "search-reindex": {
+            "task": "p1.search.reindex",
+            "schedule": crontab(hour=20, minute=30),
+        },
+        # 09:00 IST is 03:30 UTC: the day before a quote's prices lapse, on the day, and after.
+        "quote-expiry": {
+            "task": "p1.boq.quote_expiry_alerts",
+            "schedule": crontab(hour=3, minute=30),
+        },
         "library-inbox": {"task": "p1.library.scan_inbox", "schedule": 300.0},
         # 01:30 IST is 20:00 UTC. Does nothing while the retention setting is 0 (ADR 0014).
         "corpus-retention": {
@@ -108,6 +122,51 @@ def expire_prices() -> int:
     n = int(_run(service.expire_prices(get_sessionmaker())))
     log.info("prices_expired", count=n)
     return n
+
+
+@celery_app.task(name="p1.boq.quote_expiry_alerts")  # type: ignore[untyped-decorator]
+def quote_expiry_alerts() -> int:
+    from app.core.db import get_sessionmaker
+    from app.modules.boq import service
+
+    n = int(_run(service.quote_expiry_alerts(get_sessionmaker())))
+    log.info("quote_expiry_alerts", count=n)
+    return n
+
+
+@celery_app.task(name="p1.search.reindex")  # type: ignore[untyped-decorator]
+def search_reindex() -> dict[str, int]:
+    from app.core.db import get_sessionmaker
+    from app.modules.search import service
+
+    async def go() -> dict[str, int]:
+        async with get_sessionmaker()() as s:
+            return await service.reindex(s)
+
+    counts: dict[str, int] = _run(go())
+    log.info("search_reindexed", **counts)
+    return counts
+
+
+PROBE_KEY = "p1:ops:probe:"
+PROBE_MAX_SECONDS = 120
+
+
+@celery_app.task(name="p1.ops.probe")  # type: ignore[untyped-decorator]
+def probe(token: str, seconds: float = 0) -> str:
+    """A harmless task for checks: waits, then records that it ran. `scripts/chaos.py` kills the
+    worker during the wait to prove the task is handed out again and finishes."""
+    import time
+
+    import redis
+
+    time.sleep(max(0.0, min(float(seconds), PROBE_MAX_SECONDS)))
+    r = redis.from_url(get_settings().redis_url)  # type: ignore[no-untyped-call]
+    try:
+        r.set(PROBE_KEY + token[:64], str(int(time.time())), ex=3600)
+    finally:
+        r.close()
+    return token
 
 
 @celery_app.task(name="p1.ops.backup")  # type: ignore[untyped-decorator]

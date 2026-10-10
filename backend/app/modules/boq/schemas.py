@@ -43,6 +43,7 @@ class LineOut(_Out):
     source: dict[str, Any]
     notes: str | None = None
     flags: list[str] = []
+    margin_pct: str | None = None  # only for people who see prices
 
 
 class SectionOut(_Out):
@@ -87,6 +88,11 @@ class BoqOut(_Out):
     warnings: list[str]
     generation_report: dict[str, Any] = {}
     changes: list[str] | None = None
+    outcome: str = "open"
+    outcome_reason: str | None = None
+    outcome_at: str | None = None
+    min_margin_pct: str | None = None
+    submitted: bool | None = None  # set by re-price: whether it went for pricing approval
 
 
 class VersionViewOut(_Out):
@@ -142,3 +148,13 @@ class EditRowOut(_Out):
     action: str
     reason: str
     detail: list[str]
+
+
+class OutcomeOut(_Out):
+    at: str
+    by: str
+    outcome: str
+    reason: str | None = None
+    competitor: str | None = None
+    note: str | None = None
+    version_number: int | None = None

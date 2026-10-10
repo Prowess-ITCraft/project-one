@@ -76,6 +76,13 @@ The four reporting lenses everywhere: **Productivity, Resilience, Security, Heal
 | 20 | **Training snapshots**: frozen, versioned, reproducible dataset snapshots with a data card, ready for Phase 13 | 4, 13 | Built |
 | 21 | The sample files in `samples/` are always part of the corpus and of every test run | 4 | Built |
 | 22 | BOQ estimate from the report and questionnaire before the approvals, saved nowhere and labelled as an estimate (ADR 0021) | 6, 14 | Built |
+| 23 | **Field app on phones**: installable on Android and iPhone, works offline between check-in and sending for checking, location required at check-in, stamped evidence, single-use upload links, Web Push (ADR 0027) | 12A | Built |
+| 24 | Quote outcome: won or lost with a reason; alerts before a quote's prices lapse; re-price in one click as a new version | 12A | Built |
+| 25 | Minimum margin: lines under it need the approver's reason, line by line (ADR 0028) | 12A | Built; 10 percent until the Director confirms |
+| 26 | Configuration snapshot before the work and a compare after it | 12A | Built |
+| 27 | Director: how long each project waits and on whom, each engineer's phone sync state; project manager: engineer workload | 12A | Built |
+| 28 | Search across projects, customers, BOQs, tasks and catalogue, filtered by role (no prices for field engineers) | 12A | Built |
+| 29 | BOQ line prediction and price drift checks, shadow mode first, Director approval, one off switch (ADR 0029) | 13 | Built; waits for about 20 accepted BOQs |
 
 ## 5. Non-functional requirements
 
@@ -88,14 +95,18 @@ The four reporting lenses everywhere: **Productivity, Resilience, Security, Heal
 | Money | `Decimal`, `NUMERIC(14,2)`, INR, Indian grouping, GST per line, Apr to Mar financial year |
 | Time | UTC stored, IST shown |
 | Licensing | Free and open-source components only (ADR 0011) |
-| Operability | `/healthz`, `/readyz`, `/metrics`, nightly backups with a tested restore |
+| Operability | `/healthz`, `/readyz`, `/metrics`, nightly backups with a tested restore, alerts to a phone, error tracking, uptime checks |
+| Size and speed | About 30 people at once and 200 projects a year; 95 percent of reads under 500 ms and writes under 1.5 s |
+| Phone pages | Lighthouse on a mid-range phone over slow 4G: performance 80, accessibility 95; field JavaScript under its bundle budget |
+| Keeping records | Evidence and reports kept for 8 years |
+| Rollback | Migrations only expand the schema, so the previous version runs on the new database |
 | Writing | Plain English, sentence case, no em dashes in docs, UI copy or generated documents |
 
 ## 6. Scope
 
 **In:** the eight stages above, master data (catalogue and price book, rule library, BOQ
 templates, config templates, checklist templates), the library and document corpus, the web app,
-email notifications (SMS and WhatsApp behind adapters).
+email and Web Push notifications (SMS and WhatsApp behind adapters), the field app on phones.
 
 **Changed from the first draft (ADR 0012):** audit imports have a kind (baseline or rescan); an
 intake questionnaire drives the tier and recommender; acceptance needs a customer PO; a gate can

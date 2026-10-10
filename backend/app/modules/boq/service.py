@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import dataclasses
 import uuid
-from datetime import date
+from datetime import date, timedelta
+from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core import outbox
 from app.core.documents import rendered
@@ -22,8 +23,10 @@ from app.modules.boq import draft as d
 from app.modules.boq import render, storage
 from app.modules.boq.generate import build_draft, line_from_item
 from app.modules.boq.models import (
+    LOSS_REASONS,
     Boq,
     BoqEdit,
+    BoqOutcome,
     BoqTemplate,
     BoqVersion,
     CompanySettings,
@@ -42,8 +45,19 @@ from app.modules.customers.contracts import (
 )
 from app.modules.datasets.contracts import boq_history
 from app.modules.files.contracts import get_file
-from app.modules.identity.contracts import P, Principal, audit_context, ensure_different_people
+from app.modules.identity.contracts import (
+    P,
+    Principal,
+    Role,
+    audit_context,
+    ensure_different_people,
+    get_user_summary,
+    users_with_role,
+)
 from app.modules.infra.contracts import GapSet, estimate_gaps, get_locked_gaps
+from app.modules.notifications.contracts import already_queued, deliver_now, queue_email_to_user
+from app.modules.search.contracts import SearchDoc
+from app.modules.search.contracts import index as search_index
 
 ARTIFACT = "boq_version"
 VERSION_ISSUED = "boq.version_issued"
@@ -51,6 +65,13 @@ BOQ_ACCEPTED = "boq.accepted"
 # Every candidate the recommender ranked while drafting, with its criteria. The learning module
 # keeps these and labels them when the customer accepts a version (ADR 0020).
 BOQ_RECOMMENDED = "boq.recommended"
+# What the rules drafted from which findings: gap types with counts, and the line keys.
+# The learning module compares a shadow model with it (ADR 0029). No prices.
+BOQ_DRAFTED = "boq.drafted"
+# A quote won or lost, with the reason. The learning module keeps these as labels.
+BOQ_OUTCOME = "boq.outcome"
+# How many days before a quote's prices lapse its owner is told (and again on the day).
+EXPIRY_NOTICE_DAYS = 1
 
 
 # ------------------------------------------------------------------ master data
@@ -62,10 +83,56 @@ async def company(session: AsyncSession) -> dict[str, Any]:
     return {**DEFAULT_COMPANY, **(dict(row.data) if row else {})}
 
 
+def _check_company(data: dict[str, Any]) -> None:
+    """The settings that drive money and quote numbers must be sane; the rest is wording."""
+    if "min_margin_pct" in data:
+        try:
+            m = Decimal(str(data["min_margin_pct"]))
+        except (InvalidOperation, ValueError) as exc:
+            raise ValidationFailed("The minimum margin must be a number.") from exc
+        if not Decimal(0) <= m <= Decimal(90):
+            raise ValidationFailed("The minimum margin must be between 0 and 90 percent.")
+    prefix = data.get("quote_prefix")
+    if prefix is not None and not (
+        isinstance(prefix, str) and 1 <= len(prefix) <= 20 and prefix.replace("-", "").isalnum()
+    ):
+        raise ValidationFailed("The quote prefix is 1 to 20 letters or digits.")
+    days = data.get("default_validity_days")
+    if days is not None and not (isinstance(days, int) and 1 <= days <= 365):
+        raise ValidationFailed("Price validity is 1 to 365 days.")
+    for key in ("legal_name", "brand", "gstin", "email", "signatory_name"):
+        v = data.get(key)
+        if v is not None and (not isinstance(v, str) or len(v) > 200):
+            raise ValidationFailed(f"{key.replace('_', ' ').capitalize()} must be short text.")
+    terms = data.get("terms")
+    if terms is not None and (
+        not isinstance(terms, list)
+        or len(terms) > 40
+        or any(not isinstance(t, str) or len(t) > 600 for t in terms)
+    ):
+        raise ValidationFailed("Terms are up to 40 lines of up to 600 characters.")
+
+
+async def company_record(session: AsyncSession) -> dict[str, Any]:
+    """The saved settings with defaults filled in, and the version a save must send back."""
+    row = await session.get(CompanySettings, "company")
+    return {"data": await company(session), "version": row.version if row else None}
+
+
+async def min_margin(session: AsyncSession) -> Decimal:
+    """The minimum margin from company settings (ADR 0028)."""
+    raw = (await company(session)).get("min_margin_pct", 10)
+    try:
+        return Decimal(str(raw))
+    except (InvalidOperation, ValueError):  # pragma: no cover (validated on save)
+        return Decimal(10)
+
+
 async def save_company(
     session: AsyncSession, principal: Principal, data: dict[str, Any], version: int | None
 ) -> dict[str, Any]:
     principal.require(P.SETTINGS_EDIT)
+    _check_company(data)
     row = await session.get(CompanySettings, "company")
     if row is None:
         session.add(CompanySettings(key="company", data=data, updated_by=principal.user_id))
@@ -342,6 +409,30 @@ async def generate(
         for key, rec in report.get("recommendations", {}).items()
         if rec.get("ranked")
     ]
+    gap_counts: dict[str, int] = {}
+    for g in gapset.gaps:
+        gap_counts[g.gap_type] = gap_counts.get(g.gap_type, 0) + max(g.qty_hint or 1, 1)
+    outbox.publish(
+        session,
+        DomainEvent(
+            event_type=BOQ_DRAFTED,
+            aggregate_type="boq",
+            aggregate_id=str(b.id),
+            actor_id=principal.user_id,
+            payload={
+                "project_id": str(project_id),
+                "gaps": gap_counts,
+                "lines": [
+                    {
+                        "title": ln.title[:200],
+                        "template_key": ln.source.template_key,
+                        "kind": ln.source.kind,
+                    }
+                    for ln in draft.lines
+                ],
+            },
+        ),
+    )
     if groups:
         outbox.publish(
             session,
@@ -419,6 +510,49 @@ async def estimate(
     return draft, report, gapset, basis
 
 
+def quote_doc(b: Boq, v: BoqVersion) -> SearchDoc:
+    """What search shows for a quote: its reference, version, customer and state. No amounts."""
+    customer = ((v.content or {}).get("settings", {}).get("customer") or {}).get("name") or ""
+    state = {"won": "won", "lost": "lost"}.get(b.outcome, v.state)
+    return SearchDoc(
+        kind="quote",
+        ref_id=str(b.id),
+        title=v.quote_ref,
+        subtitle=f"Quote v{v.number}, {state}" + (f", {customer}" if customer else ""),
+        body=customer or None,
+        url=f"/projects/{b.project_id}#boq",
+        perm="boq:read",
+        project_id=b.project_id,
+    )
+
+
+def _accepted_lines(draft: d.Draft) -> list[dict[str, Any]]:
+    """What the customer bought, without prices: the learning module's labels for predicting
+    BOQ lines from audit findings (Phase 13)."""
+    groups = d.option_members(draft)
+    chosen = {
+        m.line.id
+        for g, members in groups.items()
+        for m in members
+        if m.letter == draft.selected_options.get(g)
+    }
+    out = []
+    for ln in draft.lines:
+        if ln.option_group and ln.id not in chosen:
+            continue
+        out.append(
+            {
+                "title": ln.title[:200],
+                "qty": ln.qty,
+                "gap_codes": list(ln.source.gap_codes),
+                "template_key": ln.source.template_key,
+                "kind": ln.source.kind,
+                "item_id": ln.item_id,
+            }
+        )
+    return out
+
+
 def _accepted_item_ids(draft: d.Draft) -> list[str]:
     """Catalogue items the customer actually took: every plain line, and only the chosen
     alternative of each option group."""
@@ -437,11 +571,15 @@ def _accepted_item_ids(draft: d.Draft) -> list[str]:
     )
 
 
-def view(b: Boq, principal: Principal) -> dict[str, Any]:
+def view(b: Boq, principal: Principal, floor: Decimal | None = None) -> dict[str, Any]:
+    """The BOQ as the editor shows it. `floor` is the minimum margin from company settings;
+    lines under it are flagged `low_margin` for people who see prices."""
     draft = _draft(b)
-    comp = d.compute(draft, today_ist())
+    prices = principal.has(P.PRICE_READ)
+    comp = d.compute(draft, today_ist(), floor if prices else None)
     out = draft.model_dump(mode="json")
-    if not principal.has(P.PRICE_READ):
+    margins = {ln.id: d.margin_pct(ln) for ln in draft.lines} if prices else {}
+    if not prices:
         for ln in out["lines"]:
             ln["cost"] = None
     numbered = {n.line.id: n for n in d.numbered(draft)}
@@ -458,6 +596,7 @@ def view(b: Boq, principal: Principal) -> dict[str, Any]:
                 "gst": str(r.gst) if r.gst is not None else None,
                 "flags": r.flags,
                 "group_id": numbered[r.id].group_id,
+                "margin_pct": str(margins[r.id]) if margins.get(r.id) is not None else None,
             }
         )
     return {
@@ -477,6 +616,10 @@ def view(b: Boq, principal: Principal) -> dict[str, Any]:
         "blockers": comp.blockers,
         "warnings": comp.warnings,
         "generation_report": b.generation_report,
+        "outcome": b.outcome,
+        "outcome_reason": b.outcome_reason,
+        "outcome_at": b.outcome_at.isoformat() if b.outcome_at else None,
+        "min_margin_pct": str(floor) if prices and floor is not None else None,
     }
 
 
@@ -659,6 +802,7 @@ async def decide_pricing(
     *,
     approve: bool,
     note: str | None,
+    margin_ack: list[str] | None = None,
 ) -> Boq:
     principal.require(P.BOQ_APPROVE_PRICING)
     b = await _load(session, principal, boq_id, lock=True)
@@ -675,8 +819,32 @@ async def decide_pricing(
                 code="boq_blockers",
                 extra={"blockers": blockers},
             )
+        # Lines under the minimum margin are accepted one by one, with a reason (ADR 0028).
+        floor = await min_margin(session)
+        low = d.low_margin_lines(_draft(b), today_ist(), floor)
+        unacked = [ref for lid, ref in low if lid not in set(margin_ack or [])]
+        if unacked:
+            raise Conflict(
+                f"Lines {', '.join(unacked)} are under the {floor}% minimum margin. Accept each "
+                "of them and say why.",
+                code="low_margin_ack_required",
+                extra={"lines": [lid for lid, _ in low], "refs": [ref for _, ref in low]},
+            )
+        if low and (not note or len(note.strip()) < 5):
+            raise ValidationFailed(
+                "Say why the low margins are acceptable.", code="low_margin_reason_required"
+            )
         b.stage, b.pricing_approved_by = "pricing_approved", principal.user_id
-        await _log(session, b, principal, "pricing_approved", note or "Pricing approved", [])
+        await _log(
+            session,
+            b,
+            principal,
+            "pricing_approved",
+            note or "Pricing approved",
+            [f"accepted margin under {floor}% on lines {', '.join(r for _, r in low)}"]
+            if low
+            else [],
+        )
     else:
         if not note or len(note.strip()) < 3:
             raise ValidationFailed("Say what needs to change.")
@@ -754,6 +922,7 @@ async def issue(session: AsyncSession, principal: Principal, boq_id: uuid.UUID) 
     )  # the draft carries on towards the next version
     await session.flush()
     await _log(session, b, principal, "issued", f"Issued v{v.number}", [v.change_summary])
+    search_index(session, quote_doc(b, v), principal.user_id)
     outbox.publish(
         session,
         DomainEvent(
@@ -940,6 +1109,18 @@ async def accept(
     v.selected_options, v.totals = dict(draft.selected_options), comp.totals.model_dump(mode="json")
     v.content = draft.model_dump(mode="json")
     b.status = "accepted"
+    b.outcome, b.outcome_reason, b.outcome_at = "won", None, utcnow()
+    search_index(session, quote_doc(b, v), principal.user_id)
+    session.add(
+        BoqOutcome(
+            boq_id=b.id,
+            project_id=b.project_id,
+            version_number=v.number,
+            outcome="won",
+            note=f"Accepted with PO {v.po_number}",
+            by=principal.user_id,
+        )
+    )
     await session.flush()
     outbox.publish(
         session,
@@ -966,6 +1147,7 @@ async def accept(
                 "version": v.number,
                 "po_number": v.po_number,
                 "item_ids": _accepted_item_ids(draft),
+                "lines": _accepted_lines(draft),
             },
         ),
     )
@@ -1028,3 +1210,209 @@ async def edit_log(
 
 def _forbid(_: Any) -> None:  # pragma: no cover
     raise Forbidden()
+
+
+# ------------------------------------------------------------------ won, lost and re-priced
+
+
+async def record_outcome(
+    session: AsyncSession,
+    principal: Principal,
+    boq_id: uuid.UUID,
+    *,
+    outcome: str,
+    reason: str | None,
+    competitor: str | None,
+    note: str | None,
+) -> Boq:
+    """Lost, with a reason from a fixed list; or open again when a lost quote comes back. Won is
+    recorded when the customer accepts a version, never by hand."""
+    principal.require(P.BOQ_EDIT)
+    b = await _load(session, principal, boq_id, lock=True)
+    latest = await session.scalar(
+        select(BoqVersion.number)
+        .where(BoqVersion.boq_id == b.id)
+        .order_by(BoqVersion.number.desc())
+        .limit(1)
+    )
+    if outcome == "lost":
+        if b.status == "accepted":
+            raise Conflict("This quote was accepted; it cannot be marked lost.", code="already_won")
+        if b.outcome == "lost":
+            raise Conflict("This quote is already marked lost.", code="already_lost")
+        if latest is None:
+            raise Conflict(
+                "Only an issued quote can be lost. Nothing was sent yet.", code="not_issued"
+            )
+        if reason not in LOSS_REASONS:
+            raise ValidationFailed(
+                f"Choose why it was lost: {', '.join(LOSS_REASONS)}.", code="reason_required"
+            )
+        if reason == "other" and not (note and len(note.strip()) >= 5):
+            raise ValidationFailed("Say what happened.", code="note_required")
+        b.status, b.stage, b.submitted_by, b.pricing_approved_by = "closed", "drafting", None, None
+    elif outcome == "open":
+        if b.outcome != "lost":
+            raise Conflict("Only a lost quote can be opened again.", code="not_lost")
+        if not (note and len(note.strip()) >= 5):
+            raise ValidationFailed("Say why the quote is open again.", code="note_required")
+        b.status, reason, competitor = "draft", None, None
+    else:
+        raise ValidationFailed("Mark a quote lost, or open a lost quote again.")
+    b.outcome, b.outcome_reason, b.outcome_at = outcome, reason, utcnow()
+    newest = await session.scalar(
+        select(BoqVersion)
+        .where(BoqVersion.boq_id == b.id)
+        .order_by(BoqVersion.number.desc())
+        .limit(1)
+    )
+    if newest is not None:
+        search_index(session, quote_doc(b, newest), principal.user_id)
+    session.add(
+        BoqOutcome(
+            boq_id=b.id,
+            project_id=b.project_id,
+            version_number=latest,
+            outcome=outcome,
+            reason=reason,
+            competitor=(competitor or "").strip()[:120] or None,
+            note=(note or "").strip()[:1000] or None,
+            by=principal.user_id,
+        )
+    )
+    await _log(
+        session,
+        b,
+        principal,
+        "lost" if outcome == "lost" else "opened_again",
+        (note or reason or outcome)[:300],
+        [f"reason {reason}"] if reason else [],
+    )
+    outbox.publish(
+        session,
+        DomainEvent(
+            event_type=BOQ_OUTCOME,
+            aggregate_type="boq",
+            aggregate_id=str(b.id),
+            actor_id=principal.user_id,
+            payload={
+                "project_id": str(b.project_id),
+                "outcome": outcome,
+                "reason": reason,
+                "version": latest,
+            },
+        ),
+    )
+    await session.commit()
+    await session.refresh(b)
+    return b
+
+
+async def list_outcomes(
+    session: AsyncSession, principal: Principal, boq_id: uuid.UUID
+) -> list[BoqOutcome]:
+    b = await _load(session, principal, boq_id)
+    return list(
+        await session.scalars(
+            select(BoqOutcome).where(BoqOutcome.boq_id == b.id).order_by(BoqOutcome.at)
+        )
+    )
+
+
+async def reprice(
+    session: AsyncSession, principal: Principal, boq_id: uuid.UUID, *, draft_rev: int
+) -> tuple[Boq, list[str], bool]:
+    """One click when a quote's prices lapse: every price book line takes today's price, then
+    the BOQ goes for pricing approval if nothing blocks it. Approval and issue stay with other
+    people, so the new version still has two pairs of eyes on it."""
+    b, changes = await refresh_prices(
+        session,
+        principal,
+        boq_id,
+        draft_rev=draft_rev,
+        reason="Quote prices lapsed: re-priced from the price book",
+    )
+    if _blockers(b, today_ist()) or b.stage != "drafting":
+        return b, changes, False
+    b = await submit_for_pricing(session, principal, boq_id)
+    return b, changes, True
+
+
+def expires_on(v: BoqVersion) -> date:
+    """The last day an issued version's prices hold: its quote date plus its validity."""
+    settings = (v.content or {}).get("settings", {})
+    raw = settings.get("quote_date")
+    try:
+        start = date.fromisoformat(raw) if raw else None
+    except ValueError:
+        start = None
+    from app.core.timeutil import to_ist
+
+    start = start or to_ist(v.issued_at).date()
+    days = int(settings.get("validity_days") or 5)
+    return start + timedelta(days=days)
+
+
+async def quote_expiry_alerts(maker: async_sessionmaker[AsyncSession]) -> int:
+    """Tell the person who issued a quote, and the sales heads, the day before its prices lapse,
+    on the day, and once after. Only the latest issued version of a quote that is still open.
+    Run daily by the worker; each notice is sent once."""
+    today = today_ist()
+    sent = 0
+    async with maker() as s:
+        rows = list(
+            await s.execute(
+                select(BoqVersion, Boq)
+                .join(Boq, Boq.id == BoqVersion.boq_id)
+                .where(BoqVersion.state == "issued", Boq.outcome == "open", Boq.status == "draft")
+            )
+        )
+        heads = await users_with_role(s, Role.SALES_HEAD)
+        ids: list[uuid.UUID] = []
+        for v, b in rows:
+            latest = await s.scalar(
+                select(BoqVersion.number)
+                .where(BoqVersion.boq_id == b.id)
+                .order_by(BoqVersion.number.desc())
+                .limit(1)
+            )
+            if latest != v.number:
+                continue
+            last_day = expires_on(v)
+            left = (last_day - today).days
+            if left > EXPIRY_NOTICE_DAYS or left < -1:
+                continue
+            when = (
+                "expires tomorrow" if left == 1 else "expires today" if left == 0 else "has expired"
+            )
+            issuer = await get_user_summary(s, v.issued_by)
+            people = {u.id: u for u in heads}
+            if issuer is not None and issuer.is_active:
+                people[issuer.id] = issuer
+            settings = (v.content or {}).get("settings", {})
+            customer = (settings.get("customer") or {}).get("name") or "the customer"
+            for person in people.values():
+                key = f"quote_exp:{v.id}:{max(left, -1)}:{person.id}"[:120]
+                if await already_queued(s, key):
+                    continue
+                n = await queue_email_to_user(
+                    s,
+                    user_id=person.id,
+                    email=person.email,
+                    template="quote_expiring",
+                    context={
+                        "name": person.full_name,
+                        "quote_ref": v.quote_ref,
+                        "when": when,
+                        "version": v.number,
+                        "project": customer,
+                        "days": int(settings.get("validity_days") or 5),
+                    },
+                    dedupe_key=key,
+                    related=("boq_project", str(b.project_id)),
+                )
+                ids.append(n.id)
+                sent += 1
+        await s.commit()
+    await deliver_now(maker, ids)
+    return sent

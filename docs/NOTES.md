@@ -26,7 +26,11 @@ Maintained by Aditya Kumar.
 | Pricing approval | Sales head or Director who did not edit | 0013 |
 | Engineer hours | Mon to Sat, 10:00 to 18:00 IST, 30 min buffer | 0017 |
 | OTP channel | Email to the sign-off contact (SMS, WhatsApp adapters off). Customer codes at check-in and hand over are switched off for now (flag `field_customer_codes`) | 0017, 0025 |
-| Offline window | 72 hours | 0017 |
+| Offline window | 72 hours, from check-in to sending for checking | 0017, 0027 |
+| Phone location | Required at check-in; elsewhere "not available" with a reason | 0027 |
+| Field phones | Android and iPhone; push on iPhone only after Add to Home Screen; idle sign-out 15 minutes | 0027 |
+| Upload links | Single use, 15 minutes, one task and one file | 0027 |
+| Minimum margin | 10 percent on the selling price, each lower line accepted with a reason | 0028 |
 | Field states | Dependents may start after hand over | 0015 |
 | Originals retention | Keep forever (0 days) | 0014 |
 | PDF | WeasyPrint only, through `core/documents.py` | 0016 |
@@ -37,6 +41,9 @@ Maintained by Aditya Kumar.
 | BOQ estimate | Any time after the report and questionnaire, saved nowhere, labelled | 0021 |
 | Certificate wording | IITPL implemented the work; no "Implemented by"; Director and stamp only | 0022 |
 | Who manages accounts | Admin and Director only; the Director holds every Admin permission | 0026 |
+| Learning models | Shadow mode, at least 30 days and 20 comparisons, Director approves; `ml_enabled` turns it all off; MLflow optional | 0029 |
+| Public ports | 80 and 443 only; 9597 only behind a load balancer | 0030 |
+| Size targets | About 30 people at once, 200 projects a year, reads under 500 ms and writes under 1.5 s (95 percent), records kept 8 years | PRD 5 |
 
 ## Machine quirks
 
@@ -44,8 +51,8 @@ Maintained by Aditya Kumar.
 - Use `backend/.venv/Scripts/python.exe`; the system Python lacks the dependencies. There is no
   `make` on Windows, use `scripts/dev.ps1`.
 - WeasyPrint cannot load on Windows, so PDFs answer 503 `pdf_unavailable` outside the container.
-- The full backend suite takes 10 to 12 minutes (testcontainers start Postgres, Valkey, MinIO).
-  Run it in the background.
+- The full backend suite takes about 30 minutes (testcontainers start Postgres, Valkey, MinIO).
+  Run it in the background, and not while Playwright or an image build runs.
 - Another local project may hold Docker containers; ports 9595 to 9606 are ours.
 - Git Bash rewrites `/data/...` arguments into Windows paths; prefix `docker exec` commands with
   `MSYS_NO_PATHCONV=1`.
@@ -58,7 +65,7 @@ Maintained by Aditya Kumar.
 | `fieldops.engine.ConfigCheckDriver` | `ExportDriver` reads SonicWall exports; everything else falls back to `AnswerDriver` (recorded values) | One driver per new brand, via `register_driver` |
 | `verification.exports.ExportParser` | SonicWall (`.exp`, key/value text, JSON) | One parser per brand |
 | `notifications.providers` SMS, WhatsApp | `UnconfiguredProvider` (recorded as skipped) | When a provider is chosen |
-| `boq.recommend` learned ranker | Rules decide; a learned model can run in shadow mode (ADR 0020) | A new ADR before it may influence a BOQ |
+| `boq.recommend` learned ranker, BOQ line prediction, price drift | Rules decide; models run in shadow mode and only advise after the Director approves (ADR 0029) | Training once about 20 accepted BOQs exist |
 | Market data feed | Manual entry | Later, behind the feed adapter |
 
 ## Known limitations
@@ -73,14 +80,49 @@ Maintained by Aditya Kumar.
 - The cleaning taxonomy is keyword rules. More real BOQs will show gaps; unlabelled lines are
   listed in the analysis as `other`.
 - One PrismSuite sample and two BOQ samples. Parser and label quality need more.
+- The iPhone browser tests use the iPhone screen and user agent in Chrome; Safari itself and
+  Web Push on a real iPhone are untested.
+- Background Sync is Chrome on Android only. The outbox also sends on open, on reconnect and
+  every 30 seconds, so iPhones sync while the app is open.
+- The web app's CSP allows inline scripts (Next.js needs them) and the bundled PostCSS has
+  build-time advisories; both wait for the Next.js 16 upgrade (security review F1, F2).
+- Backup dumps are not encrypted at rest; encrypt the off-server copy before go-live
+  (security review F6).
 
 ## Still waiting on
 
 1. Severity rules beyond critical, major and minor (ADR 0019). The default policy is in place.
 2. The IITPL stamp image. The demo uses a placeholder clearly marked "DEMO STAMP".
+3. The Director's confirmation of the 10 percent minimum margin (ADR 0028).
+4. The Next.js 16 upgrade and the backup encryption key holder (security review).
 
 ## Changelog
 
+- 2026-10-08: Phase 12A, the field app on phones (ADR 0027): installs on Android and iPhone,
+  its own phone layout with bottom navigation, works offline for up to 72 hours between
+  check-in and sending for checking, needs the phone's location at check-in, stamps photos
+  with time, place and task, single-use upload links with a QR code for configuration exports,
+  a before and after configuration compare, Web Push and a Messages page, idle sign-out after
+  15 minutes and caches cleared on sign-out. New office screens: account settings, customers,
+  company, templates, stage approvals and switches, and search across customers, projects,
+  quotes, tasks and catalogue (no prices for field engineers). The Director sees how long each
+  project waits and on whom, and each engineer's phone sync state; project managers see
+  engineer workload. Quotes: won or lost with a reason, alerts before prices lapse, re-price in
+  one click, and a 10 percent minimum margin that the approver accepts line by line (ADR 0028).
+  Phase 13: BOQ line prediction and price drift models, model cards, 30 days and 20
+  comparisons in shadow before the Director may approve, optional MLflow (ADR 0029). Phase 14:
+  production publishes only 80 and 443 (ADR 0030); GlitchTip, Uptime Kuma, Alertmanager and
+  12 alert rules; migrations held to expand only, every downgrade run and the models checked
+  against the schema (that check found two places where the models disagreed with the
+  database, now fixed in the models); chaos checks, which showed that a task lost with a
+  killed worker waited an hour to run again (now 10 minutes); ASVS Level 2 review; Lighthouse
+  and a bundle budget for the field pages; licence check feeding LICENSES.md.
+  Found by the browser tests the same day: when the signal dropped straight after an action
+  was sent, the task page could not reload and fell back to its older copy, so it offered
+  Accept again or showed a sent photo as still needed, and a form being typed into could be
+  emptied while a sent action was being confirmed. The phone now keeps what the server
+  accepted and lays it over the older copy until a fresh one arrives. The bottom bar no longer
+  hides the field or button the phone scrolls to.
 - 2026-10-05 (evening): Only an Admin or the Director creates accounts and assigns roles; the
   Director now holds every Admin permission as well as its own (ADR 0026). Neither can remove
   their own Admin or Director role. Separation of duties is unchanged.

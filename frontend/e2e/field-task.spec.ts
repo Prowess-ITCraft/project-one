@@ -95,7 +95,7 @@ async function advance(page: Page, runId: string, button: string) {
 
 test.describe("Field engineer @phone", () => {
   test("one task from accept to verified @phone", async ({ page, problems }, info) => {
-    test.skip(info.project.name !== "phone", "walks a real task; runs once, on the phone");
+    test.skip(info.project.name !== "android", "walks a real task; runs once, on the Android phone");
     test.setTimeout(240_000);
     await page.context().grantPermissions(["geolocation"]);
     await page.context().setGeolocation({ latitude: 19.1972, longitude: 72.9722 });
@@ -125,12 +125,12 @@ test.describe("Field engineer @phone", () => {
     await advance(page, run!.id, "Accept task");
 
     await expect(page.getByRole("heading", { name: "Arrive on site" })).toBeVisible();
-    // the code cannot be asked for until the arrival evidence is in
-    if (await page.locator('input[type="file"], input[id^="ev-"]').count()) {
-      const send = page.getByRole("button", { name: "Send code to the customer" });
-      await expect((await send.count()) ? send : page.getByRole("button", { name: "Check in", exact: true })).toBeDisabled();
-      await addEvidence(page);
-    }
+    // The arrival photo is always asked for (ADR 0027), and neither the code nor check-in can
+    // be used until it is in. Wait for its picker: the form renders after the task loads.
+    await page.locator('input[type="file"]').first().waitFor({ state: "attached" });
+    const send = page.getByRole("button", { name: "Send code to the customer" });
+    await expect((await send.count()) ? send : page.getByRole("button", { name: "Check in", exact: true })).toBeDisabled();
+    await addEvidence(page);
     await enterCustomerCode(page, "check_in", "visit code", "Check in");
 
     await expect(page.getByRole("heading", { name: "Before you change anything" })).toBeVisible();

@@ -43,8 +43,11 @@ async def queue_email_to_user(
     context: dict[str, Any],
     dedupe_key: str | None = None,
     related: tuple[str, str] | None = None,
+    link: str | None = None,
 ) -> Notification:
-    """Queue an email to a user, honouring the kinds they muted."""
+    """Queue a message to a user: email, plus the notification centre and push to their
+    devices, honouring the channels they turned off. `link` is where the message leads in the
+    web app; by default it follows `related`."""
     return await _service.queue_for_user(
         session,
         user_id=user_id,
@@ -53,7 +56,17 @@ async def queue_email_to_user(
         context=context,
         dedupe_key=dedupe_key,
         related=related,
+        link=link,
     )
+
+
+async def already_queued(session: AsyncSession, dedupe_key: str) -> bool:
+    """True when a message with this dedupe key exists, so a scheduled job can skip it."""
+    from sqlalchemy import select
+
+    return (
+        await session.scalar(select(Notification.id).where(Notification.dedupe_key == dedupe_key))
+    ) is not None
 
 
 async def deliver_now(maker: async_sessionmaker[AsyncSession], ids: list[uuid.UUID]) -> None:
@@ -65,4 +78,11 @@ async def send_pending(maker: async_sessionmaker[AsyncSession], limit: int = 50)
     return await _service.send_pending(maker, limit)
 
 
-__all__ = ["NotificationRow", "deliver_now", "queue_email", "queue_email_to_user", "send_pending"]
+__all__ = [
+    "NotificationRow",
+    "already_queued",
+    "deliver_now",
+    "queue_email",
+    "queue_email_to_user",
+    "send_pending",
+]

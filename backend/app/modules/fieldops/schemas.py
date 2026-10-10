@@ -124,6 +124,14 @@ class EvidenceOut(BaseModel):
     client_id: uuid.UUID
     captured_at: datetime
     uploaded_by: uuid.UUID
+    created_at: datetime
+    lat: float | None = None
+    lng: float | None = None
+    accuracy_m: float | None = None
+    location_note: str | None = None
+    stamped_file_id: uuid.UUID | None = None
+    parse: dict[str, Any] | None = None
+    via: str = "app"
 
 
 class CheckOut(BaseModel):
@@ -160,6 +168,108 @@ class RunDetailOut(BaseModel):
     waiting_on: list[str]
     next_action: str
     customer_codes: bool  # whether check-in and hand over ask for the customer's code
+
+
+class UploadLinkIn(_In):
+    requirement_index: int = Field(ge=0, le=100)
+
+
+class UploadLinkOut(BaseModel):
+    """Shown once. The token itself is never stored, only its hash."""
+
+    url: str
+    path: str
+    expires_at: datetime
+    valid_minutes: int
+    qr_svg: str
+
+
+class UploadLinkInfoOut(BaseModel):
+    """What the person opening an upload link sees: the task and what to upload, nothing else."""
+
+    task_ref: str
+    title: str
+    asset: str | None
+    label: str
+    project: str
+    expires_at: datetime
+    accept: str
+
+
+class UploadLinkDoneOut(BaseModel):
+    received: bool
+    file_name: str
+    parse: dict[str, Any] | None
+
+
+class ConfigChangeOut(BaseModel):
+    key: str
+    before: str | None
+    after: str | None
+    change: Literal["added", "removed", "changed"]
+
+
+class ConfigDiffOut(BaseModel):
+    """The configuration export taken before the work (the rollback point) against the one
+    after. Values that look like secrets are masked."""
+
+    available: bool
+    reason: str | None = None
+    before_file: str | None = None
+    after_file: str | None = None
+    before_at: datetime | None = None
+    after_at: datetime | None = None
+    method: Literal["settings", "lines"] | None = None
+    brand: str | None = None
+    changes: list[ConfigChangeOut] = Field(default_factory=list)
+    unchanged: int = 0
+    truncated: bool = False
+
+
+class DeviceStatusIn(_In):
+    """What the phone reports about the work saved on it, each time it syncs or opens."""
+
+    pending: int = Field(ge=0, le=10_000)
+    failed: int = Field(ge=0, le=10_000)
+    oldest_pending_at: datetime | None = None
+    last_sync_at: datetime | None = None
+    app_version: Annotated[str, StringConstraints(max_length=40)] | None = None
+    platform: Annotated[str, StringConstraints(max_length=40)] | None = None
+
+
+class EngineerStatusOut(BaseModel):
+    """One field engineer as the Director sees them: is their phone holding unsent work, and
+    when did it last reach us."""
+
+    user_id: uuid.UUID
+    full_name: str
+    open_tasks: int
+    working_now: int
+    blocked: int
+    pending: int
+    failed: int
+    oldest_pending_at: datetime | None
+    last_sync_at: datetime | None
+    last_seen_at: datetime | None
+    last_activity_at: datetime | None
+    state: Literal["synced", "waiting", "refused", "quiet", "never"]
+    summary: str
+
+
+class WorkloadDayOut(BaseModel):
+    day: str
+    tasks: int
+    hours: float
+
+
+class WorkloadOut(BaseModel):
+    user_id: uuid.UUID
+    full_name: str
+    open_tasks: int
+    blocked: int
+    overdue: int
+    hours_next_14_days: float
+    days: list[WorkloadDayOut]
 
 
 class CodeSentOut(BaseModel):

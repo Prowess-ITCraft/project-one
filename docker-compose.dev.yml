@@ -1,5 +1,6 @@
 # Dev mode: publishes the port map on localhost only and adds mail capture and Celery monitoring.
 # Use: docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile dev --profile monitoring up -d --build
+# Add --profile ops for GlitchTip (9608) and Uptime Kuma (9607), --profile mlflow for MLflow (9606).
 
 services:
   postgres:
@@ -45,6 +46,12 @@ services:
     ports: ["127.0.0.1:9603:9090"]
   grafana:
     ports: ["127.0.0.1:9604:3000"]
+  uptime-kuma:
+    ports: ["127.0.0.1:9607:3001"]
+  glitchtip:
+    ports: ["127.0.0.1:9608:8000"]
+  mlflow:
+    ports: ["127.0.0.1:9606:5000"]
   mailpit:
     profiles: [dev]
     image: axllent/mailpit:v1.21@sha256:81370195cd4a0eab9604d17c2617a7525b0486f9365555253b6c5376c6350f1a

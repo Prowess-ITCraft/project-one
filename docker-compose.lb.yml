@@ -1,0 +1,8 @@
+# Only when a front load balancer terminates TLS and forwards plain HTTP (DEPLOYMENT.md
+# section 5, option C; ADR 0030). Publishes the proxy's plain HTTP server on 9597; firewall it so
+# only the load balancer reaches it. Use with:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.lb.yml up -d
+services:
+  proxy:
+    ports:
+      - "9597:8080"

@@ -4,8 +4,8 @@ import uuid
 from datetime import datetime
 from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter, Depends
-from pydantic import BaseModel, ConfigDict
+from fastapi import APIRouter, Body, Depends
+from pydantic import BaseModel, ConfigDict, StringConstraints
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_session
@@ -16,6 +16,7 @@ router = APIRouter(prefix="/ml", tags=["learning"])
 Session = Annotated[AsyncSession, Depends(get_session)]
 Reader = Annotated[Principal, Depends(require(P.ML_READ))]
 Manager = Annotated[Principal, Depends(require(P.ML_MANAGE))]
+Kind = Literal["ranker", "boq_lines", "price_drift"]
 
 
 class TrainingSetOut(BaseModel):
@@ -23,6 +24,7 @@ class TrainingSetOut(BaseModel):
 
     id: uuid.UUID
     number: int
+    kind: str
     data_card: dict[str, Any]
     frozen_at: datetime
 
@@ -32,11 +34,21 @@ class ModelOut(BaseModel):
 
     id: uuid.UUID
     number: int
+    kind: str
     training_set_id: uuid.UUID
     weights: dict[str, float]
     metrics: dict[str, Any]
     status: str
     created_at: datetime
+    shadow_started_at: datetime | None = None
+    approved_at: datetime | None = None
+    approval_note: str | None = None
+
+
+class FreezeIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    kind: Kind = "ranker"
 
 
 class TrainIn(BaseModel):
@@ -51,9 +63,36 @@ class StatusIn(BaseModel):
     status: Literal["shadow", "retired"]
 
 
+class ApproveIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    note: Annotated[str, StringConstraints(strip_whitespace=True, min_length=10, max_length=1000)]
+
+
+class CardOut(BaseModel):
+    card: dict[str, Any]
+    markdown: str
+    status: str
+    comparisons: int
+
+
+class SuggestedLineOut(BaseModel):
+    label: str
+    title: str
+    probability: float
+
+
+class SuggestionsOut(BaseModel):
+    available: bool
+    reason: str | None = None
+    model: int | None = None
+    lines: list[SuggestedLineOut]
+
+
 @router.get("/report")
 async def report(session: Session, principal: Reader) -> dict[str, Any]:
-    """How much the ranker has to learn from, and how the shadow model compares with the rules."""
+    """How much each kind of model has to learn from, and how a shadow model compares with the
+    rules."""
     return await service.report(session, principal)
 
 
@@ -63,9 +102,12 @@ async def training_sets(session: Session, principal: Reader) -> Any:
 
 
 @router.post("/training-sets", response_model=TrainingSetOut, status_code=201)
-async def freeze(session: Session, principal: Manager) -> Any:
-    """Freeze every labelled example into a new numbered training set with a data card."""
-    return await service.freeze_training_set(session, principal)
+async def freeze(
+    session: Session, principal: Manager, body: Annotated[FreezeIn | None, Body()] = None
+) -> Any:
+    """Freeze every labelled example of one kind into a new numbered training set with a data
+    card. Training only ever reads frozen sets."""
+    return await service.freeze_training_set(session, principal, (body or FreezeIn()).kind)
 
 
 @router.get("/models", response_model=list[ModelOut])
@@ -83,8 +125,36 @@ async def train(session: Session, principal: Manager, body: TrainIn) -> Any:
 async def set_status(
     session: Session, principal: Manager, model_id: uuid.UUID, body: StatusIn
 ) -> Any:
-    """Run a model in shadow mode (it never changes a BOQ) or retire it."""
+    """Run a model in shadow mode (it never changes anything) or retire it."""
     return await service.set_status(session, principal, model_id, body.status)
+
+
+@router.post("/models/{model_id}/approve", response_model=ModelOut)
+async def approve(
+    session: Session,
+    principal: Annotated[Principal, Depends(require(P.ML_APPROVE))],
+    model_id: uuid.UUID,
+    body: ApproveIn,
+) -> Any:
+    """The Director approves a model after 30 days and 20 comparisons in shadow mode. It may then
+    advise people; it still never decides."""
+    return await service.approve_model(session, principal, model_id, body.note)
+
+
+@router.get("/models/{model_id}/card", response_model=CardOut)
+async def card(session: Session, principal: Reader, model_id: uuid.UUID) -> Any:
+    """The model card: purpose, data, results, limitations and what it is never used for."""
+    return await service.model_card(session, principal, model_id)
+
+
+@router.get("/projects/{project_id}/suggested-lines", response_model=SuggestionsOut)
+async def suggested_lines(
+    session: Session,
+    principal: Annotated[Principal, Depends(require(P.BOQ_EDIT))],
+    project_id: uuid.UUID,
+) -> Any:
+    """Lines an approved model expects from this project's audit findings. Advice only."""
+    return await service.suggest_lines(session, principal, project_id)
 
 
 routers = [router]

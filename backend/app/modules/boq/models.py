@@ -24,6 +24,18 @@ from app.core.db import Base, Timestamps, UUIDPk, Versioned
 
 STAGES = ("drafting", "pricing_review", "pricing_approved")
 STATUSES = ("draft", "accepted", "closed")
+OUTCOMES = ("open", "won", "lost")
+# Why a quote was lost. Phase 13 learns from these, so they are a fixed list, with a note.
+LOSS_REASONS = (
+    "price",
+    "competitor",
+    "budget",
+    "timing",
+    "scope",
+    "no_decision",
+    "relationship",
+    "other",
+)
 
 
 class BoqTemplate(UUIDPk, Timestamps, Versioned, Base):
@@ -86,6 +98,11 @@ class Boq(UUIDPk, Timestamps, Versioned, Base):
     submitted_by: Mapped[uuid.UUID | None] = mapped_column()
     pricing_approved_by: Mapped[uuid.UUID | None] = mapped_column()
     created_by: Mapped[uuid.UUID] = mapped_column(nullable=False)
+    # Won when the customer accepts a version; lost with a reason when they say no. The full
+    # history is in boq_outcomes.
+    outcome: Mapped[str] = mapped_column(String(8), nullable=False, server_default="open")
+    outcome_reason: Mapped[str | None] = mapped_column(String(20))
+    outcome_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class BoqVersion(UUIDPk, Base):
@@ -137,3 +154,21 @@ class BoqEdit(UUIDPk, Base):
     reason: Mapped[str] = mapped_column(String(300), nullable=False)
     detail: Mapped[list[str]] = mapped_column(JSONB, nullable=False, default=list)
     draft_rev: Mapped[int] = mapped_column(Integer, nullable=False)
+
+
+class BoqOutcome(UUIDPk, Base):
+    """Every win, loss and reopening of a quote, with who and why. Append only."""
+
+    __tablename__ = "boq_outcomes"
+
+    boq_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("boqs.id"), nullable=False, index=True)
+    project_id: Mapped[uuid.UUID] = mapped_column(nullable=False)
+    version_number: Mapped[int | None] = mapped_column(Integer)
+    outcome: Mapped[str] = mapped_column(String(8), nullable=False)
+    reason: Mapped[str | None] = mapped_column(String(20))
+    competitor: Mapped[str | None] = mapped_column(String(120))
+    note: Mapped[str | None] = mapped_column(String(1000))
+    by: Mapped[uuid.UUID] = mapped_column(nullable=False)
+    at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )

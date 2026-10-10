@@ -15,6 +15,8 @@ OPEN = {
     "GET /api/v1/public/acks/{token}",
     "POST /api/v1/public/acks/{token}",
     "GET /api/v1/public/certificates/{number}",
+    "GET /api/v1/public/field-upload/{token}",
+    "POST /api/v1/public/field-upload/{token}",
     "GET /api/v1/public/files/{file_id}",
     "GET /api/v1/public/waivers/{token}",
     "POST /api/v1/public/waivers/{token}",

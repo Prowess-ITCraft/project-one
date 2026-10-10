@@ -58,7 +58,8 @@ export async function signInAs(page: Page, a: Account, opts: { here?: boolean } 
     await page.getByRole("button", { name: "Verify", exact: true }).click();
   }
   await page.waitForURL((u) => !u.pathname.startsWith("/login"));
-  await page.locator("nav.nav a").first().waitFor();
+  // the office sidebar or the field engineer's bottom bar
+  await page.locator('nav[aria-label="Main"] a').first().waitFor();
   return a;
 }
 

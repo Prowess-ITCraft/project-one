@@ -22,7 +22,8 @@ Everything runs in Docker on one server. Only the proxy is reachable from outsid
 ```
 
 - **Port 443** serves the app over HTTPS. **Port 80** only answers certificate checks and sends
-  everything else to HTTPS. **Port 9597** is plain HTTP for a load balancer, if you use one.
+  everything else to HTTPS. Nothing else is published (ADR 0030). Only with a load balancer in
+  front (option C) is **port 9597** opened as well, for plain HTTP from the load balancer.
 - The database, file storage and cache are never reachable from outside. Files are served to
   browsers through the app itself, with short-lived signed links.
 - Backups run every night at 21:00 UTC (02:30 India time) into the `p1-backups` storage bucket.
@@ -130,8 +131,13 @@ cp privkey.pem   infra/nginx/tls/live/project-one/privkey.pem
 chmod 600 infra/nginx/tls/live/project-one/privkey.pem
 ```
 
-**C. Load balancer.** Nothing to do here. Point the load balancer at port 9597 of this server,
-and allow that port only from the load balancer.
+**C. Load balancer.** No certificate here. Add the load balancer file to the shorthand, so
+port 9597 is published, then point the load balancer at port 9597 of this server and allow that
+port only from the load balancer:
+
+```bash
+alias p1='docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.lb.yml'
+```
 
 **Check (A and B):** `ls infra/nginx/tls/live/project-one/` lists `fullchain.pem` and `privkey.pem`.
 

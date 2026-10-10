@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import secrets
 import uuid
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any
 
 from sqlalchemy import ColumnElement, Select, exists, false, or_, select, true
@@ -57,6 +57,9 @@ from app.modules.identity.contracts import (
     ensure_different_people,
     get_user_summary,
 )
+from app.modules.search.contracts import SearchDoc
+from app.modules.search.contracts import index as search_index
+from app.modules.search.contracts import unindex as search_unindex
 
 ARTIFACT_LOCKED = "stage.artifact_locked"
 GATE_APPROVED = "customers.gate_approved"
@@ -218,6 +221,34 @@ def projects_query(
 # ------------------------------------------------------------------ customers
 
 
+def customer_doc(c: Customer) -> SearchDoc:
+    """What search shows for a customer. No contacts, no money."""
+    return SearchDoc(
+        kind="customer",
+        ref_id=str(c.id),
+        title=c.display_name,
+        subtitle=f"Customer {c.code}, {c.city}",
+        body=" ".join(x for x in (c.legal_name, c.gstin, c.industry, c.state) if x),
+        url=f"/customers/{c.id}",
+        perm="customer:read",
+        customer_id=c.id,
+    )
+
+
+def project_doc(p: Project, customer_name: str | None) -> SearchDoc:
+    return SearchDoc(
+        kind="project",
+        ref_id=str(p.id),
+        title=f"{p.code} {p.name}",
+        subtitle=f"Project for {customer_name}" if customer_name else "Project",
+        body=(p.description or "")[:1000] or None,
+        url=f"/projects/{p.id}",
+        perm="project:read",
+        project_id=p.id,
+        customer_id=p.customer_id,
+    )
+
+
 async def create_customer(
     session: AsyncSession, principal: Principal, data: CustomerCreateIn
 ) -> Customer:
@@ -252,6 +283,7 @@ async def create_customer(
         entity_id=c.id,
         after=_snap(c, _CUSTOMER_FIELDS),
     )
+    search_index(session, customer_doc(c), principal.user_id)
     await session.commit()
     return c
 
@@ -289,6 +321,7 @@ async def update_customer(
         before=before,
         after=_snap(c, _CUSTOMER_FIELDS),
     )
+    search_index(session, customer_doc(c), principal.user_id)
     await session.commit()
     return c
 
@@ -318,6 +351,7 @@ async def delete_customer(
         entity_id=c.id,
         only_changes=False,
     )
+    search_unindex(session, "customer", str(c.id), principal.user_id)
     await session.commit()
 
 
@@ -337,6 +371,7 @@ async def restore_customer(
         entity_id=c.id,
         only_changes=False,
     )
+    search_index(session, customer_doc(c), principal.user_id)
     await session.commit()
     return c
 
@@ -616,6 +651,7 @@ async def create_project(
             payload={"code": project.code, "customer_id": str(customer.id)},
         ),
     )
+    search_index(session, project_doc(project, customer.display_name), principal.user_id)
     await session.commit()
     return project
 
@@ -643,6 +679,10 @@ async def update_project(
         before=before,
         after=_snap(project, _PROJECT_FIELDS),
     )
+    owner = await session.get(Customer, project.customer_id)
+    search_index(
+        session, project_doc(project, owner.display_name if owner else None), principal.user_id
+    )
     await session.commit()
     return project
 
@@ -660,6 +700,7 @@ async def delete_project(
         entity_id=project.id,
         only_changes=False,
     )
+    search_unindex(session, "project", str(project.id), principal.user_id)
     await session.commit()
 
 
@@ -676,6 +717,12 @@ async def restore_project(
             entity_type="project",
             entity_id=project.id,
             only_changes=False,
+        )
+        owner = await session.get(Customer, project.customer_id)
+        search_index(
+            session,
+            project_doc(project, owner.display_name if owner else None),
+            principal.user_id,
         )
         await session.commit()
     return project
@@ -1397,3 +1444,119 @@ async def return_to_stage(
     await session.commit()
     await session.refresh(project)
     return project
+
+
+# ------------------------------------------------------------------ bottlenecks
+
+# Who normally does the work of each stage (the gate is then approved by others).
+STAGE_WORKERS: dict[str, tuple[str, ...]] = {
+    "audit_intake": ("audit_engineer",),
+    "current_infra": ("solution_architect",),
+    "ideal_infra": ("solution_architect",),
+    "gap_analysis": ("solution_architect",),
+    "boq": ("sales_manager", "sales_head"),
+    "implementation_plan": ("project_manager", "technical_lead"),
+    "field_work": ("field_engineer", "project_manager"),
+    "completion": ("project_manager",),
+}
+SLOW_AFTER_DAYS = 7
+STUCK_AFTER_DAYS = 14
+
+
+async def bottlenecks(session: AsyncSession, principal: Principal) -> list[dict[str, Any]]:
+    """For the Director: how long each open project has been in its stage and who it is
+    waiting on, oldest first. Names come from the project's own members."""
+    from app.modules.customers.stages import STAGE_LABELS, STAGE_ORDER
+
+    principal.require(P.DASHBOARD_READ)
+    projects = list(
+        await session.scalars(
+            projects_query(
+                principal, customer_id=None, stage=None, status=None, include_deleted=False
+            ).where(Project.status.in_(["active", "on_hold"]))
+        )
+    )
+    if not projects:
+        return []
+    ids = [p.id for p in projects]
+    customers = {
+        c.id: c.display_name
+        for c in await session.scalars(
+            select(Customer).where(Customer.id.in_({p.customer_id for p in projects}))
+        )
+    }
+    approved: dict[tuple[uuid.UUID, str], datetime] = {}
+    for d in await session.scalars(
+        select(GateDecision).where(
+            GateDecision.project_id.in_(ids), GateDecision.decision == "approved"
+        )
+    ):
+        key = (d.project_id, d.stage)
+        approved[key] = max(approved.get(key, d.decided_at), d.decided_at)
+    pending = {
+        (sub.project_id, sub.stage): sub
+        for sub in await session.scalars(
+            select(StageSubmission).where(
+                StageSubmission.project_id.in_(ids), StageSubmission.status == "pending"
+            )
+        )
+    }
+    members: dict[uuid.UUID, list[tuple[str, str]]] = {i: [] for i in ids}
+    rows = await session.execute(
+        select(ProjectMember.project_id, ProjectMember.project_role, ProjectMember.user_id).where(
+            ProjectMember.project_id.in_(ids)
+        )
+    )
+    names: dict[uuid.UUID, str] = {}
+    for pid, role, uid in rows.all():
+        if uid not in names:
+            u = await get_user_summary(session, uid)
+            names[uid] = u.full_name if u and u.is_active else ""
+        if names[uid]:
+            members[pid].append((role, names[uid]))
+    now = utcnow()
+    out: list[dict[str, Any]] = []
+    for p in projects:
+        stage = Stage(p.current_stage)
+        i = STAGE_ORDER.index(stage)
+        prev = STAGE_ORDER[i - 1].value if i > 0 else None
+        since = approved.get((p.id, prev), p.created_at) if prev else p.created_at
+        sub = pending.get((p.id, stage.value))
+        roles: tuple[str, ...]
+        if sub is not None and sub.requires_customer_ack and sub.customer_ack_at is None:
+            waiting_for, roles = "the customer to acknowledge", ()
+            waiting_since = sub.created_at
+        elif sub is not None:
+            cfg = await gate_config(session, stage)
+            waiting_for, roles = "approval", tuple(cfg.approver_roles)
+            waiting_since = sub.created_at
+        else:
+            waiting_for, roles = "the work", STAGE_WORKERS.get(stage.value, ())
+            waiting_since = since
+        people = sorted({n for r, n in members[p.id] if r in roles})
+        days = max((now - since).days, 0)
+        out.append(
+            {
+                "project_id": p.id,
+                "code": p.code,
+                "name": p.name,
+                "customer": customers.get(p.customer_id),
+                "stage": stage.value,
+                "stage_label": STAGE_LABELS[stage],
+                "in_stage_since": since,
+                "days_in_stage": days,
+                "waiting_for": waiting_for,
+                "waiting_since": waiting_since,
+                "waiting_on_roles": list(roles),
+                "waiting_on_people": people,
+                "health": "stuck"
+                if days >= STUCK_AFTER_DAYS
+                else "slow"
+                if days >= SLOW_AFTER_DAYS
+                else "moving",
+                "on_hold": p.status == "on_hold",
+            }
+        )
+    out.sort(key=lambda r: (-r["days_in_stage"], r["code"]))
+    await session.commit()  # gate_config may have saved a default row
+    return out

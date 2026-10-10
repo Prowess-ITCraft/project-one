@@ -128,6 +128,8 @@ class P(StrEnum):
     # Learning from accepted BOQs (phase 13). The ranker only runs in shadow mode (ADR 0020).
     ML_READ = "ml:read"
     ML_MANAGE = "ml:manage"
+    # Letting a model advise people after its shadow run: the Director only (ADR 0029).
+    ML_APPROVE = "ml:approve"
 
 
 _READ_WORK = {P.CUSTOMER_READ, P.PROJECT_READ, P.FILE_READ, P.CATALOGUE_READ}
@@ -176,6 +178,7 @@ ROLE_PERMISSIONS: dict[Role, frozenset[P]] = {
         {
             P.ML_READ,
             P.ML_MANAGE,
+            P.ML_APPROVE,
             P.DASHBOARD_READ,
             P.POLICY_EDIT,
             P.REPORT_READ,

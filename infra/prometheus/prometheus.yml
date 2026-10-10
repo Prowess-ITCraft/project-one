@@ -1,7 +1,40 @@
+# Prometheus for Project One (compose profile `monitoring`). Scrapes the API, the host (node
+# exporter) and the public address (blackbox: up and certificate expiry), and sends alerts to
+# Alertmanager. Rules: alerts.yml, tested by alerts.test.yml (`promtool test rules`).
 global:
   scrape_interval: 15s
+  evaluation_interval: 30s
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["alertmanager:9093"]
+
 scrape_configs:
   - job_name: project-one-api
     metrics_path: /metrics
     static_configs:
       - targets: ["api:9596"]
+
+  - job_name: node
+    static_configs:
+      - targets: ["node-exporter:9100"]
+
+  # The address people use, through the proxy: is it up, and when does its certificate expire.
+  # In production change the target to the real https:// address (docs/runbooks/alerts.md).
+  - job_name: public
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets: ["http://proxy/healthz"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox:9115

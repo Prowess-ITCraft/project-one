@@ -2,7 +2,9 @@
 # publish nothing. Add a mode on top:
 #   dev : docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile dev up -d --build
 #   prod: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-# Optional profiles: `dev` (mailpit, flower), `monitoring` (prometheus, grafana).
+# Optional profiles: `dev` (mailpit, flower), `monitoring` (prometheus, alertmanager, node and
+# blackbox exporters, grafana), `ops` (GlitchTip error tracking, Uptime Kuma), `mlflow`
+# (experiment tracking). docs/guides/docker.md lists every file and command.
 
 name: project-one
 
@@ -32,6 +34,10 @@ x-backend-env: &backend-env
   P1_SMTP_FROM: ${P1_SMTP_FROM:-no-reply@itcraft.example}
   P1_SMTP_STARTTLS: ${P1_SMTP_STARTTLS:-true}
   P1_SENTRY_DSN: ${P1_SENTRY_DSN:-}
+  P1_VAPID_PUBLIC_KEY: ${P1_VAPID_PUBLIC_KEY:-}
+  P1_VAPID_PRIVATE_KEY: ${P1_VAPID_PRIVATE_KEY:-}
+  P1_VAPID_SUBJECT: ${P1_VAPID_SUBJECT:-mailto:it@itcraft.net.in}
+  P1_MLFLOW_TRACKING_URI: ${P1_MLFLOW_TRACKING_URI:-}
   P1_OTEL_EXPORTER_OTLP_ENDPOINT: ${P1_OTEL_EXPORTER_OTLP_ENDPOINT:-}
   P1_LIBRARY_INBOX_DIR: /data/inbox
   P1_CORPUS_ORIGINALS_RETENTION_DAYS: ${P1_CORPUS_ORIGINALS_RETENTION_DAYS:-0}
@@ -206,7 +212,36 @@ services:
       - --storage.tsdb.retention.time=15d
     volumes:
       - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./infra/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
       - promdata:/prometheus
+    networks: [internal]
+
+  # Routes alerts to email and, for critical ones, to a phone through ntfy (infra/alertmanager).
+  alertmanager:
+    profiles: [monitoring]
+    image: prom/alertmanager:v0.27.0@sha256:e13b6ed5cb929eeaee733479dce55e10eb3bc2e9c4586c705a4e8da41e5eacf5
+    restart: unless-stopped
+    command: ["--config.file=/etc/alertmanager/alertmanager.yml", "--storage.path=/alertmanager"]
+    volumes:
+      - ./infra/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertdata:/alertmanager
+    networks: [internal]
+
+  # Disk, memory and CPU of the server, for the disk and memory alerts.
+  node-exporter:
+    profiles: [monitoring]
+    image: prom/node-exporter:v1.8.2@sha256:4032c6d5bfd752342c3e631c2f1de93ba6b86c41db6b167b9a35372c139e7706
+    restart: unless-stopped
+    networks: [internal]
+
+  # Probes the public address: up or down, and the HTTPS certificate's expiry.
+  blackbox:
+    profiles: [monitoring]
+    image: prom/blackbox-exporter:v0.25.0@sha256:b04a9fef4fa086a02fc7fcd8dcdbc4b7b35cc30cdee860fdc6a19dd8b208d63e
+    restart: unless-stopped
+    command: ["--config.file=/etc/blackbox/blackbox.yml"]
+    volumes:
+      - ./infra/blackbox/blackbox.yml:/etc/blackbox/blackbox.yml:ro
     networks: [internal]
 
   grafana:
@@ -223,6 +258,96 @@ services:
     depends_on: [prometheus]
     networks: [internal]
 
+  # ------------------------------------------------------------- ops profile (self-hosted)
+  # GlitchTip: error tracking that speaks the Sentry protocol. Set P1_SENTRY_DSN to the DSN of
+  # the project you create in it. Its own small database keeps it apart from the app's data.
+  glitchtip-db:
+    profiles: [ops]
+    image: postgres:16.6-alpine@sha256:1d04b9ba1d4996401f2552b51beda8187f175c0645c091e4781134fc9c9a3eef
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: glitchtip
+      POSTGRES_PASSWORD: ${P1_GLITCHTIP_DB_PASSWORD:-glitchtip-dev}
+      POSTGRES_DB: glitchtip
+    volumes:
+      - glitchtipdb:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U glitchtip -d glitchtip"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+
+  glitchtip-migrate:
+    profiles: [ops]
+    image: glitchtip/glitchtip:v4.2.10@sha256:41c4c0ac813eda1c605c30ce55d72c09f4d427f30f795db1de3def43c4977c7a
+    restart: "no"
+    command: ["./bin/run-migrate.sh"]
+    environment: &glitchtip-env
+      DATABASE_URL: postgres://glitchtip:${P1_GLITCHTIP_DB_PASSWORD:-glitchtip-dev}@glitchtip-db:5432/glitchtip
+      SECRET_KEY: ${P1_GLITCHTIP_SECRET_KEY:-glitchtip-dev-secret-change-me}
+      REDIS_URL: redis://:${P1_REDIS_PASSWORD}@redis:6379/5
+      GLITCHTIP_DOMAIN: ${P1_GLITCHTIP_DOMAIN:-http://localhost:9608}
+      DEFAULT_FROM_EMAIL: ${P1_SMTP_FROM:-no-reply@itcraft.example}
+      EMAIL_URL: ${P1_GLITCHTIP_EMAIL_URL:-consolemail://}
+      ENABLE_USER_REGISTRATION: "false"
+      ENABLE_ORGANIZATION_CREATION: "false"
+      GLITCHTIP_MAX_EVENT_LIFE_DAYS: "90"
+      PORT: "8000"
+    depends_on:
+      glitchtip-db: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    networks: [internal]
+
+  glitchtip:
+    profiles: [ops]
+    image: glitchtip/glitchtip:v4.2.10@sha256:41c4c0ac813eda1c605c30ce55d72c09f4d427f30f795db1de3def43c4977c7a
+    restart: unless-stopped
+    environment: *glitchtip-env
+    depends_on:
+      glitchtip-migrate: {condition: service_completed_successfully}
+    deploy:
+      resources:
+        limits: {memory: 768m}
+    networks: [internal]
+
+  glitchtip-worker:
+    profiles: [ops]
+    image: glitchtip/glitchtip:v4.2.10@sha256:41c4c0ac813eda1c605c30ce55d72c09f4d427f30f795db1de3def43c4977c7a
+    restart: unless-stopped
+    command: ["./bin/run-celery-with-beat.sh"]
+    environment: *glitchtip-env
+    depends_on:
+      glitchtip-migrate: {condition: service_completed_successfully}
+    networks: [internal]
+
+  # Uptime Kuma: checks /healthz and /readyz every minute and alerts by Telegram, ntfy or email.
+  uptime-kuma:
+    profiles: [ops]
+    image: louislam/uptime-kuma:1.23.16@sha256:431fee3be822b04861cf0e35daf4beef6b7cb37391c5f26c3ad6e12ce280fe18
+    restart: unless-stopped
+    volumes:
+      - uptimedata:/app/data
+    networks: [internal]
+
+  # --------------------------------------------------------------- mlflow profile (optional)
+  # Experiment tracking for the learning module (ADR 0029). Off unless P1_MLFLOW_TRACKING_URI is
+  # http://mlflow:5000; the app logs to it over the REST API and keeps its own record anyway.
+  mlflow:
+    profiles: [mlflow]
+    image: ghcr.io/mlflow/mlflow:v2.18.0@sha256:09d25b0c80efa2c1dd4b5e4834a1a0ed861d6b1c2b43017ff99493bd5c6bb4ee
+    restart: unless-stopped
+    command:
+      - mlflow
+      - server
+      - --host=0.0.0.0
+      - --port=5000
+      - --backend-store-uri=sqlite:////mlflow/mlflow.db
+      - --default-artifact-root=/mlflow/artifacts
+    volumes:
+      - mlflowdata:/mlflow
+    networks: [internal]
+
 networks:
   internal:
 
@@ -233,3 +358,7 @@ volumes:
   clamdata:
   promdata:
   grafanadata:
+  alertdata:
+  glitchtipdb:
+  uptimedata:
+  mlflowdata:

@@ -112,10 +112,12 @@ def test_every_run_needs_arrival_and_prechecks_evidence() -> None:
     )
     assert [(r["stage"], r["type"]) for r in reqs] == [
         ("check_in", "photo"),
-        ("prechecks", "screenshot"),  # a network device: show the backup
+        ("prechecks", "config_export"),  # a firewall: the export before any change
         ("prechecks", "note"),
         ("work", "config_export"),
     ]
+    assert reqs[1]["snapshot"] is True and "rollback" in reqs[1]["label"]
+    assert evidence_plan([], "server")[1]["type"] == "screenshot"  # a server: show the backup
     assert evidence_plan([], None)[1]["type"] == "note"  # an endpoint: say who backed up
 
 

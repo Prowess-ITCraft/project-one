@@ -13,6 +13,7 @@ from app.core.events import DomainEvent
 from app.modules.customers import service as _service
 from app.modules.customers.stages import STAGE_LABELS, STAGE_ORDER, Stage
 from app.modules.identity.contracts import Principal
+from app.modules.search.contracts import SearchDoc
 
 ARTIFACT_LOCKED = _service.ARTIFACT_LOCKED
 GATE_APPROVED = _service.GATE_APPROVED
@@ -153,6 +154,23 @@ def artifact_locked_event(
             "locked_by": str(locked_by) if locked_by else None,
         },
     )
+
+
+async def search_documents(session: AsyncSession) -> list[SearchDoc]:
+    """Every live customer and project, for rebuilding the search index."""
+    from sqlalchemy import select
+
+    from app.modules.customers.models import Customer, Project
+
+    customers = {
+        c.id: c
+        for c in await session.scalars(select(Customer).where(Customer.deleted_at.is_(None)))
+    }
+    out: list[SearchDoc] = [_service.customer_doc(c) for c in customers.values()]
+    for p in await session.scalars(select(Project).where(Project.deleted_at.is_(None))):
+        owner = customers.get(p.customer_id)
+        out.append(_service.project_doc(p, owner.display_name if owner else None))
+    return out
 
 
 async def list_visible_projects(

@@ -643,7 +643,14 @@ class Demo:
 
     async def evidence(self, who: Person, run: dict[str, Any], i: int) -> None:
         req = run["evidence_reqs"][i]
-        data = {"requirement_index": str(i), "client_id": str(uuid.uuid4())}
+        # The arrival photo needs the phone's location (ADR 0027); the demo site is in Thane.
+        data = {
+            "requirement_index": str(i),
+            "client_id": str(uuid.uuid4()),
+            "lat": "19.1972",
+            "lng": "72.9722",
+            "accuracy_m": "12",
+        }
         files = None
         if req["type"] in ("photo", "screenshot"):
             files = {"file": (f"evidence-{i}.png", _png(req.get("label", "evidence")), "image/png")}

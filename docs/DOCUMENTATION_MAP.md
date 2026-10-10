@@ -26,9 +26,10 @@ has been walked.
 | `guides/03-operations-guide.md` | Operators | New setting, service, job, runbook or port |
 | `guides/04-api-guide.md` | API users | New endpoints or conventions |
 | `guides/05-tech-stack-and-processes.md` | Developers | New technology or process |
+| `guides/docker.md` | Developers, operators | A Docker file, service, profile or command changes |
 | `guides/06-data-guide.md` | Data and ML | Corpus, cleaning, labels or training snapshots change |
 | `decisions/NNNN-*.md` | Everyone | Any decision that is not obvious from code |
-| `runbooks/` | Operators | Deploy, backup, restore, rollback change |
+| `runbooks/` | Operators | Deploy, backup, restore, rollback change; `incident.md` when something breaks; `alerts.md` what each alert means and what to do; `security-review.md` the ASVS Level 2 review |
 | `.env.example` | Operators | New setting |
 
 ## Phase checklist

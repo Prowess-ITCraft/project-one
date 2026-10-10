@@ -22,8 +22,15 @@ export default defineConfig({
     actionTimeout: 15_000,
     navigationTimeout: 45_000,
   },
+  // Field engineers use Android phones and iPhones (both, 8 Oct 2026). The iPhone project uses
+  // the iPhone screen, touch and user agent in Chrome, since only Chrome is installed here.
   projects: [
-    { name: "desktop", use: { viewport: { width: 1440, height: 900 } } },
-    { name: "phone", use: { ...devices["Pixel 7"], channel: "chrome" }, grep: /@phone/ },
+    { name: "desktop", use: { viewport: { width: 1440, height: 900 } }, grepInvert: /@phone-only/ },
+    { name: "android", use: { ...devices["Pixel 7"], channel: "chrome" }, grep: /@phone/ },
+    {
+      name: "iphone",
+      use: { ...devices["iPhone 14"], browserName: "chromium", channel: "chrome" },
+      grep: /@phone/,
+    },
   ],
 });

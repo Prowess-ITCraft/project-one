@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import time
+from collections.abc import Awaitable, Callable
 from typing import Any
 
 from fastapi import APIRouter, Response
@@ -66,6 +67,17 @@ async def readyz() -> JSONResponse:
     )
 
 
+# Extra gauges computed at scrape time (queue depth, failed jobs, last backup). The app fills
+# this in main.py, so core never imports a module. Each returns Prometheus text lines.
+EXTRA_METRICS: list[Callable[[], Awaitable[str]]] = []
+
+
 @router.get("/metrics")
 async def metrics() -> Response:
-    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+    body = generate_latest().decode()
+    for extra in EXTRA_METRICS:
+        try:
+            body += await asyncio.wait_for(extra(), timeout=5)
+        except Exception:  # a broken gauge must never break the scrape
+            body += "# extra metrics unavailable\n"
+    return Response(body, media_type=CONTENT_TYPE_LATEST)

@@ -9,14 +9,13 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 
-from app.core import outbox
 from app.core.db import get_sessionmaker
 from app.core.redis import get_redis
 from app.core.timeutil import IST, today_ist, utcnow
 from app.modules.boq.tests.test_boq_flow import Ctx, _approved, ready
 from app.modules.identity.permissions import Role
 from app.modules.planning.seed import seed_planning
-from tests.helpers import idem, make_user
+from tests.helpers import drain_outbox, idem, make_user
 
 API = "/api/v1"
 
@@ -457,7 +456,7 @@ async def test_baseline_needs_a_complete_schedule_then_locks_everything(client: 
             except DBAPIError:
                 raised = True
         assert raised
-    await outbox.dispatch_batch(get_sessionmaker())
+    await drain_outbox()
     arts = (await client.get(f"{API}/projects/{p.pid}/artifacts", headers=p.pm.headers)).json()
     assert any(a["artifact_type"] == "implementation_plan" for a in arts)
 

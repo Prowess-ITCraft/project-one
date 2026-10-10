@@ -1,6 +1,6 @@
 # API routes
 
-All 253 operations of the Project One API, grouped by area. Generated from the
+All 276 operations of the Project One API, grouped by area. Generated from the
 code with `python -m app.cli api-routes`; do not edit by hand. The interactive
 reference, where you can try each call, is at `/docs` on a running server;
 conventions, errors and sign-in are in the [API guide](guides/04-api-guide.md).
@@ -45,6 +45,7 @@ what each role may call is in the permission matrix test.
 | --- | --- | --- | --- |
 | GET | `/api/v1/boq/company` | Get Company | yes |
 | PUT | `/api/v1/boq/company` | Put Company | yes |
+| GET | `/api/v1/boq/company/record` | Get Company Record | yes |
 | GET | `/api/v1/boq/templates` | List Templates | yes |
 | PUT | `/api/v1/boq/templates/{gap_type}` | Put Template | yes |
 | GET | `/api/v1/boq/weights/{segment}` | Get Weights | yes |
@@ -56,11 +57,14 @@ what each role may call is in the permission matrix test.
 | GET | `/api/v1/boq/{boq_id}/edits` | Edits | yes |
 | POST | `/api/v1/boq/{boq_id}/issue` | Issue | yes |
 | GET | `/api/v1/boq/{boq_id}/lines/{line_id}/history` | Line History | yes |
+| POST | `/api/v1/boq/{boq_id}/outcome` | Outcome | yes |
+| GET | `/api/v1/boq/{boq_id}/outcomes` | Outcomes | yes |
 | POST | `/api/v1/boq/{boq_id}/pricing-decision` | Pricing Decision | yes |
 | GET | `/api/v1/boq/{boq_id}/recommend` | Recommend | yes |
 | POST | `/api/v1/boq/{boq_id}/refresh-prices` | Refresh Prices | yes |
 | GET | `/api/v1/boq/{boq_id}/render` | Render Doc | yes |
 | POST | `/api/v1/boq/{boq_id}/reopen` | Reopen | yes |
+| POST | `/api/v1/boq/{boq_id}/reprice` | Reprice | yes |
 | POST | `/api/v1/boq/{boq_id}/submit` | Submit | yes |
 | GET | `/api/v1/boq/{boq_id}/versions` | Versions | yes |
 | GET | `/api/v1/boq/{boq_id}/versions/{number}` | Get Version | yes |
@@ -150,6 +154,8 @@ what each role may call is in the permission matrix test.
 
 | Method | Path | What it does | Sign-in |
 | --- | --- | --- | --- |
+| POST | `/api/v1/field/device-status` | Device Status | yes |
+| GET | `/api/v1/field/engineers` | Engineers | yes |
 | GET | `/api/v1/field/my` | My Tasks | yes |
 | GET | `/api/v1/field/review-queue` | Review Queue | yes |
 | GET | `/api/v1/field/runs/{run_id}` | Run Detail | yes |
@@ -157,6 +163,7 @@ what each role may call is in the permission matrix test.
 | POST | `/api/v1/field/runs/{run_id}/block` | Block | yes |
 | POST | `/api/v1/field/runs/{run_id}/check-in` | Check In | yes |
 | POST | `/api/v1/field/runs/{run_id}/codes/{purpose}` | Send Code | yes |
+| GET | `/api/v1/field/runs/{run_id}/config-diff` | Config Diff | yes |
 | POST | `/api/v1/field/runs/{run_id}/configured` | Configured | yes |
 | POST | `/api/v1/field/runs/{run_id}/decision` | Decision | yes |
 | POST | `/api/v1/field/runs/{run_id}/depart` | Depart | yes |
@@ -168,7 +175,9 @@ what each role may call is in the permission matrix test.
 | POST | `/api/v1/field/runs/{run_id}/steps/{index}` | Step Done | yes |
 | POST | `/api/v1/field/runs/{run_id}/submit-evidence` | Submit Evidence | yes |
 | POST | `/api/v1/field/runs/{run_id}/unblock` | Unblock | yes |
+| POST | `/api/v1/field/runs/{run_id}/upload-links` | Make Upload Link | yes |
 | POST | `/api/v1/field/runs/{run_id}/values` | Record Values | yes |
+| GET | `/api/v1/field/workload` | Workload | yes |
 | GET | `/api/v1/projects/{project_id}/field/events` | Project Events | yes |
 | GET | `/api/v1/projects/{project_id}/field/runs` | Project Runs | yes |
 | POST | `/api/v1/projects/{project_id}/field/start` | Start | yes |
@@ -209,7 +218,10 @@ what each role may call is in the permission matrix test.
 | --- | --- | --- | --- |
 | GET | `/api/v1/ml/models` | Models | yes |
 | POST | `/api/v1/ml/models` | Train | yes |
+| POST | `/api/v1/ml/models/{model_id}/approve` | Approve | yes |
+| GET | `/api/v1/ml/models/{model_id}/card` | Card | yes |
 | POST | `/api/v1/ml/models/{model_id}/status` | Set Status | yes |
+| GET | `/api/v1/ml/projects/{project_id}/suggested-lines` | Suggested Lines | yes |
 | GET | `/api/v1/ml/report` | Report | yes |
 | GET | `/api/v1/ml/training-sets` | Training Sets | yes |
 | POST | `/api/v1/ml/training-sets` | Freeze | yes |
@@ -233,6 +245,13 @@ what each role may call is in the permission matrix test.
 | --- | --- | --- | --- |
 | GET | `/api/v1/account/notification-preferences` | Preferences | yes |
 | PUT | `/api/v1/account/notification-preferences/{template}` | Set Preference | yes |
+| GET | `/api/v1/account/notifications` | My Notifications | yes |
+| POST | `/api/v1/account/notifications/read` | Mark Read | yes |
+| GET | `/api/v1/account/notifications/unread` | My Unread | yes |
+| GET | `/api/v1/account/push` | Push Status | yes |
+| POST | `/api/v1/account/push/subscriptions` | Push Subscribe | yes |
+| POST | `/api/v1/account/push/subscriptions/remove` | Push Unsubscribe | yes |
+| POST | `/api/v1/account/push/test` | Push Test | yes |
 | GET | `/api/v1/notifications` | List Notifications | yes |
 
 ## Planning
@@ -273,6 +292,7 @@ what each role may call is in the permission matrix test.
 
 | Method | Path | What it does | Sign-in |
 | --- | --- | --- | --- |
+| GET | `/api/v1/dashboard/bottlenecks` | Bottlenecks | yes |
 | GET | `/api/v1/gates` | List Gate Configs | yes |
 | PUT | `/api/v1/gates/{stage}` | Update Gate Config | yes |
 | GET | `/api/v1/projects` | List Projects | yes |
@@ -303,6 +323,8 @@ what each role may call is in the permission matrix test.
 | GET | `/api/v1/public/acks/{token}` | View Ack | no |
 | POST | `/api/v1/public/acks/{token}` | Confirm Ack | no |
 | GET | `/api/v1/public/certificates/{number}` | Verify Certificate | no |
+| GET | `/api/v1/public/field-upload/{token}` | Upload Link Info | no |
+| POST | `/api/v1/public/field-upload/{token}` | Upload With Link | no |
 | GET | `/api/v1/public/files/{file_id}` | Open a file through a signed download link | no |
 | GET | `/api/v1/public/waivers/{token}` | View Waiver | no |
 | POST | `/api/v1/public/waivers/{token}` | Acknowledge Waiver | no |
@@ -328,6 +350,12 @@ what each role may call is in the permission matrix test.
 | POST | `/api/v1/reporting/settings/stamp` | Put Stamp | yes |
 | PUT | `/api/v1/reporting/settings/wording` | Put Wording | yes |
 | POST | `/api/v1/reporting/waivers/{waiver_id}/decision` | Decide Waiver | yes |
+
+## Search
+
+| Method | Path | What it does | Sign-in |
+| --- | --- | --- | --- |
+| GET | `/api/v1/search` | Search | yes |
 
 ## Users
 

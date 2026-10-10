@@ -17,6 +17,7 @@ from app.modules.catalogue import service as _service
 from app.modules.catalogue.models import CatalogueItem
 from app.modules.catalogue.schemas import ItemIn, VendorIn
 from app.modules.identity.contracts import P, Principal
+from app.modules.search.contracts import SearchDoc
 
 PRICE_CHANGED = _service.PRICE_CHANGED
 PRICE_EXPIRED = _service.PRICE_EXPIRED_EVENT
@@ -89,6 +90,15 @@ async def _vendor_names(session: AsyncSession, items: list[CatalogueItem]) -> di
     if not ids:
         return {}
     return {v.id: v.name for v in await _service.list_vendors(session) if v.id in ids}
+
+
+async def search_documents(session: AsyncSession) -> list[SearchDoc]:
+    """Every live catalogue item, for rebuilding the search index. No prices."""
+    items = list(
+        await session.scalars(select(CatalogueItem).where(CatalogueItem.deleted_at.is_(None)))
+    )
+    names = await _vendor_names(session, items)
+    return [_service.item_doc(i, names.get(i.vendor_id) if i.vendor_id else None) for i in items]
 
 
 async def get_item_ref(session: AsyncSession, principal: Principal, item_id: uuid.UUID) -> ItemRef:

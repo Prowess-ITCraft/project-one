@@ -67,7 +67,16 @@ class Certificate(UUIDPk, Base):
     verification page shows only non-sensitive fields."""
 
     __tablename__ = "certificates"
-    __table_args__ = (Index("ix_certificates_project", "project_id"),)
+    __table_args__ = (
+        Index("ix_certificates_project", "project_id"),
+        # One valid certificate per project at a time; revoke before issuing again.
+        Index(
+            "uq_certificates_valid",
+            "project_id",
+            unique=True,
+            postgresql_where=text("status = 'valid'"),
+        ),
+    )
 
     number: Mapped[str] = mapped_column(String(30), nullable=False, unique=True)
     project_id: Mapped[uuid.UUID] = mapped_column(nullable=False)

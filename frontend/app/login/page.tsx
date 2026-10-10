@@ -100,7 +100,11 @@ export default function Login() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [local, setLocal] = useState(false);
-  useEffect(() => setLocal(isLocal()), []);
+  const [idle, setIdle] = useState(false);
+  useEffect(() => {
+    setLocal(isLocal());
+    setIdle(new URLSearchParams(window.location.search).get("reason") === "idle");
+  }, []);
   // Still signed in from earlier (the session lasts 14 days): no password or code needed.
   useEffect(() => {
     void resumeSession().then((ok) => ok && router.replace(nextPage()));
@@ -247,6 +251,9 @@ export default function Login() {
                   </span>
                 )}
               </Field>
+              {idle && !error && (
+                <Notice>Signed out after 15 minutes without use, so a lost phone does not stay open. Work saved on the phone is still here.</Notice>
+              )}
               {error && <Notice tone="bad">{error}</Notice>}
               <button className="btn primary wide" disabled={busy}>
                 <SignIn size={18} weight="bold" aria-hidden="true" />

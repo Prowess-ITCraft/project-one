@@ -108,6 +108,11 @@ def create_app() -> FastAPI:
     app.add_middleware(RequestContextMiddleware)
 
     app.include_router(health_router)
+    from app import ops
+    from app.core.health import EXTRA_METRICS
+
+    if ops.ops_metrics not in EXTRA_METRICS:
+        EXTRA_METRICS.append(ops.ops_metrics)
     for router in registry.routers():
         app.include_router(router, prefix=s.api_prefix)
     _init_observability(app)

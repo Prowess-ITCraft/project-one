@@ -551,7 +551,14 @@ def _days_left(ref: PriceRef | None, today: date) -> int | None:
     return (ref.valid_until - today).days if ref and ref.valid_until else None
 
 
-def line_flags(ln: Line, today: date) -> list[str]:
+def margin_pct(ln: Line) -> Decimal | None:
+    """Margin on the selling price, in percent, when both the price and the cost are known."""
+    if ln.unit_price is None or ln.cost is None or ln.unit_price <= 0:
+        return None
+    return ((ln.unit_price - ln.cost) / ln.unit_price * 100).quantize(Decimal("0.1"))
+
+
+def line_flags(ln: Line, today: date, min_margin: Decimal | None = None) -> list[str]:
     flags: list[str] = []
     if ln.unit_price is None:
         flags.append("no_price")
@@ -567,6 +574,9 @@ def line_flags(ln: Line, today: date) -> list[str]:
         flags.append("manual_price")
     if ln.unit_price is not None and ln.cost is not None and ln.unit_price < ln.cost:
         flags.append("below_cost")
+    m = margin_pct(ln)
+    if min_margin is not None and m is not None and m < min_margin:
+        flags.append("low_margin")
     if ln.stock_status in ("out_of_stock",):
         flags.append("out_of_stock")
     elif ln.stock_status in ("on_order",):
@@ -581,7 +591,7 @@ def line_flags(ln: Line, today: date) -> list[str]:
 BLOCKING = {"no_price", "price_expired", "zero_qty"}
 
 
-def compute(d: Draft, today: date) -> Computed:
+def compute(d: Draft, today: date, min_margin: Decimal | None = None) -> Computed:
     nums = numbered(d)
     results: list[LineResult] = []
     amounts: dict[str, Decimal] = {}
@@ -593,7 +603,9 @@ def compute(d: Draft, today: date) -> Computed:
         if amt is not None and gst is not None:
             amounts[ln.id], gsts[ln.id] = amt, gst
         results.append(
-            LineResult(id=ln.id, ref=x.ref, amount=amt, gst=gst, flags=line_flags(ln, today))
+            LineResult(
+                id=ln.id, ref=x.ref, amount=amt, gst=gst, flags=line_flags(ln, today, min_margin)
+            )
         )
 
     fixed_ids = [x.line.id for x in nums if not x.line.option_group]
@@ -652,6 +664,8 @@ def compute(d: Draft, today: date) -> Computed:
                     "price_expiring": f"Line {r.ref} price expires within {EXPIRING_DAYS} days",
                     "manual_price": f"Line {r.ref} has a price entered by hand",
                     "below_cost": f"Line {r.ref} is priced below cost",
+                    "low_margin": f"Line {r.ref} margin is below the {min_margin}% minimum; "
+                    "the approver must accept it with a reason",
                     "out_of_stock": f"Line {r.ref} is out of stock",
                     "on_order": f"Line {r.ref} is on order, not in stock",
                     "end_of_life": f"Line {r.ref} is end of life",
@@ -711,3 +725,13 @@ def summarise(delta: dict[str, Any]) -> str:
         if parts
         else "No line changes (terms or settings only)."
     )
+
+
+def low_margin_lines(d: Draft, today: date, min_margin: Decimal) -> list[tuple[str, str]]:
+    """(line id, line ref) for every line under the minimum margin, in quotation order."""
+    refs = {x.line.id: x.ref for x in numbered(d)}
+    return [
+        (ln.id, refs.get(ln.id, "?"))
+        for ln in d.lines
+        if "low_margin" in line_flags(ln, today, min_margin)
+    ]

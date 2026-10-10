@@ -346,7 +346,7 @@ async def open_counts(
         .where(Deviation.project_id.in_(project_ids), Deviation.status == "open")
         .group_by(Deviation.project_id, Deviation.severity)
     )
-    for pid, severity, n in rows.tuples():
+    for pid, severity, n in rows.all():
         out[pid][str(severity)] = int(n)
     return out
 

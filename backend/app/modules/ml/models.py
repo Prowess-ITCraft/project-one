@@ -1,16 +1,32 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
-from sqlalchemy import Boolean, DateTime, Float, Index, Integer, String, UniqueConstraint, text
+from sqlalchemy import (
+    Boolean,
+    Date,
+    DateTime,
+    Float,
+    Index,
+    Integer,
+    String,
+    UniqueConstraint,
+    text,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base, Timestamps, UUIDPk
 
-MODEL_STATUSES = ("trained", "shadow", "retired")
+# trained: made, not running. shadow: runs next to the rules, its answers only recorded.
+# approved: the Director accepted it after shadow mode; it may advise people (suggested lines,
+# price alerts), never decide. retired: never used again.
+MODEL_STATUSES = ("trained", "shadow", "approved", "retired")
+# ranker: weights for the recommendation criteria (ADR 0020). boq_lines: which BOQ lines a set
+# of audit findings leads to. price_drift: what a new price should be, from the price history.
+MODEL_KINDS = ("ranker", "boq_lines", "price_drift")
 
 
 class MlExample(UUIDPk, Timestamps, Base):
@@ -44,6 +60,7 @@ class MlTrainingSet(UUIDPk, Base):
     __tablename__ = "ml_training_sets"
 
     number: Mapped[int] = mapped_column(Integer, nullable=False, unique=True)
+    kind: Mapped[str] = mapped_column(String(12), nullable=False, server_default="ranker")
     rows: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False)
     data_card: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     frozen_by: Mapped[uuid.UUID] = mapped_column(nullable=False)
@@ -53,12 +70,19 @@ class MlTrainingSet(UUIDPk, Base):
 
 
 class MlModel(UUIDPk, Timestamps, Base):
-    """Learned criteria weights from one training set. At most one runs in shadow mode."""
+    """A model learned from one frozen training set. Per kind, at most one runs in shadow mode
+    and at most one is approved."""
 
     __tablename__ = "ml_models"
     __table_args__ = (
         Index(
-            "uq_ml_models_shadow", "status", unique=True, postgresql_where=text("status = 'shadow'")
+            "uq_ml_models_shadow", "kind", unique=True, postgresql_where=text("status = 'shadow'")
+        ),
+        Index(
+            "uq_ml_models_approved",
+            "kind",
+            unique=True,
+            postgresql_where=text("status = 'approved'"),
         ),
     )
 
@@ -69,6 +93,15 @@ class MlModel(UUIDPk, Timestamps, Base):
     status: Mapped[str] = mapped_column(String(10), nullable=False, default="trained")
     trained_by: Mapped[uuid.UUID] = mapped_column(nullable=False)
     note: Mapped[str | None] = mapped_column(String(500))
+    kind: Mapped[str] = mapped_column(String(12), nullable=False, server_default="ranker")
+    # The learned parameters as plain data (coefficients, or LightGBM's own text format), so a
+    # model can be loaded without unpickling anything.
+    artifact: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    card: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    shadow_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    approved_by: Mapped[uuid.UUID | None] = mapped_column()
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    approval_note: Mapped[str | None] = mapped_column(String(1000))
 
 
 class MlShadowRun(UUIDPk, Timestamps, Base):
@@ -85,3 +118,49 @@ class MlShadowRun(UUIDPk, Timestamps, Base):
     rule_top: Mapped[str] = mapped_column(String(300), nullable=False)
     model_top: Mapped[str] = mapped_column(String(300), nullable=False)
     agree: Mapped[bool] = mapped_column(Boolean, nullable=False)
+
+
+class MlLineExample(UUIDPk, Timestamps, Base):
+    """One BOQ: the audit findings it was drafted from (gap types and counts), the lines the
+    rules drafted, the lines a shadow model would have drafted, and, once the customer accepts,
+    the lines actually bought. Live data; training reads frozen copies only."""
+
+    __tablename__ = "ml_line_examples"
+
+    boq_id: Mapped[uuid.UUID] = mapped_column(nullable=False, unique=True)
+    project_id: Mapped[uuid.UUID] = mapped_column(nullable=False)
+    features: Mapped[dict[str, float]] = mapped_column(JSONB, nullable=False)
+    rule_labels: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
+    titles: Mapped[dict[str, str]] = mapped_column(JSONB, nullable=False, default=dict)
+    model_id: Mapped[uuid.UUID | None] = mapped_column()
+    model_labels: Mapped[list[str] | None] = mapped_column(JSONB)
+    labels: Mapped[list[str] | None] = mapped_column(JSONB)
+    labelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class MlPricePoint(UUIDPk, Base):
+    """One price entered in the price book, for spotting a price that does not fit its history.
+    The rule verdict is deterministic; a shadow model's verdict is kept next to it."""
+
+    __tablename__ = "ml_price_points"
+    __table_args__ = (Index("ix_ml_price_points_item", "item_id", "quoted_on"),)
+
+    price_id: Mapped[uuid.UUID] = mapped_column(nullable=False, unique=True)
+    item_id: Mapped[uuid.UUID] = mapped_column(nullable=False)
+    item_name: Mapped[str] = mapped_column(String(300), nullable=False)
+    category: Mapped[str] = mapped_column(String(60), nullable=False)
+    item_kind: Mapped[str] = mapped_column(String(10), nullable=False)
+    vendor: Mapped[str | None] = mapped_column(String(64))
+    selling: Mapped[float] = mapped_column(Float, nullable=False)
+    cost: Mapped[float | None] = mapped_column(Float)
+    quoted_on: Mapped[date] = mapped_column(Date, nullable=False)
+    rule_flag: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    rule_reason: Mapped[str | None] = mapped_column(String(300))
+    change_pct: Mapped[float | None] = mapped_column(Float)
+    model_id: Mapped[uuid.UUID | None] = mapped_column()
+    model_expected: Mapped[float | None] = mapped_column(Float)
+    model_flag: Mapped[bool | None] = mapped_column(Boolean)
+    alerted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=text("now()"), nullable=False
+    )
