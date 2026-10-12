@@ -92,7 +92,7 @@ const ROLE_SECTIONS: { role: string; title: string; steps: ReactNode[] }[] = [
       <>Choose <b>Send for the check</b>. If a setting does not match, the page says which; fix it and send again.</>,
       <>Finish with <b>Hand over to the customer</b>. The technical lead then verifies your work.</>,
       <>Stuck? Choose <b>I cannot continue</b> and say what stops you. The task is marked blocked and your project manager sees it straight away.</>,
-      <>No signal? Keep working, for up to three days. The app saves your steps on the phone and sends them by itself when the signal is back; <b>Sync now</b> sends straight away. If the server refuses one, the task says why: fix it and choose <b>Try again</b>, or <b>Remove</b> it.</>,
+      <>No signal? Keep working, for up to three days. The app saves your steps on the phone and sends them by itself when the signal is back; <b>Sync now</b> sends straight away. After a day it warns you, so the work is sent before the three days run out. If the server refuses one, the task says why: fix it and choose <b>Try again</b>, or <b>Remove</b> it.</>,
       <>Sign out only when everything is sent. If something is still on the phone, the app says so first; only you can send it, the next time you sign in on that phone.</>,
     ],
   },

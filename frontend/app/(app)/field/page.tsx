@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { type S } from "@/lib/api";
 import { useData, useMe } from "@/lib/hooks";
-import { flush, pending, subscribe } from "@/lib/offline";
+import { flush, pending, subscribe, waitedTooLong } from "@/lib/offline";
 import { Badge, Empty, Notice, Skeleton } from "@/components/ui";
 import { STATE_SHORT, shortTitle, stateTone } from "@/components/field";
 
@@ -93,9 +93,14 @@ export default function MyTasks() {
   const { can } = useMe();
   const runs = useData<Run[]>(can("field:work") ? "/field/my" : null);
   const [waiting, setWaiting] = useState(0);
+  const [late, setLate] = useState(false);
   const [project, setProject] = useState("all");
   useEffect(() => {
-    const read = () => void pending().then((p) => setWaiting(p.length));
+    const read = () =>
+      void pending().then((p) => {
+        setWaiting(p.length);
+        setLate(waitedTooLong(p[0]?.createdAt));
+      });
     read();
     return subscribe(read);
   }, []);
@@ -136,6 +141,11 @@ export default function MyTasks() {
             Send now
           </button>
         </div>
+      )}
+      {late && (
+        <Notice tone="bad">
+          Some of this work has waited on the phone for more than 24 hours. Find a signal and choose Send now: the server refuses work more than 72 hours old.
+        </Notice>
       )}
 
       {runs.error && !runs.data && <Notice tone="bad">{runs.error}</Notice>}
