@@ -174,6 +174,59 @@ Planned dates are in `ROADMAP.md`, decisions in `decisions/`.
 - [x] Incident runbook: docs/runbooks/incident.md (who does what, first 15 minutes, common
   incidents, break-in, restore, messages to staff and customers)
 
+## v3 changes (branch `feat/v3-changes`, from 12 October 2026)
+
+The v3 task asks for the new IITPL stamp, an audit against the v3 decisions (no RAG or AI calls,
+WeasyPrint only, free and open-source only, phones through the web app, always-on hosting), and
+whatever of the field app, backend and deployment work is still missing. The baseline is in
+`NOTES.md`.
+
+### Audit findings (12 October)
+
+- [x] PDFs: WeasyPrint only, through `core/documents.py`; `tests/test_documents.py` fails on any
+  other generator. Nothing to change.
+- [x] RAG, embeddings, vector stores, LLM or AI API calls or SDKs: none in code or dependencies.
+- [x] Electron, Tauri, Capacitor: none.
+- [x] Licences: `scripts/licenses.py --check` passes (135 backend, 21 web packages). The web
+  check reads direct dependencies only; Lighthouse (dev only) brings `@sentry/node` with it,
+  MIT, and it reports nothing unless error reporting is switched on, which our script never does.
+- [x] Error tracking: `sentry-sdk` (MIT) sends only to `P1_SENTRY_DSN`, which is empty by default;
+  production refuses a DSN on sentry.io. GlitchTip is the self-hosted target. Nothing to change.
+- [x] Sleeping hosting tiers: nothing assumes one.
+- [x] Prices to field engineers: `tests/test_field_role_never_sees_prices.py` walks every route,
+  and `e2e/field-no-prices.spec.ts` checks the phone's traffic. Both pass.
+- [x] Already built (Phase 12A, ADR 0027): manifest, hand-written service worker, IndexedDB outbox
+  (`lib/offline.ts`, not Dexie), install prompt and update banner, phone layout, evidence stamps,
+  single-use upload link with QR, OTP screen, Web Push with `pywebpush`, notification centre and
+  settings, idle sign-out, Lighthouse and bundle budget scripts. OTP defaults to email; SMS and
+  WhatsApp are off. Stamp upload and wording exist in certificate settings; no real stamp yet.
+- [ ] The stamp file is at `frontend/public/icons/stamp_sign.png` (the task said `icon/`). It holds
+  the IITPL seal and a handwritten signature. Everything in `public/` is served without sign-in
+  and `/icons/` is cached on every phone, so it must not be committed there. Needs Aditya.
+- [ ] The v3 defaults differ from ADR 0027 in two places, and both would loosen a rule the server
+  enforces: work older than 72 hours is refused (v3: no cutoff, warn after 24 hours), and check-in
+  is refused without the phone's location (v3: best effort). Kept as they are; needs Aditya.
+- [ ] No warning yet when work has waited on the phone for more than 24 hours.
+- [ ] Phase 13 learning (scikit-learn, LightGBM, optional MLflow) is in the code, local and in
+  shadow mode; rules still decide everything. It is not an AI API call. v3 puts Phase 13 out of
+  scope, so it is left alone; needs Aditya if it should go.
+- [ ] Production compose: 12 long-running services have no healthcheck (MinIO, proxy,
+  Prometheus, Alertmanager, node and blackbox exporters, Grafana, GlitchTip and its worker,
+  Uptime Kuma, MLflow, certbot). Restart policies and the 80 and 443 rule are already right.
+- [x] GlitchTip and Uptime Kuma are an optional profile, off by default, but named `ops`, because
+  `monitoring` already holds Prometheus and Grafana and is on in development. Kept as `ops`.
+- [x] No hosted CI (removed on purpose, commit 5d403b1). The Lighthouse, budget and licence
+  checks run as scripts. No CI deploy job exists, so none runs on its own.
+- [ ] `mypy` reports 2 errors in `tests/test_worker_probe.py` (there before v3).
+
+### Candidates, not built (v3 optional list)
+
+Already built before v3: quote expiry alerts with one-click re-price, win and loss with a reason,
+the before and after configuration compare, minimum margin, the before and after PrismSuite
+scores in the completion report, the engineer workload view, and global search. Still
+candidates: scheduled re-verification that opens a deviation on drift, and a Director
+bottleneck view beyond the existing wait times.
+
 ## Questions still open
 
 1. Severity rules beyond critical, major and minor (ADR 0019).

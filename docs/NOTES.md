@@ -58,6 +58,29 @@ Maintained by Aditya Kumar.
   `MSYS_NO_PATHCONV=1`.
 - After backend API changes: `python -m app.cli openapi`, then `npm run api-types` in `frontend/`.
 
+## Baseline before v3 (12 October 2026, `main` at 7629e9b)
+
+This file is the project memory the v3 task calls `MEMORY.md`. On Windows, from the repo root:
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Backend tests | `scripts/dev.ps1 test` | 403 passed, 86 percent coverage, 22 minutes |
+| Import boundaries | `backend/.venv/Scripts/python.exe -m importlinter.cli --config .importlinter` (from `backend/`) | pass |
+| Lint and format | `scripts/dev.ps1 lint` | pass |
+| Types (backend) | `scripts/dev.ps1 typecheck` | 2 errors in `tests/test_worker_probe.py`, there before v3 |
+| Types (web) | `npm run typecheck` in `frontend/` | pass |
+| Web build | `npm run build` in `frontend/` | pass |
+| Web unit tests | none exist; the web app is covered by Playwright | |
+| Browser tests | `$env:BASE_URL="http://localhost:9595"; npx playwright test` in `frontend/` | 24 passed, 2 failed, 6 skipped |
+| Licences | `backend/.venv/Scripts/python.exe scripts/licenses.py --check` | pass |
+| Stack | `scripts/dev.ps1 up` | every service up, the ones with a healthcheck healthy |
+
+The two browser failures are demo data, not code: the project manager's demo password was
+changed on 5 October, and the Accounts test expects the dev admin to set up an authenticator
+from scratch, which only holds straight after `seed-demo`. The permission matrix test that once
+timed out on Valkey during an image build passed in this run, with no image build running; run
+the suite only while nothing is building.
+
 ## Stubs and interfaces
 
 | Interface | Today | Filled by |
