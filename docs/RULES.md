@@ -14,8 +14,16 @@ Every change follows these. Changing a rule needs Aditya's sign-off and an ADR.
 5. Field engineers never receive prices, in any response, export or notification.
 6. Every PDF is made by WeasyPrint through `core/documents.py`. No other generator without an ADR.
    `pdfplumber` is for reading only.
-7. Free and open-source components only (ADR 0011).
-8. No em dashes in docs, UI copy or generated documents. Sentence case. Plain words.
+7. Free and open-source components only (ADR 0011). A new dependency means running
+   `python scripts/licenses.py` to update `LICENSES.md`; `--check` fails on any unknown or
+   disallowed licence. No hosted services that receive our data, including error tracking
+   (ADR 0032).
+8. No retrieval, embeddings, vector stores, or language model or AI API calls.
+9. Field data never carries prices, so the phone's cache and outbox never hold any. Every API
+   route is checked as a field engineer (`tests/test_field_role_never_sees_prices.py`) and so is
+   the phone's traffic (`e2e/field-no-prices.spec.ts`).
+10. The IITPL stamp is never committed or put in `frontend/public/` (ADR 0031).
+11. No em dashes in docs, UI copy or generated documents. Sentence case. Plain words.
 
 ## 2. Data rules (the library and corpus)
 

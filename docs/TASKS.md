@@ -200,19 +200,28 @@ whatever of the field app, backend and deployment work is still missing. The bas
   single-use upload link with QR, OTP screen, Web Push with `pywebpush`, notification centre and
   settings, idle sign-out, Lighthouse and bundle budget scripts. OTP defaults to email; SMS and
   WhatsApp are off. Stamp upload and wording exist in certificate settings; no real stamp yet.
-- [ ] The stamp file is at `frontend/public/icons/stamp_sign.png` (the task said `icon/`). It holds
-  the IITPL seal and a handwritten signature. Everything in `public/` is served without sign-in
-  and `/icons/` is cached on every phone, so it must not be committed there. Needs Aditya.
-- [ ] The v3 defaults differ from ADR 0027 in two places, and both would loosen a rule the server
+- [x] The stamp file was at `frontend/public/icons/stamp_sign.png` (the task said `icon/`). It holds
+  the IITPL seal and a handwritten signature, and everything in `public/` is served without
+  sign-in. Aditya chose (ADR 0031): keep it out of git and out of `public/`, load it with the
+  certificate settings upload or `python -m app.cli load-stamp`, and mark every certificate made
+  outside production "SAMPLE, NOT VALID". It has been moved out of `public/` and was never
+  committed; `.gitignore` and `frontend/.dockerignore` now refuse it.
+- [x] The v3 defaults differ from ADR 0027 in two places, and both would loosen a rule the server
   enforces: work older than 72 hours is refused (v3: no cutoff, warn after 24 hours), and check-in
-  is refused without the phone's location (v3: best effort). Kept as they are; needs Aditya.
-- [ ] No warning yet when work has waited on the phone for more than 24 hours.
-- [ ] Phase 13 learning (scikit-learn, LightGBM, optional MLflow) is in the code, local and in
+  is refused without the phone's location (v3: best effort). Aditya chose to keep both.
+- [x] A warning when work has waited on the phone for more than 24 hours: the sync badge turns
+  red and the field home page says to send it before the 72 hours run out
+  (`e2e/field-late-sync.spec.ts`).
+- [x] Phase 13 learning (scikit-learn, LightGBM, optional MLflow) is in the code, local and in
   shadow mode; rules still decide everything. It is not an AI API call. v3 puts Phase 13 out of
-  scope, so it is left alone; needs Aditya if it should go.
-- [ ] Production compose: 12 long-running services have no healthcheck (MinIO, proxy,
+  scope, and Aditya chose to leave it alone.
+- [x] Production compose: 12 long-running services had no healthcheck (MinIO, proxy,
   Prometheus, Alertmanager, node and blackbox exporters, Grafana, GlitchTip and its worker,
-  Uptime Kuma, MLflow, certbot). Restart policies and the 80 and 443 rule are already right.
+  Uptime Kuma, MLflow, certbot). Each now has one; Uptime Kuma uses its image's own, and certbot
+  turns unhealthy when the certificate has under 14 days left. `tests/test_compose_prod.py` checks
+  restart policies, healthchecks and the 80 and 443 rule.
+- [x] Server setup in `DEPLOYMENT.md` section 2 now also covers Docker on boot, SSH keys only,
+  automatic security updates and a VPN; `docs/runbooks/deploy.md` points at each runbook.
 - [x] GlitchTip and Uptime Kuma are an optional profile, off by default, but named `ops`, because
   `monitoring` already holds Prometheus and Grafana and is on in development. Kept as `ops`.
 - [x] No hosted CI (removed on purpose, commit 5d403b1). The Lighthouse, budget and licence
@@ -230,7 +239,8 @@ bottleneck view beyond the existing wait times.
 ## Questions still open
 
 1. Severity rules beyond critical, major and minor (ADR 0019).
-2. The IITPL stamp image.
+2. Whether the signed certificate payload should also carry the stamp's hash (ADR 0031). It
+   would change the signature format, so it waits for a decision.
 3. The minimum margin: 10 percent for now (ADR 0028).
 4. Upgrade to Next.js 16 now or after go-live (security review F1, F2).
 5. How to encrypt the off-server backup copy, and who keeps the key (security review F6).

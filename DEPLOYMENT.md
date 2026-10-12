@@ -186,6 +186,15 @@ p1 exec api python -m app.cli create-admin --email it@itcraft.net.in --name "IT 
 p1 exec api python -m app.cli seed      # catalogue items, prices, rules and templates
 ```
 
+Load the IITPL stamp (PNG or JPEG, from the password manager; never copy it into the repo).
+No certificate can be issued until it is loaded. The Director or an Admin can also upload it
+on **Certificate** in the sidebar instead:
+
+```bash
+p1 exec -T api python -m app.cli load-stamp - --as it@itcraft.net.in < ~/stamp_sign.png
+rm ~/stamp_sign.png
+```
+
 Then, in a browser:
 
 1. Open `https://p1.itcraft.net.in` and sign in as that admin.

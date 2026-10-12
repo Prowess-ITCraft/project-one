@@ -43,6 +43,9 @@ Maintained by Aditya Kumar.
 | Who manages accounts | Admin and Director only; the Director holds every Admin permission | 0026 |
 | Learning models | Shadow mode, at least 30 days and 20 comparisons, Director approves; `ml_enabled` turns it all off; MLflow optional | 0029 |
 | Public ports | 80 and 443 only; 9597 only behind a load balancer | 0030 |
+| IITPL stamp | Never in git or `public/`; loaded through certificate settings or `cli load-stamp` by a Director or Admin; certificates made outside production say "SAMPLE, NOT VALID" | 0031 |
+| Late field work | Warn on the phone after 24 hours; the 72 hour cutoff stays | 0027 |
+| Error tracking | Self-hosted GlitchTip (profile `ops`), through `sentry-sdk` and `P1_SENTRY_DSN`; production refuses sentry.io | 0032 |
 | Size targets | About 30 people at once, 200 projects a year, reads under 500 ms and writes under 1.5 s (95 percent), records kept 8 years | PRD 5 |
 
 ## Machine quirks
@@ -81,6 +84,24 @@ from scratch, which only holds straight after `seed-demo`. The permission matrix
 timed out on Valkey during an image build passed in this run, with no image build running; run
 the suite only while nothing is building.
 
+## Loading the IITPL stamp
+
+The stamp holds a real signature, so it never goes in git or in `frontend/public/` (both
+refuse `stamp*` files). Keep it in the password manager or on the server outside the repo.
+A Director or Admin loads it once; loading the same file again changes nothing:
+
+```bash
+# production (DEPLOYMENT.md alias p1)
+p1 exec -T api python -m app.cli load-stamp - --as <director email> < stamp_sign.png
+# development, from the repo root
+docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T api python -m app.cli load-stamp - --as <email> < stamp_sign.png
+```
+
+Or upload it on **Certificate** in the sidebar. Either way it goes through the upload checks
+(size, type, virus scan, metadata stripped) and gets an audit entry. Demo and sample
+certificates can use it too, `demo-projects --stamp FILE` and `render-samples --stamp FILE`,
+and are always marked "SAMPLE, NOT VALID", as is anything made outside production.
+
 ## Stubs and interfaces
 
 | Interface | Today | Filled by |
@@ -115,12 +136,20 @@ the suite only while nothing is building.
 ## Still waiting on
 
 1. Severity rules beyond critical, major and minor (ADR 0019). The default policy is in place.
-2. The IITPL stamp image. The demo uses a placeholder clearly marked "DEMO STAMP".
+2. Whether the signed certificate payload should carry the stamp's hash (ADR 0031).
 3. The Director's confirmation of the 10 percent minimum margin (ADR 0028).
 4. The Next.js 16 upgrade and the backup encryption key holder (security review).
 
 ## Changelog
 
+- 2026-10-12: v3 changes (branch `feat/v3-changes`). Audit against the v3 decisions found no
+  RAG, AI calls, desktop wrappers or other PDF generators, and the field app and backend
+  pieces already built. The real IITPL stamp: loaded with `cli load-stamp` or the settings
+  upload, never served from `public/`, sharper and larger above the Director's line, and
+  "SAMPLE, NOT VALID" on every certificate made outside production (ADR 0031). The phone warns
+  when work has waited more than 24 hours. Production compose: a healthcheck on every
+  long-running service, with a test; server setup steps for Docker on boot, SSH keys only,
+  automatic updates and a VPN. Self-hosted error tracking recorded (ADR 0032).
 - 2026-10-08: Phase 12A, the field app on phones (ADR 0027): installs on Android and iPhone,
   its own phone layout with bottom navigation, works offline for up to 72 hours between
   check-in and sending for checking, needs the phone's location at check-in, stamps photos

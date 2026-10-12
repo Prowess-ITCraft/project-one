@@ -144,7 +144,12 @@ WeasyPrint with a restricted URL fetcher (no network, only bundled assets), font
 `@font-face` from the image, checksum recorded. Used by the quotation and summary BOQ (Phase 6),
 plan and schedule (Phase 7), checklist export (Phase 8), the completion report and the
 certificate (Phase 10).
-No other PDF generator is allowed without an ADR.
+No other PDF generator is allowed without an ADR. There is no retrieval, embedding or language
+model anywhere: documents are filled from data and templates only.
+
+The IITPL stamp is stored like any upload (MinIO, through the files pipeline) and embedded in the
+certificate as a data URL at issue; the issued PDF and its SHA-256 are kept, so a later stamp
+change never alters an issued certificate (ADR 0031).
 
 ## 7. Ports and environments
 
@@ -166,7 +171,8 @@ No other PDF generator is allowed without an ADR.
 Compose files: `docker-compose.yml` (base), `docker-compose.dev.yml` (publishes ports, Mailpit),
 `docker-compose.prod.yml`, and `docker-compose.lb.yml` only behind a load balancer. Profiles:
 `monitoring` (Prometheus, Alertmanager, exporters, Grafana), `ops` (GlitchTip, Uptime Kuma),
-`mlflow`. Alerts and what to do: `runbooks/alerts.md`. On Windows `scripts/dev.ps1` replaces
+`mlflow`. In production every long-running service restarts unless stopped and has a
+healthcheck (`tests/test_compose_prod.py`). Alerts and what to do: `runbooks/alerts.md`. On Windows `scripts/dev.ps1` replaces
 `make`. Every Docker file is described in `guides/docker.md`.
 
 ## 8. Security model
@@ -215,3 +221,5 @@ Web Push goes only to known push services. The ASVS Level 2 review and its open 
 | [0028](decisions/0028-minimum-margin.md) | A minimum margin, accepted line by line |
 | [0029](decisions/0029-learning-models-in-shadow.md) | BOQ line prediction and price checks, in shadow until the Director approves |
 | [0030](decisions/0030-production-ports-80-443.md) | Production publishes only ports 80 and 443 |
+| [0031](decisions/0031-iitpl-stamp.md) | The IITPL stamp: loaded, never committed or served, and samples marked |
+| [0032](decisions/0032-self-hosted-error-tracking.md) | Error tracking is self-hosted GlitchTip |
