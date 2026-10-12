@@ -21,6 +21,10 @@ inbox/*
 # Rendered sample PDFs (python -m app.cli render-samples); regenerate, never commit
 sample-documents/
 
+# The IITPL stamp holds a real signature: load it with `cli load-stamp`, never commit or serve it
+frontend/public/**/stamp*
+**/stamp_sign*
+
 # demo accounts written by `cli demo-projects` (development only)
 demo-accounts.json
 .demo/

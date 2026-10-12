@@ -1,7 +1,8 @@
 """Demo data: two real projects walked through the API exactly as people would, for looking
 around the screens and for the browser smoke tests. Development only; refuses to run in prod.
 
-    python -m app.cli demo-projects --samples /data/samples --out /out/demo-accounts.json
+    python -m app.cli demo-projects --samples /data/samples --out /out/demo-accounts.json \
+        [--stamp /tmp/stamp_sign.png]
 
 - "Head office IT hardening" goes through every gate to a signed certificate: audit, current
   and ideal state, gaps (customer acknowledged), BOQ with a purchase order, plan, field work
@@ -151,6 +152,7 @@ class Demo:
         self.cust: dict[str, Any] = {}
         self.previous: dict[str, Any] | None = None
         self.certificate: str | None = None
+        self.stamp: tuple[str, bytes] | None = None
 
     # ------------------------------------------------------------------ plumbing
 
@@ -817,7 +819,7 @@ class Demo:
             "POST",
             "/reporting/settings/stamp",
             director,
-            files={"file": ("iitpl-demo-stamp.png", demo_stamp(), "image/png")},
+            files={"file": self.stamp or ("iitpl-demo-stamp.png", demo_stamp())},
         )
         await self.call("POST", f"/reporting/projects/{pid}/reports", pm, idem=True)
         await self.gate(pid, "completion", "completion_report", pm, director)
@@ -901,7 +903,8 @@ def _write(out: Path, data: dict[str, Any]) -> None:
     out.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
 
-async def run(samples: Path, out: Path) -> dict[str, Any]:
+async def run(samples: Path, out: Path, stamp: tuple[str, bytes] | None = None) -> dict[str, Any]:
+    """`stamp` is (file name, bytes) of a stamp image to use instead of the placeholder."""
     from app.main import app as fastapi_app
     from app.modules import registry
 
@@ -919,6 +922,7 @@ async def run(samples: Path, out: Path) -> dict[str, Any]:
         transport=transport, base_url="http://demo", timeout=120
     ) as client:
         d = Demo(client, samples)
+        d.stamp = stamp
         d.previous = _read(out)
         await d.staff()
         # Written now, not only at the end: a run stopped half way still leaves working logins.

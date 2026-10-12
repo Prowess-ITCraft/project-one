@@ -7,6 +7,7 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
 from app.core.documents import RenderedDocument, qr_data_url, render_pdf, template_env
 from app.modules.boq.contracts import get_company_profile
 
@@ -39,6 +40,8 @@ async def certificate_context(
         "verify_url": verify_url,
         "qr": qr_data_url(verify_url),
         "stamp": stamp,
+        # A certificate made outside production is never genuine, even with the real stamp on it.
+        "sample": not get_settings().is_prod,
     }
 
 
