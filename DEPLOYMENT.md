@@ -67,7 +67,23 @@ sudo ufw allow 80/tcp && sudo ufw allow 443/tcp
 sudo ufw enable
 ```
 
-**Check:** `docker run --rm hello-world` prints "Hello from Docker!".
+If the office reaches the server over a VPN (WireGuard, for example), allow port 22 from the
+VPN address range instead of the office's public IP, and keep 80 and 443 as they are.
+
+Start Docker when the server boots (every service then comes back by itself, because each has
+`restart: unless-stopped`), allow SSH with keys only, and turn on automatic security updates:
+
+```bash
+sudo systemctl enable --now docker containerd
+# Copy your key first (ssh-copy-id you@server) and check you can sign in with it
+echo 'PasswordAuthentication no' | sudo tee /etc/ssh/sshd_config.d/10-keys-only.conf
+sudo systemctl reload ssh
+sudo apt-get install -y unattended-upgrades && sudo dpkg-reconfigure -f noninteractive unattended-upgrades
+```
+
+**Check:** `docker run --rm hello-world` prints "Hello from Docker!",
+`systemctl is-enabled docker` prints `enabled`, and `ssh -o PubkeyAuthentication=no you@server`
+is refused.
 
 ## 3. Get the code
 
@@ -152,8 +168,8 @@ p1 ps
 On the first start ClamAV downloads its virus database, which takes up to five minutes; the API
 waits for it. The `migrate` job creates the database tables and storage buckets, then exits.
 
-**Check:** after a few minutes `p1 ps` shows `api`, `worker`, `beat`, `web`, `postgres`, `redis`
-and `clamav` as `healthy`, `migrate` as `Exited (0)`, and:
+**Check:** after a few minutes `p1 ps` shows `proxy`, `api`, `worker`, `beat`, `web`,
+`postgres`, `redis`, `minio` and `clamav` as `healthy`, `migrate` as `Exited (0)`, and:
 
 ```bash
 curl -sI https://p1.itcraft.net.in/healthz | head -1      # HTTP/2 200

@@ -28,6 +28,13 @@ services:
       - certbot-www:/var/www/certbot:ro
     # Reload every six hours so a renewed certificate is picked up without a restart.
     command: ["/bin/sh", "-c", "while :; do sleep 6h; nginx -s reload; done & exec nginx -g 'daemon off;'"]
+    # 8080 is internal in both proxy configurations (published only with docker-compose.lb.yml).
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
 
   # Renews the Let's Encrypt certificate twice a day (only acts when it is near expiry).
   # Not needed when you bring your own certificate files.
@@ -39,6 +46,13 @@ services:
       - ./infra/nginx/tls:/etc/letsencrypt
       - certbot-www:/var/www/certbot
     entrypoint: ["/bin/sh", "-c", "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $${!}; done"]
+    # Unhealthy when the certificate is missing or has less than 14 days left: renewal is failing.
+    healthcheck:
+      test: ["CMD", "python", "-c", "import datetime as d, sys; from cryptography import x509; c = x509.load_pem_x509_certificate(open('/etc/letsencrypt/live/project-one/fullchain.pem', 'rb').read()); sys.exit(c.not_valid_after_utc < d.datetime.now(d.timezone.utc) + d.timedelta(days=14))"]
+      interval: 1h
+      timeout: 10s
+      retries: 1
+      start_period: 1m
 
   api:
     environment:
@@ -61,24 +75,66 @@ services:
     environment:
       P1_ENV: prod
       P1_S3_PUBLIC_ENDPOINT_URL: ${P1_S3_PUBLIC_ENDPOINT_URL:-}
+  # api and web have their healthchecks in their Dockerfiles; uptime-kuma in its image.
+  minio:
+    healthcheck:
+      test: ["CMD-SHELL", "MC_HOST_local=http://127.0.0.1:9000 mc ready local --quiet"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+  prometheus:
+    healthcheck: &wget-health
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:9090/-/healthy"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+  alertmanager:
+    healthcheck:
+      <<: *wget-health
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:9093/-/healthy"]
+  blackbox:
+    healthcheck:
+      <<: *wget-health
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:9115/-/healthy"]
 
   # Only with --profile monitoring. Published on this server's own loopback address, so it is
   # reached through an SSH tunnel (DEPLOYMENT.md, section 10), never from the internet.
   grafana:
     ports: ["127.0.0.1:9604:3000"]
+    healthcheck:
+      <<: *wget-health
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/api/health"]
 
   # Admin tools on this server's loopback only: reached over the VPN or an SSH tunnel.
   uptime-kuma:
     ports: ["127.0.0.1:9607:3001"]
+  mlflow:
+    ports: ["127.0.0.1:9606:5000"]
+    healthcheck: &python-health
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health', timeout=4)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
   glitchtip:
     ports: ["127.0.0.1:9608:8000"]
     environment:
       GLITCHTIP_DOMAIN: ${P1_GLITCHTIP_DOMAIN:-http://localhost:9608}
-  mlflow:
-    ports: ["127.0.0.1:9606:5000"]
+    healthcheck:
+      <<: *python-health
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/_health/', timeout=4)"]
+  glitchtip-worker:
+    healthcheck:
+      <<: *python-health
+      test: ["CMD", "python", "-c", "import sys; sys.exit(b'celery' not in open('/proc/1/cmdline', 'rb').read())"]
 
   # The disk and memory alerts watch the server itself, not the container.
   node-exporter:
+    healthcheck:
+      <<: *wget-health
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:9100/metrics"]
     command: ["--path.rootfs=/host"]
     pid: host
     volumes:
