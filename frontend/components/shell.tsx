@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowClockwise, Bell, CloudArrowUp, CloudCheck, CloudSlash, MagnifyingGlass, Warning } from "@phosphor-icons/react";
 import { get, type S } from "@/lib/api";
-import { flush, outboxState, subscribe, type OutboxState } from "@/lib/offline";
+import { flush, outboxState, subscribe, waitedTooLong, type OutboxState } from "@/lib/offline";
 import { applyUpdate, isIos, isStandalone, onInstallable, onUpdateReady, promptInstall } from "@/lib/device";
 import { dateTime } from "@/lib/api";
 
@@ -25,14 +25,15 @@ export function SyncBadge({ compact = false }: { compact?: boolean }) {
     };
   }, []);
   if (!st) return null;
-  const tone = st.failed ? "bad" : st.uploading ? "accent" : st.waiting ? "warn" : "ok";
+  const late = waitedTooLong(st.oldestAt);
+  const tone = st.failed || late ? "bad" : st.uploading ? "accent" : st.waiting ? "warn" : "ok";
   const Icon = st.failed ? Warning : st.uploading ? CloudArrowUp : !st.online ? CloudSlash : st.waiting ? CloudArrowUp : CloudCheck;
   const words = st.failed
     ? `${st.failed} refused`
     : st.uploading
       ? "Sending"
       : st.waiting
-        ? `${st.waiting} waiting${st.online ? "" : ", offline"}`
+        ? `${st.waiting} waiting${late ? " over 24 h" : st.online ? "" : ", offline"}`
         : st.online
           ? "All sent"
           : "Offline";

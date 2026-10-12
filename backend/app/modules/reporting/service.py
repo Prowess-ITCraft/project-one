@@ -131,6 +131,10 @@ async def set_wording(session: AsyncSession, principal: Principal, wording: str)
     return new
 
 
+def _sha256(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
 async def upload_stamp(
     session: AsyncSession,
     principal: Principal,
@@ -153,7 +157,12 @@ async def upload_stamp(
     if ref.kind not in ("png", "jpeg"):
         raise ValidationFailed("The stamp must be a PNG or JPEG image.", code="stamp_not_image")
     cur = await cert_settings(session)
-    new = {**cur, "stamp_file_id": str(ref.id), "stamp_updated_at": utcnow().isoformat()}
+    new = {
+        **cur,
+        "stamp_file_id": str(ref.id),
+        "stamp_source_sha256": _sha256(data),
+        "stamp_updated_at": utcnow().isoformat(),
+    }
     await _save_settings(session, principal, new)
     await record(
         session,
@@ -161,11 +170,18 @@ async def upload_stamp(
         action="upload_certificate_stamp",
         entity_type="report_setting",
         entity_id="certificate",
-        after={"file": ref.original_name, "sha256": ref.sha256},
+        after={"file": ref.original_name, "sha256": ref.sha256, "source_sha256": _sha256(data)},
         only_changes=False,
     )
     await session.commit()
     return new
+
+
+async def stamp_is_current(session: AsyncSession, data: bytes) -> bool:
+    """True when `data` is the file the current stamp was uploaded from. Uploads are re-encoded
+    to drop metadata, so this compares the hash of the file as it was given."""
+    s = await cert_settings(session)
+    return bool(s.get("stamp_file_id")) and s.get("stamp_source_sha256") == _sha256(data)
 
 
 async def stamp_data_url(session: AsyncSession) -> str | None:

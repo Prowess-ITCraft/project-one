@@ -66,6 +66,11 @@ Phone (field engineer, 360 px):
 Left aligned, one content column up to 1080px. On phones the sidebar becomes a top bar, tables
 become stacked rows, the stage rail turns vertical.
 
+The field engineer's phone has its own layout (ADR 0027): bottom navigation, one task and one
+next action per card, and a sync badge in the top bar that counts work still on the phone. The
+badge turns red, and the field home page shows a red notice, when any of it has waited more than
+24 hours, well before the server's 72 hour cutoff.
+
 ## 5. Where boldness goes
 
 Two places only, both drawn in the brand's own idea, a circuit trace:
@@ -192,4 +197,7 @@ All documents are HTML and print CSS rendered by WeasyPrint (`core/documents.py`
 - **Completion report**: scope delivered, exclusions (waivers), before and after scores on the
   four lenses, configuration per device, deviations, open recommendations. No prices.
 - **Certificate**: one landscape page, IITPL mark and stamp, Director's signature, certificate
-  number and a QR code to the public check page.
+  number and a QR code to the public check page. The stamp sits centred above the Director's
+  signature line, 26 mm high (up to 78 mm wide), with its transparency kept, clear of the name
+  and the QR code. Any certificate made outside production carries "SAMPLE, NOT VALID" across
+  the middle in faint red, turned slightly, so a demo can never pass for a real one (ADR 0031).

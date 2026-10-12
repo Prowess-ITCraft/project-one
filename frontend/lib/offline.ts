@@ -37,7 +37,14 @@ export type OutboxState = {
   others: number; // saved by someone else who used this phone
   lastSyncAt: string | null;
   online: boolean;
+  oldestAt: string | null; // when the oldest unsent item was saved
 };
+
+/** Work older than this gets a warning; the server refuses it after 72 hours (ADR 0027). */
+export const WARN_AFTER_MS = 24 * 3_600_000;
+
+export const waitedTooLong = (savedAt: string | null | undefined, now = Date.now()) =>
+  !!savedAt && now - new Date(savedAt).getTime() > WARN_AFTER_MS;
 
 const DB = "p1-field";
 const STORE = "outbox";
@@ -146,6 +153,7 @@ export async function outboxState(): Promise<OutboxState> {
     others: items.length - own.length,
     lastSyncAt: lastSync(),
     online: typeof navigator === "undefined" ? true : navigator.onLine,
+    oldestAt: own[0]?.createdAt ?? null,
   };
 }
 

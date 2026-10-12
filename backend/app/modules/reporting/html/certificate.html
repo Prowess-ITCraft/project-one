@@ -32,7 +32,8 @@
   .verify img { width: 24mm; height: 24mm; }
   .verify b { color: #0F2A45; }
   .sign { text-align: center; position: relative; width: 80mm; }
-  .sign .stamp { position: absolute; right: -6mm; bottom: 6mm; height: 28mm; width: auto; opacity: 0.92; }
+  .sign .stamp { display: block; margin: 0 auto 1mm; height: 26mm; width: auto; max-width: 78mm; }
+  .sample-mark { position: absolute; left: 0; right: 0; top: 70mm; text-align: center; font-size: 54pt; font-weight: 700; letter-spacing: 2pt; color: rgba(180, 35, 24, 0.16); transform: rotate(-14deg); }
   .sign .line { border-top: 0.75pt solid #222; padding-top: 1.5mm; font-weight: 700; }
   .sign .role { font-size: 8.5pt; color: #444; }
 </style>
@@ -78,6 +79,7 @@
       <div class="role">Director, IITPL</div>
     </div>
   </div>
+  {% if sample %}<div class="sample-mark">SAMPLE, NOT VALID</div>{% endif %}
 </div></div>
 </body>
 </html>

@@ -89,7 +89,7 @@ The four reporting lenses everywhere: **Productivity, Resilience, Security, Heal
 | Requirement | Target |
 | --- | --- |
 | Security | RBAC plus object checks, deny by default, MFA for Director and Admin, append-only audit log, envelope encryption for device credentials and config exports |
-| Field use | Works on a 360 px phone with poor signal; evidence queues offline up to 72 hours |
+| Field use | Works on a 360 px phone with poor signal; evidence queues offline up to 72 hours, with a warning after 24 |
 | Documents | Every PDF is made by WeasyPrint through one shared service |
 | Data cost | Originals are converted once and archived; the hot path and the training data use compact JSON and Parquet (FR 18) |
 | Money | `Decimal`, `NUMERIC(14,2)`, INR, Indian grouping, GST per line, Apr to Mar financial year |
@@ -115,6 +115,12 @@ return to an earlier stage with a reason; waivers are Not applicable or Deferred
 **Out for v1:** a customer self-service portal (beyond OTPs and acknowledgement links), live
 device APIs (verification uses uploaded config exports), scraping of market data, a general
 pivot and chart workspace (the engine stays API-only).
+
+**Out (v3, 12 October 2026):** retrieval, embeddings and any language model or AI API; desktop
+wrappers (Electron, Tauri), since phones use the installable web app; load and penetration
+testing, and new learning work beyond what Phase 13 already built. It is an internal tool: the
+only pages open without sign-in are certificate checks, customer links and upload links. Hosting
+is always on; nothing relies on a free tier that sleeps.
 
 ## 7. Open questions
 

@@ -1,6 +1,6 @@
 """Render every document template from the reference samples, for review and for visual checks.
 
-    python -m app.cli render-samples --corpus ../samples/corpus --out ./out
+    python -m app.cli render-samples --corpus ../samples/corpus --out ./out [--stamp stamp.png]
 
 - quotation and summary BOQ: rebuilt from the Shobhaglobs priced quotation's corpus record, so the
   output can be laid beside the original PDF in `samples/`;
@@ -8,7 +8,8 @@
 - field task record: the firewall task walked through once, including a failed configuration
   check, the rework and the passed check;
 - completion report and certificate: that project finished, with one exclusion by agreement
-  (illustrative before and after scores, no IITPL stamp until one is uploaded).
+  (illustrative before and after scores). The certificate carries the stamp given with
+  `--stamp` and always the "SAMPLE, NOT VALID" mark.
 
 Nothing here touches the database. Rendering needs WeasyPrint, so run it in the API container.
 """
@@ -512,8 +513,23 @@ def report_content(start: date, quote_ref: str | None) -> dict[str, Any]:
     }
 
 
-def certificate_context(content: dict[str, Any], issued: date) -> dict[str, Any]:
-    """The certificate the Director would sign for that report. No stamp until IITPL sends one."""
+def stamp_data_url(stamp: bytes) -> str:
+    """The stamp image as the certificate template embeds it. PNG or JPEG only."""
+    import base64
+
+    if stamp.startswith(b"\x89PNG\r\n\x1a\n"):
+        mime = "image/png"
+    elif stamp.startswith(b"\xff\xd8\xff"):
+        mime = "image/jpeg"
+    else:
+        raise ValueError("The stamp must be a PNG or JPEG image.")
+    return f"data:{mime};base64,{base64.b64encode(stamp).decode()}"
+
+
+def certificate_context(
+    content: dict[str, Any], issued: date, stamp: bytes | None = None
+) -> dict[str, Any]:
+    """The certificate the Director would sign for that report, always marked as a sample."""
     import hashlib
 
     from app.core.documents import qr_data_url
@@ -547,11 +563,14 @@ def certificate_context(content: dict[str, Any], issued: date) -> dict[str, Any]
         "fingerprint": digest[:16],
         "verify_url": url,
         "qr": qr_data_url(url),
-        "stamp": None,
+        "stamp": stamp_data_url(stamp) if stamp else None,
+        "sample": True,
     }
 
 
-def render_all(corpus_dir: Path, out: Path, today: date | None = None) -> list[Path]:
+def render_all(
+    corpus_dir: Path, out: Path, today: date | None = None, stamp: bytes | None = None
+) -> list[Path]:
     out.mkdir(parents=True, exist_ok=True)
     record = json.loads((corpus_dir / PRICED).read_text(encoding="utf-8"))
     draft = quotation_draft(record)
@@ -592,7 +611,7 @@ def render_all(corpus_dir: Path, out: Path, today: date | None = None) -> list[P
     save(
         "06-certificate.pdf",
         report_render.render_certificate_html(
-            certificate_context(content, start + timedelta(days=4))
+            certificate_context(content, start + timedelta(days=4), stamp)
         ),
     )
     return made

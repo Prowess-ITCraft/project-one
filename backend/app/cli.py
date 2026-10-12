@@ -182,6 +182,45 @@ async def _create_admin(email: str, name: str, initials: str) -> None:
         print(f"Created admin {user.email}. MFA enrolment is required at first sign in.")
 
 
+async def load_stamp(data: bytes, filename: str, email: str) -> bool:
+    """Upload the IITPL stamp through the certificate settings service, as the named Director or
+    Admin, so it gets the same checks, virus scan and audit entry as the settings page. Returns
+    False when that exact file is already the stamp."""
+    import uuid
+
+    from app.modules.identity import repository
+    from app.modules.identity import service as identity
+    from app.modules.identity.contracts import P, Principal
+    from app.modules.identity.permissions import permissions_for
+    from app.modules.reporting import service as reporting
+
+    async with get_sessionmaker()() as s:
+        user = await repository.user_by_email(s, email)
+        if user is None or not user.is_active:
+            raise SystemExit(f"No active account has the address {email}.")
+        roles = identity.user_roles(user)
+        perms = permissions_for(roles)
+        if P.CERT_SETTINGS not in perms:
+            raise SystemExit(
+                f"{email} may not change the certificate settings. Use a Director or Admin."
+            )
+        if await reporting.stamp_is_current(s, data):
+            return False
+        principal = Principal(
+            user_id=user.id,
+            email=user.email,
+            full_name=user.full_name,
+            initials=user.initials,
+            roles=roles,
+            permissions=perms,
+            session_id=uuid.uuid4(),
+            user_agent="app.cli load-stamp",
+            extra={"via": "cli"},
+        )
+        await reporting.upload_stamp(s, principal, data=data, filename=filename, client_ip=None)
+    return True
+
+
 async def _expire() -> None:
     from app.modules.catalogue import service
 
@@ -360,6 +399,10 @@ def main(argv: list[str] | None = None) -> int:
     dp = sub.add_parser("demo-projects", help="walk two demo projects through the API (dev only)")
     dp.add_argument("--samples", default="../samples")
     dp.add_argument("--out", default="demo-accounts.json")
+    dp.add_argument("--stamp", default=None, help="stamp image to use instead of the placeholder")
+    st = sub.add_parser("load-stamp", help="upload the IITPL stamp, as a Director or Admin")
+    st.add_argument("path", help="PNG or JPEG file, or - to read it from standard input")
+    st.add_argument("--as", dest="as_email", required=True, help="the Director's or Admin's email")
     o = sub.add_parser("openapi")
     o.add_argument("--out", default="openapi.json")
     ar = sub.add_parser("api-routes", help="write every API route as Markdown")
@@ -376,6 +419,7 @@ def main(argv: list[str] | None = None) -> int:
     rs = sub.add_parser("render-samples", help="render every PDF template from the samples")
     rs.add_argument("--corpus", default="../samples/corpus")
     rs.add_argument("--out", default="sample-documents")
+    rs.add_argument("--stamp", default=None, help="stamp image to print on the sample certificate")
     sub.add_parser("vapid-keys", help="print a new Web Push key pair for the .env file")
     sub.add_parser("search-reindex", help="rebuild the global search index from every module")
     cp = csub.add_parser("purge", help="apply the originals retention rule")
@@ -387,14 +431,33 @@ def main(argv: list[str] | None = None) -> int:
 
         from app.demo import run as run_demo
 
-        asyncio.run(run_demo(Path(args.samples), Path(args.out)))
+        stamp = (Path(args.stamp).name, Path(args.stamp).read_bytes()) if args.stamp else None
+        asyncio.run(run_demo(Path(args.samples), Path(args.out), stamp))
         return 0
     if args.cmd == "render-samples":
         from pathlib import Path
 
         from app.sample_documents import render_all
 
-        render_all(Path(args.corpus), Path(args.out))
+        stamp_bytes = Path(args.stamp).read_bytes() if args.stamp else None
+        render_all(Path(args.corpus), Path(args.out), stamp=stamp_bytes)
+        return 0
+    if args.cmd == "load-stamp":
+        data = sys.stdin.buffer.read() if args.path == "-" else Path(args.path).read_bytes()
+        if args.path != "-":
+            name = Path(args.path).name
+        else:
+            name = "iitpl-stamp.jpg" if data.startswith(b"\xff\xd8\xff") else "iitpl-stamp.png"
+
+        async def load() -> bool:
+            try:
+                return await load_stamp(data, name, args.as_email)
+            finally:
+                await redis.close_redis()
+                await db.dispose_engine()
+
+        changed = asyncio.run(load())
+        print("Stamp loaded." if changed else "This stamp is already loaded; nothing changed.")
         return 0
     if args.cmd == "corpus" and args.corpus_cmd == "convert":
         print(f"{_corpus_convert(args.folder, args.out)} file(s) converted")

@@ -23,6 +23,10 @@ def test_good_production_settings_start() -> None:
     Settings(**GOOD).validate_for_runtime()
 
 
+def test_a_self_hosted_glitchtip_dsn_is_allowed_in_production() -> None:
+    Settings(**{**GOOD, "sentry_dsn": "http://key@glitchtip:8000/1"}).validate_for_runtime()
+
+
 @pytest.mark.parametrize(
     ("change", "message"),
     [
@@ -34,6 +38,7 @@ def test_good_production_settings_start() -> None:
         ({"smtp_host": ""}, "P1_SMTP_HOST"),
         ({"cookie_secure": False}, "P1_COOKIE_SECURE"),
         ({"jwt_signing_keys": "short"}, "at least 32"),
+        ({"sentry_dsn": "https://key@o1.ingest.us.sentry.io/1"}, "P1_SENTRY_DSN"),
     ],
 )
 def test_unsafe_production_settings_are_refused(change: dict[str, Any], message: str) -> None:
