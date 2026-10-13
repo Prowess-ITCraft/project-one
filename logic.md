@@ -215,33 +215,47 @@ not approved” and does not replace the official, gap-register-based BOQ.
 
 ```mermaid
 stateDiagram-v2
-  [*] --> assigned
-  assigned --> accepted: engineer accepts
-  accepted --> checked_in: dependencies done + arrival evidence + location\ncustomer code only when feature flag is on
-  checked_in --> prechecks_done: backup and access confirmed
-  prechecks_done --> configured: ordered steps done + every baseline value recorded
-  configured --> evidence_uploaded: all required evidence supplied
-  evidence_uploaded --> engine_check: run automatic baseline comparison
-  engine_check --> configured: critical/major failure or missing work
-  engine_check --> verifier_review: check passes; hand-over confirmed\n(customer code only when enabled)
-  verifier_review --> configured: independent verifier rejects with reason
-  verifier_review --> closed: independent verifier approves
-  assigned --> blocked
-  accepted --> blocked
-  checked_in --> blocked
-  prechecks_done --> blocked
-  configured --> blocked
-  evidence_uploaded --> blocked
-  engine_check --> blocked
-  verifier_review --> blocked
-  blocked --> accepted: manager unblocks before on-site start
-  blocked --> checked_in: manager unblocks after check-in
-  blocked --> prechecks_done
-  blocked --> configured
-  blocked --> evidence_uploaded
-  blocked --> engine_check
-  blocked --> verifier_review
-  closed --> [*]
+    [*] --> assigned
+    assigned --> accepted: Engineer accepts
+    accepted --> checked_in: Dependencies done, arrival evidence and location confirmed
+    checked_in --> prechecks_done: Backup and access confirmed
+    prechecks_done --> configured: Ordered steps done, all baseline values recorded
+    configured --> evidence_uploaded: All required evidence supplied
+    evidence_uploaded --> engine_check: Run automatic baseline comparison
+
+    engine_check --> configured: Critical or major failure, or missing work
+    engine_check --> verifier_review: Checks pass and handover confirmed
+    verifier_review --> configured: Independent verifier rejects with reason
+    verifier_review --> closed: Independent verifier approves
+
+    assigned --> blocked
+    accepted --> blocked
+    checked_in --> blocked
+    prechecks_done --> blocked
+    configured --> blocked
+    evidence_uploaded --> blocked
+    engine_check --> blocked
+    verifier_review --> blocked
+
+    blocked --> accepted: Manager unblocks before on-site start
+    blocked --> checked_in: Manager unblocks after check-in
+    blocked --> prechecks_done: Manager unblocks
+    blocked --> configured: Manager unblocks
+    blocked --> evidence_uploaded: Manager unblocks
+    blocked --> engine_check: Manager unblocks
+    blocked --> verifier_review: Manager unblocks
+
+    note right of checked_in
+        Customer code required only
+        when the feature flag is enabled
+    end note
+
+    note right of verifier_review
+        Handover customer code required
+        only when the feature flag is enabled
+    end note
+
+    closed --> [*]
 ```
 
 Each field action carries a client event ID and capture time for idempotent, offline sync up to
